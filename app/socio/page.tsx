@@ -4,6 +4,7 @@ import { supabase } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
 import QRCode from 'qrcode'
 import CalendarioMes from '@/components/CalendarioMes'
+import HistorialAsistencia from '@/components/HistorialAsistencia'
 
 export default function SocioPage() {
   const [perfil, setPerfil] = useState<any>(null)
@@ -72,7 +73,6 @@ export default function SocioPage() {
   const seleccionarDia = async (fecha: string, clasesD: any[]) => {
     setClasesDelDia(clasesD)
     setModalFecha(fecha)
-    // Cargar ocupación para cada clase de ese día
     const nuevaOcupacion: Record<string, { sesionId: string, count: number }> = { ...ocupacion }
     for (const clase of clasesD) {
       const key = `${clase.id}_${fecha}`
@@ -157,7 +157,6 @@ export default function SocioPage() {
   const estadoMembresia = getEstadoMembresia()
   const diasRestantes = getDiasRestantes()
 
-  // Construir marcadores para el calendario
   const marcadores: Record<string, 'reservada' | 'disponible' | 'llena'> = {}
   reservas.forEach(r => {
     if (r.fecha) marcadores[r.fecha] = 'reservada'
@@ -185,6 +184,7 @@ export default function SocioPage() {
         </div>
       )}
 
+      {/* ── HEADER según tab ── */}
       {tab === 'clases' && (
         <div style={{ background: 'linear-gradient(160deg, #1a2a0a 0%, #0f0f0f 60%)', padding: '28px 20px 20px', borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
           <div style={{ fontSize: '13px', color: '#888' }}>Buenos días,</div>
@@ -197,13 +197,16 @@ export default function SocioPage() {
           </div>
         </div>
       )}
-
+      {tab === 'historial' && (
+        <div style={{ background: '#181818', borderBottom: '1px solid rgba(255,255,255,0.07)', padding: '16px 20px' }}>
+          <div style={{ fontSize: '18px', fontWeight: '800' }}>Mi historial</div>
+        </div>
+      )}
       {tab === 'qr' && (
         <div style={{ background: '#181818', borderBottom: '1px solid rgba(255,255,255,0.07)', padding: '16px 20px' }}>
           <div style={{ fontSize: '18px', fontWeight: '800' }}>Mi acceso</div>
         </div>
       )}
-
       {tab === 'perfil' && (
         <div style={{ background: '#181818', borderBottom: '1px solid rgba(255,255,255,0.07)', padding: '16px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div style={{ fontSize: '18px', fontWeight: '800' }}>Mi perfil</div>
@@ -211,6 +214,7 @@ export default function SocioPage() {
         </div>
       )}
 
+      {/* ── CLASES ── */}
       {tab === 'clases' && (
         <div style={{ padding: '20px' }}>
           <CalendarioMes
@@ -218,11 +222,9 @@ export default function SocioPage() {
             onSeleccionarDia={seleccionarDia}
             marcadores={marcadores}
           />
-
           {modalFecha && clasesDelDia.length === 0 && (
             <p style={{ color: '#888', textAlign: 'center', padding: '20px 0', fontSize: '13px' }}>Sin clases este día</p>
           )}
-
           {modalFecha && clasesDelDia.map(c => {
             const key = `${c.id}_${modalFecha}`
             const reservada = estaReservadaEnFecha(c.id, modalFecha)
@@ -231,7 +233,6 @@ export default function SocioPage() {
             const llena = libres <= 0 && !reservada
             const porcentaje = Math.min((ocupadas / c.aforo_max) * 100, 100)
             const colorBarra = porcentaje >= 90 ? '#ff5c5c' : porcentaje >= 60 ? '#ffb84d' : '#c8f542'
-
             return (
               <div key={c.id} onClick={() => setModal({ ...c, fecha: modalFecha })} style={{
                 background: '#1e1e1e',
@@ -244,11 +245,7 @@ export default function SocioPage() {
                     <div style={{ fontSize: '17px', fontWeight: '700' }}>{c.nombre}</div>
                     <div style={{ fontSize: '12px', color: '#888', marginTop: '2px' }}>{c.hora_inicio} · {c.duracion_min} min</div>
                   </div>
-                  <span style={{
-                    fontSize: '11px', fontWeight: '600', borderRadius: '20px', padding: '3px 10px',
-                    background: reservada ? 'rgba(200,245,66,0.15)' : llena ? 'rgba(255,92,92,0.15)' : 'rgba(255,255,255,0.07)',
-                    color: reservada ? '#c8f542' : llena ? '#ff5c5c' : '#888'
-                  }}>
+                  <span style={{ fontSize: '11px', fontWeight: '600', borderRadius: '20px', padding: '3px 10px', background: reservada ? 'rgba(200,245,66,0.15)' : llena ? 'rgba(255,92,92,0.15)' : 'rgba(255,255,255,0.07)', color: reservada ? '#c8f542' : llena ? '#ff5c5c' : '#888' }}>
                     {reservada ? '✓ Reservada' : llena ? 'Llena' : `${libres}/${c.aforo_max} libres`}
                   </span>
                 </div>
@@ -261,6 +258,14 @@ export default function SocioPage() {
         </div>
       )}
 
+      {/* ── HISTORIAL ── */}
+      {tab === 'historial' && userId && (
+        <div style={{ padding: '20px' }}>
+          <HistorialAsistencia userId={userId} limit={50} compact={false} />
+        </div>
+      )}
+
+      {/* ── QR ── */}
       {tab === 'qr' && (
         <div style={{ padding: '32px 20px', textAlign: 'center' }}>
           <div style={{ fontSize: '11px', color: '#888', fontWeight: '600', letterSpacing: '1px', textTransform: 'uppercase', marginBottom: '20px' }}>Tu acceso</div>
@@ -283,6 +288,7 @@ export default function SocioPage() {
         </div>
       )}
 
+      {/* ── PERFIL ── */}
       {tab === 'perfil' && (
         <div>
           <div style={{ padding: '24px 20px', display: 'flex', alignItems: 'center', gap: '16px', borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
@@ -294,7 +300,6 @@ export default function SocioPage() {
               <div style={{ fontSize: '13px', color: '#888', marginTop: '2px' }}>{perfil?.telefono || 'Sin teléfono'}</div>
             </div>
           </div>
-
           <div style={{ margin: '16px 20px', background: estadoMembresia === 'caducada' ? 'linear-gradient(135deg, #2a0a0a, #1a0808)' : estadoMembresia === 'pronto' ? 'linear-gradient(135deg, #2a1a0a, #1a1208)' : 'linear-gradient(135deg, #1a2a0a, #162210)', border: `1px solid ${estadoMembresia === 'caducada' ? 'rgba(255,92,92,0.2)' : estadoMembresia === 'pronto' ? 'rgba(255,184,77,0.2)' : 'rgba(200,245,66,0.2)'}`, borderRadius: '14px', padding: '18px' }}>
             <div style={{ fontSize: '11px', color: '#888', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '6px' }}>Membresía</div>
             <div style={{ fontSize: '20px', fontWeight: '800', color: estadoMembresia === 'caducada' ? '#ff5c5c' : estadoMembresia === 'pronto' ? '#ffb84d' : '#c8f542' }}>{perfil?.tipo_membresia || 'Básica'}</div>
@@ -302,7 +307,6 @@ export default function SocioPage() {
               {estadoMembresia === 'caducada' ? '❌ Caducada' : estadoMembresia === 'pronto' ? `⚠️ Vence en ${diasRestantes} días` : `✓ Válida hasta ${perfil?.membresia_vence || 'N/A'}`}
             </div>
           </div>
-
           <div style={{ padding: '0 20px' }}>
             <div style={{ fontSize: '11px', color: '#888', fontWeight: '600', letterSpacing: '1px', textTransform: 'uppercase', marginBottom: '12px' }}>Clases reservadas</div>
             {reservas.length === 0 ? (
@@ -324,6 +328,7 @@ export default function SocioPage() {
         </div>
       )}
 
+      {/* ── MODAL RESERVA ── */}
       {modal && (
         <div onClick={(e) => { if (e.target === e.currentTarget) setModal(null) }}
           style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.8)', zIndex: 200, display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}>
@@ -363,14 +368,16 @@ export default function SocioPage() {
         </div>
       )}
 
+      {/* ── NAV INFERIOR ── */}
       <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, background: 'rgba(18,18,18,0.95)', backdropFilter: 'blur(12px)', borderTop: '1px solid rgba(255,255,255,0.07)', display: 'flex', justifyContent: 'space-around', padding: '10px 0 20px' }}>
         {[
-          { key: 'clases', icon: '🗓', label: 'Clases' },
-          { key: 'qr', icon: '⬛', label: 'Mi QR' },
-          { key: 'perfil', icon: '👤', label: 'Perfil' }
+          { key: 'clases',    icon: '🗓',  label: 'Clases' },
+          { key: 'historial', icon: '📋',  label: 'Historial' },
+          { key: 'qr',        icon: '⬛',  label: 'Mi QR' },
+          { key: 'perfil',    icon: '👤',  label: 'Perfil' },
         ].map(n => (
           <button key={n.key} onClick={() => setTab(n.key)}
-            style={{ display: 'flex', flexDirection: 'column' as const, alignItems: 'center', gap: '3px', cursor: 'pointer', padding: '4px 20px', borderRadius: '10px', border: 'none', background: 'transparent', fontFamily: 'system-ui', color: tab === n.key ? '#c8f542' : '#888' }}>
+            style={{ display: 'flex', flexDirection: 'column' as const, alignItems: 'center', gap: '3px', cursor: 'pointer', padding: '4px 16px', borderRadius: '10px', border: 'none', background: 'transparent', fontFamily: 'system-ui', color: tab === n.key ? '#c8f542' : '#888' }}>
             <span style={{ fontSize: '20px' }}>{n.icon}</span>
             <span style={{ fontSize: '10px', fontWeight: '500' }}>{n.label}</span>
           </button>
