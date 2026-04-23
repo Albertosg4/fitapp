@@ -1,25 +1,39 @@
-import { createClient } from '@supabase/supabase-js'
 import { NextResponse } from 'next/server'
-
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
+import { supabaseAdmin } from '@/lib/supabase/admin'
 
 export async function GET() {
   try {
-    const { data, error } = await supabaseAdmin
+    // Query sin JOIN — evita problemas de FK no declarada
+    const { data: pagos, error } = await supabaseAdmin
       .from('pagos')
-      .select(`
-        *,
-        perfiles (nombre)
-      `)
+      .select('*')
       .order('fecha_pago', { ascending: false })
 
     if (error) throw error
 
-    return NextResponse.json({ pagos: data || [] })
-  } catch (err: any) {
-    return NextResponse.json({ error: err.message }, { status: 500 })
+    if (!pagos || pagos.length === 0) {
+      return NextResponse.json({ pagos: [] })
+    }
+
+    // Traer nombres de perfiles por separado
+    const userIds = [...new Set(pagos.map(p => p.user_id))]
+    const { data: perfiles } = await supabaseAdmin
+      .from('perfiles')
+      .select('id, nombre')
+      .in('id', userIds)
+
+    const perfilesMap = Object.fromEntries((perfiles || []).map(p => [p.id, p]))
+
+    const resultado = pagos.map(p => ({
+      ...p,
+      perfiles: perfilesMap[p.user_id] || null,
+    }))
+
+    return NextResponse.json({ pagos: resultado })
+
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : 'Error interno'
+    console.error('[pagos] Error:', msg)
+    return NextResponse.json({ error: msg }, { status: 500 })
   }
 }
