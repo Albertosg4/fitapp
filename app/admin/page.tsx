@@ -5,25 +5,19 @@ import ClasesTab from '@/features/admin/components/ClasesTab'
 import SociosTab from '@/features/admin/components/SociosTab'
 import PagosTab from '@/features/admin/components/PagosTab'
 import { supabase } from '@/lib/supabase'
+import { TIPOS_MEMBRESIA } from '@/lib/domain/membresias'
+import type { Clase } from '@/types/domain'
 
 const inputStyle = { width: '100%', background: '#181818', border: '1px solid rgba(255,255,255,0.07)', borderRadius: '10px', padding: '10px 14px', color: '#f0f0f0', fontSize: '14px', outline: 'none', boxSizing: 'border-box' as const, fontFamily: 'system-ui' }
-
 const DIAS = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo']
-const TIPOS_MEMBRESIA = [
-  { value: 'mensual', label: 'Mensual' },
-  { value: 'trimestral', label: 'Trimestral' },
-  { value: 'semestral', label: 'Semestral' },
-  { value: 'anual', label: 'Anual' },
-]
 
 export default function AdminPage() {
-  const { clases, socios, gymId, loading, loadSocios, crearClase, eliminarClase, logout } = useAdminData()
+  const { clases, socios, gymId, loading, error, loadSocios, crearClase, eliminarClase, logout } = useAdminData()
   const [tab, setTab] = useState('clases')
 
-  // Formulario nueva clase
-  const [nueva, setNueva] = useState({ nombre: '', dia_semana: 0, hora_inicio: '07:00', duracion_min: 60, aforo_max: 15 })
-
-  // Formulario nuevo socio
+  const [nueva, setNueva] = useState<Omit<Clase, 'id' | 'gym_id' | 'activa'>>({
+    nombre: '', dia_semana: 0, hora_inicio: '07:00', duracion_min: 60, aforo_max: 15,
+  })
   const [nuevoSocio, setNuevoSocio] = useState({ nombre: '', email: '', password: '', tipo_membresia: 'mensual' })
   const [msgSocio, setMsgSocio] = useState('')
   const [loadingSocio, setLoadingSocio] = useState(false)
@@ -58,6 +52,12 @@ export default function AdminPage() {
   if (loading) return (
     <div style={{ minHeight: '100vh', background: '#0f0f0f', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
       <p style={{ color: '#888', fontFamily: 'system-ui' }}>Cargando...</p>
+    </div>
+  )
+
+  if (error) return (
+    <div style={{ minHeight: '100vh', background: '#0f0f0f', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
+      <p style={{ color: '#ff5c5c', fontFamily: 'system-ui', textAlign: 'center' }}>Error al cargar: {error}</p>
     </div>
   )
 
@@ -102,17 +102,12 @@ export default function AdminPage() {
 
       <div style={{ padding: '16px 20px', paddingBottom: '40px' }}>
 
-        {tab === 'clases' && (
-          <ClasesTab clases={clases} onEliminarClase={eliminarClase} />
-        )}
+        {tab === 'clases' && <ClasesTab clases={clases} onEliminarClase={eliminarClase} />}
 
-        {tab === 'socios' && (
-          <SociosTab socios={socios} gymId={gymId} onRefreshSocios={loadSocios} />
-        )}
+        {tab === 'socios' && <SociosTab socios={socios} gymId={gymId} onRefreshSocios={loadSocios} />}
 
-        {tab === 'pagos' && (
-          <PagosTab />
-        )}
+        {/* PagosTab notifica a SociosTab cuando se confirma un pago que afecta membresía */}
+        {tab === 'pagos' && <PagosTab onSociosChange={loadSocios} />}
 
         {/* NUEVA CLASE */}
         {tab === 'nueva' && (

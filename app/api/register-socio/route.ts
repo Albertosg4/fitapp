@@ -1,9 +1,8 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { supabaseAdmin } from '@/lib/supabase/admin'
-import { TIPOS_MEMBRESIA, calcularFechaVencimiento, type TipoMembresia } from '@/lib/domain/membresias'
+import { TIPOS_MEMBRESIA_VALUES, calcularFechaVencimiento, type TipoMembresia } from '@/lib/domain/membresias'
 
-// ─── Validación del payload ───────────────────────────────────────────────────
 function validarPayload(body: unknown): {
   ok: true
   data: { email: string; password: string; nombre: string; tipo_membresia: TipoMembresia; gym_id: string }
@@ -19,8 +18,8 @@ function validarPayload(body: unknown): {
     return { ok: false, error: 'Nombre inválido' }
   if (!b.gym_id || typeof b.gym_id !== 'string')
     return { ok: false, error: 'gym_id requerido' }
-  if (!b.tipo_membresia || !TIPOS_MEMBRESIA.includes(b.tipo_membresia as TipoMembresia))
-    return { ok: false, error: `tipo_membresia debe ser: ${TIPOS_MEMBRESIA.join(', ')}` }
+  if (!b.tipo_membresia || !TIPOS_MEMBRESIA_VALUES.includes(b.tipo_membresia as TipoMembresia))
+    return { ok: false, error: `tipo_membresia debe ser: ${TIPOS_MEMBRESIA_VALUES.join(', ')}` }
 
   return {
     ok: true,
@@ -36,41 +35,30 @@ function validarPayload(body: unknown): {
 
 export async function POST(req: Request) {
   try {
-    // ─── 1. Autenticar al llamante (debe ser admin con sesión válida) ───────────
     const authHeader = req.headers.get('authorization')
     if (!authHeader?.startsWith('Bearer ')) {
       return NextResponse.json({ error: 'No autorizado' }, { status: 401 })
     }
 
     const token = authHeader.replace('Bearer ', '')
-
-    // Crear cliente con el token del usuario llamante para verificar su sesión
     const supabaseUser = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
     )
     const { data: { user }, error: authError } = await supabaseUser.auth.getUser(token)
-
     if (authError || !user) {
       return NextResponse.json({ error: 'Sesión inválida' }, { status: 401 })
     }
 
-    // ─── 2. Verificar que el llamante es admin ──────────────────────────────────
     const { data: perfil_admin, error: perfilError } = await supabaseAdmin
-      .from('perfiles')
-      .select('rol, gym_id')
-      .eq('id', user.id)
-      .single()
-
+      .from('perfiles').select('rol, gym_id').eq('id', user.id).single()
     if (perfilError || !perfil_admin) {
       return NextResponse.json({ error: 'Perfil no encontrado' }, { status: 403 })
     }
-
     if (perfil_admin.rol !== 'admin') {
       return NextResponse.json({ error: 'Acceso denegado: se requiere rol admin' }, { status: 403 })
     }
 
-    // ─── 3. Validar payload ─────────────────────────────────────────────────────
     const body = await req.json()
     const validacion = validarPayload(body)
     if (!validacion.ok) {
@@ -78,40 +66,24 @@ export async function POST(req: Request) {
     }
     const { email, password, nombre, tipo_membresia, gym_id } = validacion.data
 
-    // ─── 4. Verificar que el gym_id pertenece al admin ──────────────────────────
     if (perfil_admin.gym_id !== gym_id) {
       return NextResponse.json({ error: 'gym_id no autorizado' }, { status: 403 })
     }
 
-    // ─── 5. Crear usuario auth ──────────────────────────────────────────────────
     const { data, error: createError } = await supabaseAdmin.auth.admin.createUser({
-      email,
-      password,
-      email_confirm: true,
+      email, password, email_confirm: true,
     })
-
     if (createError || !data.user) {
-      return NextResponse.json(
-        { error: createError?.message || 'Error al crear usuario' },
-        { status: 400 }
-      )
+      return NextResponse.json({ error: createError?.message || 'Error al crear usuario' }, { status: 400 })
     }
 
-    // ─── 6. Crear perfil (rollback si falla) ────────────────────────────────────
     const membresia_vence = calcularFechaVencimiento(tipo_membresia)
-
     const { error: insertError } = await supabaseAdmin.from('perfiles').insert({
-      id: data.user.id,
-      gym_id,
-      nombre,
-      rol: 'socio',
-      tipo_membresia,
-      membresia_activa: true,
-      membresia_vence,
+      id: data.user.id, gym_id, nombre, rol: 'socio',
+      tipo_membresia, membresia_activa: true, membresia_vence,
     })
 
     if (insertError) {
-      // Rollback: eliminar el usuario auth creado
       await supabaseAdmin.auth.admin.deleteUser(data.user.id)
       console.error('[register-socio] Rollback activado:', insertError.message)
       return NextResponse.json({ error: 'Error al crear perfil. Usuario revertido.' }, { status: 500 })

@@ -1,11 +1,9 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextResponse } from 'next/server'
 
-// Protección de rutas via proxy (Next.js 16)
-// La verificación de sesión y rol se hace en cada página via supabase.auth.getUser()
-// porque la sesión se almacena en localStorage (no en cookies).
-// Este proxy solo deja pasar todas las peticiones sin modificar.
-
-export async function proxy(_req: NextRequest) {
+// Protección de rutas server-side pendiente de migrar a cookies (Supabase SSR).
+// La sesión actual usa localStorage, por lo que la verificación de rol
+// se realiza client-side en cada página.
+export function proxy() {
   return NextResponse.next()
 }
 

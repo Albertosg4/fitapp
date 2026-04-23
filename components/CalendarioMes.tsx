@@ -1,8 +1,9 @@
 import { useState } from 'react'
+import type { Clase } from '@/types/domain'
 
 interface Props {
-  clases: any[]
-  onSeleccionarDia: (fecha: string, clasesDelDia: any[]) => void
+  clases: Clase[]
+  onSeleccionarDia: (fecha: string, clasesDelDia: Clase[]) => void
   marcadores?: Record<string, 'reservada' | 'disponible' | 'llena'>
 }
 
@@ -11,7 +12,7 @@ const MESES_CORTO = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct'
 
 export default function CalendarioMes({ clases, onSeleccionarDia, marcadores = {} }: Props) {
   const hoy = new Date()
-  // Inicio de la semana actual (lunes)
+
   const getLunes = (fecha: Date) => {
     const d = new Date(fecha)
     const dia = (d.getDay() + 6) % 7
@@ -43,7 +44,7 @@ export default function CalendarioMes({ clases, onSeleccionarDia, marcadores = {
 
   const getFecha = (d: Date) => d.toISOString().split('T')[0]
 
-  const getClasesDelDia = (d: Date) => {
+  const getClasesDelDia = (d: Date): Clase[] => {
     const diaSemanaIdx = (d.getDay() + 6) % 7
     return clases.filter(c => c.dia_semana === diaSemanaIdx)
   }
@@ -57,7 +58,6 @@ export default function CalendarioMes({ clases, onSeleccionarDia, marcadores = {
   const esHoy = (d: Date) => getFecha(d) === getFecha(hoy)
   const esSeleccionado = (d: Date) => getFecha(d) === fechaSeleccionada
 
-  // Etiqueta del mes/semana en el header
   const mesInicio = semana[0]
   const mesFin = semana[6]
   const labelMes = mesInicio.getMonth() === mesFin.getMonth()
@@ -66,20 +66,11 @@ export default function CalendarioMes({ clases, onSeleccionarDia, marcadores = {
 
   return (
     <div style={{ marginBottom: '20px' }}>
-      {/* Header navegación */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
-        <button onClick={irSemanaAnterior} style={{
-          background: 'rgba(255,255,255,0.06)', border: 'none', borderRadius: '8px',
-          padding: '6px 12px', color: '#888', cursor: 'pointer', fontSize: '16px', fontFamily: 'system-ui'
-        }}>‹</button>
+        <button onClick={irSemanaAnterior} style={{ background: 'rgba(255,255,255,0.06)', border: 'none', borderRadius: '8px', padding: '6px 12px', color: '#888', cursor: 'pointer', fontSize: '16px', fontFamily: 'system-ui' }}>‹</button>
         <span style={{ fontSize: '13px', color: '#888', fontWeight: '600' }}>{labelMes}</span>
-        <button onClick={irSemanaSiguiente} style={{
-          background: 'rgba(255,255,255,0.06)', border: 'none', borderRadius: '8px',
-          padding: '6px 12px', color: '#888', cursor: 'pointer', fontSize: '16px', fontFamily: 'system-ui'
-        }}>›</button>
+        <button onClick={irSemanaSiguiente} style={{ background: 'rgba(255,255,255,0.06)', border: 'none', borderRadius: '8px', padding: '6px 12px', color: '#888', cursor: 'pointer', fontSize: '16px', fontFamily: 'system-ui' }}>›</button>
       </div>
-
-      {/* Días de la semana */}
       <div style={{ display: 'flex', gap: '6px', overflowX: 'auto', scrollbarWidth: 'none' }}>
         {semana.map((d, i) => {
           const fecha = getFecha(d)
@@ -87,33 +78,11 @@ export default function CalendarioMes({ clases, onSeleccionarDia, marcadores = {
           const hoyDia = esHoy(d)
           const tieneClases = getClasesDelDia(d).length > 0
           const marcador = marcadores[fecha]
-
           return (
-            <button key={i} onClick={() => seleccionar(d)} style={{
-              flexShrink: 0,
-              display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px',
-              padding: '10px 12px', borderRadius: '12px', border: '1px solid',
-              borderColor: seleccionado ? '#c8f542' : hoyDia ? 'rgba(200,245,66,0.2)' : 'rgba(255,255,255,0.07)',
-              background: seleccionado ? '#c8f542' : hoyDia ? 'rgba(200,245,66,0.06)' : '#1e1e1e',
-              cursor: 'pointer', fontFamily: 'system-ui', minWidth: '44px'
-            }}>
-              <span style={{ fontSize: '10px', fontWeight: '600', color: seleccionado ? '#0f0f0f' : '#888' }}>
-                {DIAS_CORTO[i]}
-              </span>
-              <span style={{ fontSize: '18px', fontWeight: '800', color: seleccionado ? '#0f0f0f' : '#f0f0f0' }}>
-                {d.getDate()}
-              </span>
-              {/* Punto indicador de clases */}
-              <div style={{
-                width: '5px', height: '5px', borderRadius: '50%',
-                background: seleccionado
-                  ? '#0f0f0f'
-                  : marcador === 'reservada'
-                    ? '#c8f542'
-                    : tieneClases
-                      ? 'rgba(255,255,255,0.2)'
-                      : 'transparent'
-              }} />
+            <button key={i} onClick={() => seleccionar(d)} style={{ flexShrink: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px', padding: '10px 12px', borderRadius: '12px', border: '1px solid', borderColor: seleccionado ? '#c8f542' : hoyDia ? 'rgba(200,245,66,0.2)' : 'rgba(255,255,255,0.07)', background: seleccionado ? '#c8f542' : hoyDia ? 'rgba(200,245,66,0.06)' : '#1e1e1e', cursor: 'pointer', fontFamily: 'system-ui', minWidth: '44px' }}>
+              <span style={{ fontSize: '10px', fontWeight: '600', color: seleccionado ? '#0f0f0f' : '#888' }}>{DIAS_CORTO[i]}</span>
+              <span style={{ fontSize: '18px', fontWeight: '800', color: seleccionado ? '#0f0f0f' : '#f0f0f0' }}>{d.getDate()}</span>
+              <div style={{ width: '5px', height: '5px', borderRadius: '50%', background: seleccionado ? '#0f0f0f' : marcador === 'reservada' ? '#c8f542' : tieneClases ? 'rgba(255,255,255,0.2)' : 'transparent' }} />
             </button>
           )
         })}

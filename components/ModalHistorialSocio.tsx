@@ -1,6 +1,5 @@
 'use client'
 
-import { useState } from 'react'
 import HistorialAsistencia from '@/components/HistorialAsistencia'
 
 interface Socio {
@@ -19,7 +18,6 @@ export default function ModalHistorialSocio({ socio, onClose }: Props) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
       <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg max-h-[85vh] flex flex-col">
-        {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
           <div>
             <h2 className="font-bold text-gray-900">{socio.nombre}</h2>
@@ -30,15 +28,8 @@ export default function ModalHistorialSocio({ socio, onClose }: Props) {
               </span>
             </p>
           </div>
-          <button
-            onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 text-xl leading-none"
-          >
-            ✕
-          </button>
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-xl leading-none">✕</button>
         </div>
-
-        {/* Contenido scrollable */}
         <div className="overflow-y-auto flex-1 px-5 py-4">
           <HistorialAsistencia userId={socio.id} limit={100} compact={true} />
         </div>

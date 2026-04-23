@@ -1,52 +1,42 @@
 'use client'
-import HistorialAsistencia from '@/components/HistorialAsistencia'
+import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '@/lib/supabase'
-import { useState, useEffect } from 'react'
+import HistorialAsistencia from '@/components/HistorialAsistencia'
+import { TIPOS_MEMBRESIA, IMPORTES, METODOS_PAGO, getEstadoMembresiaAdmin } from '@/lib/domain/membresias'
+import type { Socio, Pago } from '@/types/domain'
 
 const cardStyle = { background: '#1e1e1e', border: '1px solid rgba(255,255,255,0.07)', borderRadius: '12px', padding: '14px', marginBottom: '10px' }
 const inputStyle = { width: '100%', background: '#181818', border: '1px solid rgba(255,255,255,0.07)', borderRadius: '10px', padding: '10px 14px', color: '#f0f0f0', fontSize: '14px', outline: 'none', boxSizing: 'border-box' as const, fontFamily: 'system-ui' }
 
-const TIPOS_MEMBRESIA = [
-  { value: 'mensual', label: 'Mensual' },
-  { value: 'trimestral', label: 'Trimestral' },
-  { value: 'semestral', label: 'Semestral' },
-  { value: 'anual', label: 'Anual' },
-]
-const METODOS = [
-  { value: 'efectivo', label: '💵 Efectivo' },
-  { value: 'transferencia', label: '🏦 Transferencia' },
-  { value: 'cortesia', label: '🎁 Cortesía (0€)' },
-]
-const IMPORTES: Record<string, number> = {
-  mensual: 49.99, trimestral: 129.99, semestral: 229.99, anual: 399.99,
-}
-
-function getEstadoMembresia(socio: any) {
-  if (!socio.membresia_activa) return 'caducada'
-  if (!socio.membresia_vence) return 'ok'
-  const diff = Math.ceil((new Date(socio.membresia_vence).getTime() - Date.now()) / 86400000)
-  if (diff < 0) return 'caducada'
-  if (diff <= 7) return 'pronto'
-  return 'ok'
-}
-
-// ── Subcomponente: pagos de un socio ─────────────────────────────────────────
 function SocioPagosAdmin({ userId, onRefresh }: { userId: string; onRefresh: () => void }) {
-  const [pagos, setPagos] = useState<any[]>([])
+  const [pagos, setPagos] = useState<Pago[]>([])
   const [loading, setLoading] = useState(true)
 
-  useEffect(() => { cargar() }, [userId])
-
-  const cargar = async () => {
-    const { data } = await supabase.from('pagos').select('*').eq('user_id', userId).order('fecha_pago', { ascending: false })
-    setPagos(data || [])
+  const cargar = useCallback(async () => {
+    const { data } = await supabase
+      .from('pagos').select('*')
+      .eq('user_id', userId).order('fecha_pago', { ascending: false })
+    setPagos((data as Pago[]) || [])
     setLoading(false)
-  }
+  }, [userId])
+
+  useEffect(() => {
+    cargar()
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userId])
 
   const confirmar = async (pagoId: string) => {
-    await fetch('/api/pagos/manual', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ pagoId }) })
-    await cargar()
-    onRefresh()
+    try {
+      await fetch('/api/pagos/manual', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ pagoId }),
+      })
+      await cargar()
+      onRefresh()
+    } catch (err) {
+      console.error('[SocioPagosAdmin] Error confirmando pago:', err)
+    }
   }
 
   if (loading) return <p style={{ color: '#888', fontSize: '13px', textAlign: 'center', padding: '20px 0' }}>Cargando...</p>
@@ -55,6 +45,7 @@ function SocioPagosAdmin({ userId, onRefresh }: { userId: string; onRefresh: () 
   const total = pagos.filter(p => p.estado === 'pagado' && p.metodo !== 'cortesia').reduce((s, p) => s + Number(p.importe), 0)
   const pendiente = pagos.filter(p => p.estado === 'pendiente').reduce((s, p) => s + Number(p.importe), 0)
   const cortesias = pagos.filter(p => p.metodo === 'cortesia').length
+  const metodoIcon = (m: string) => m === 'stripe' ? '💳' : m === 'efectivo' ? '💵' : m === 'transferencia' ? '🏦' : '🎁'
 
   return (
     <div>
@@ -82,7 +73,7 @@ function SocioPagosAdmin({ userId, onRefresh }: { userId: string; onRefresh: () 
             <div>
               <div style={{ fontSize: '13px', fontWeight: '600', textTransform: 'capitalize', color: '#f0f0f0' }}>{p.tipo_membresia}</div>
               <div style={{ fontSize: '11px', color: '#888', marginTop: '2px' }}>
-                {new Date(p.fecha_pago).toLocaleDateString('es-ES')} · {p.metodo === 'stripe' ? '💳' : p.metodo === 'efectivo' ? '💵' : p.metodo === 'transferencia' ? '🏦' : '🎁'} {p.metodo}
+                {new Date(p.fecha_pago).toLocaleDateString('es-ES')} · {metodoIcon(p.metodo)} {p.metodo}
               </div>
               {p.notas && <div style={{ fontSize: '11px', color: '#666', fontStyle: 'italic' }}>{p.notas}</div>}
             </div>
@@ -106,32 +97,32 @@ function SocioPagosAdmin({ userId, onRefresh }: { userId: string; onRefresh: () 
   )
 }
 
-// ── Props principales ────────────────────────────────────────────────────────
 interface Props {
-  socios: any[]
+  socios: Socio[]
   gymId: string
   onRefreshSocios: () => void
 }
 
 export default function SociosTab({ socios, gymId, onRefreshSocios }: Props) {
-  const [modalSocio, setModalSocio] = useState<any>(null)
+  const [modalSocio, setModalSocio] = useState<Socio | null>(null)
   const [tabModal, setTabModal] = useState<'info' | 'historial' | 'pagos'>('info')
-  const [modalPago, setModalPago] = useState<any>(null)
+  const [modalPago, setModalPago] = useState<Socio | null>(null)
   const [formPago, setFormPago] = useState({ tipoMembresia: 'mensual', metodo: 'efectivo', estado: 'pagado', notas: '' })
   const [guardandoPago, setGuardandoPago] = useState(false)
   const [msgPago, setMsgPago] = useState('')
 
-  const abrirModalSocio = (socio: any) => { setModalSocio(socio); setTabModal('info') }
+  const abrirModalSocio = (socio: Socio) => { setModalSocio(socio); setTabModal('info') }
 
   const toggleActivar = async () => {
     if (!modalSocio) return
     const nuevoEstado = !modalSocio.membresia_activa
-    await supabase.from('perfiles').update({ membresia_activa: nuevoEstado }).eq('id', modalSocio.id)
+    const { error } = await supabase.from('perfiles').update({ membresia_activa: nuevoEstado }).eq('id', modalSocio.id)
+    if (error) { console.error('[SociosTab] toggleActivar:', error.message); return }
     setModalSocio({ ...modalSocio, membresia_activa: nuevoEstado })
     onRefreshSocios()
   }
 
-  const abrirModalPago = (socio: any) => {
+  const abrirModalPago = (socio: Socio) => {
     setModalPago(socio)
     setFormPago({ tipoMembresia: 'mensual', metodo: 'efectivo', estado: 'pagado', notas: '' })
     setMsgPago('')
@@ -166,30 +157,42 @@ export default function SociosTab({ socios, gymId, onRefreshSocios }: Props) {
     finally { setGuardandoPago(false) }
   }
 
-  const importeFormPago = formPago.metodo === 'cortesia' ? 0 : (IMPORTES[formPago.tipoMembresia] || 0)
+  const importeFormPago = formPago.metodo === 'cortesia' ? 0 : (IMPORTES[formPago.tipoMembresia as keyof typeof IMPORTES] || 0)
+
+  const badgeEstado = (s: Socio) => {
+    const estado = getEstadoMembresiaAdmin(s)
+    if (!s.membresia_activa) return { label: 'Baja', bg: 'rgba(255,255,255,0.06)', color: '#555' }
+    if (estado === 'caducada') return { label: 'Caducada', bg: 'rgba(255,92,92,0.12)', color: '#ff5c5c' }
+    if (estado === 'pronto') return { label: 'Vence pronto', bg: 'rgba(255,184,77,0.12)', color: '#ffb84d' }
+    return { label: 'Activo', bg: 'rgba(200,245,66,0.12)', color: '#c8f542' }
+  }
+
+  const borderEstado = (s: Socio) => {
+    const estado = getEstadoMembresiaAdmin(s)
+    if (estado === 'caducada') return '3px solid #ff5c5c'
+    if (estado === 'pronto') return '3px solid #ffb84d'
+    return '1px solid rgba(255,255,255,0.07)'
+  }
 
   return (
     <>
       {socios.length === 0 ? (
         <p style={{ color: '#888', textAlign: 'center', padding: '40px 0' }}>No hay socios registrados.</p>
       ) : socios.map(s => {
-        const estado = getEstadoMembresia(s)
+        const badge = badgeEstado(s)
         return (
-          <div key={s.id} onClick={() => abrirModalSocio(s)} style={{ ...cardStyle, cursor: 'pointer', opacity: s.membresia_activa ? 1 : 0.5, borderLeft: estado === 'caducada' ? '3px solid #ff5c5c' : estado === 'pronto' ? '3px solid #ffb84d' : '1px solid rgba(255,255,255,0.07)' }}>
+          <div key={s.id} onClick={() => abrirModalSocio(s)} style={{ ...cardStyle, cursor: 'pointer', opacity: s.membresia_activa ? 1 : 0.5, borderLeft: borderEstado(s) }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <div>
                 <div style={{ fontSize: '15px', fontWeight: '600' }}>{s.nombre || 'Sin nombre'}</div>
                 <div style={{ fontSize: '12px', color: '#888', marginTop: '3px' }}>{s.tipo_membresia} · vence {s.membresia_vence || 'N/A'}</div>
               </div>
-              <span style={{ fontSize: '11px', padding: '3px 10px', borderRadius: '20px', background: !s.membresia_activa ? 'rgba(255,255,255,0.06)' : estado === 'caducada' ? 'rgba(255,92,92,0.12)' : estado === 'pronto' ? 'rgba(255,184,77,0.12)' : 'rgba(200,245,66,0.12)', color: !s.membresia_activa ? '#555' : estado === 'caducada' ? '#ff5c5c' : estado === 'pronto' ? '#ffb84d' : '#c8f542' }}>
-                {!s.membresia_activa ? 'Baja' : estado === 'caducada' ? 'Caducada' : estado === 'pronto' ? 'Vence pronto' : 'Activo'}
-              </span>
+              <span style={{ fontSize: '11px', padding: '3px 10px', borderRadius: '20px', background: badge.bg, color: badge.color }}>{badge.label}</span>
             </div>
           </div>
         )
       })}
 
-      {/* MODAL SOCIO */}
       {modalSocio && (
         <div onClick={(e) => { if (e.target === e.currentTarget) setModalSocio(null) }}
           style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.8)', zIndex: 200, display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}>
@@ -200,14 +203,13 @@ export default function SociosTab({ socios, gymId, onRefreshSocios }: Props) {
               {modalSocio.tipo_membresia} · Vence: {modalSocio.membresia_vence || 'N/A'} · {modalSocio.membresia_activa ? '🟢 Activo' : '🔴 Baja'}
             </div>
             <div style={{ display: 'flex', background: 'rgba(255,255,255,0.05)', borderRadius: '10px', padding: '3px', marginBottom: '20px' }}>
-              {([['info', '⚙️ Gestión'], ['historial', '📋 Asistencia'], ['pagos', '💳 Pagos']] as const).map(([key, label]) => (
+              {(['info', 'historial', 'pagos'] as const).map(key => (
                 <button key={key} onClick={() => setTabModal(key)}
                   style={{ flex: 1, padding: '8px 4px', fontSize: '12px', fontWeight: '500', border: 'none', borderRadius: '8px', cursor: 'pointer', fontFamily: 'system-ui', background: tabModal === key ? '#2a2a2a' : 'transparent', color: tabModal === key ? '#c8f542' : '#888' }}>
-                  {label}
+                  {key === 'info' ? '⚙️ Gestión' : key === 'historial' ? '📋 Asistencia' : '💳 Pagos'}
                 </button>
               ))}
             </div>
-
             {tabModal === 'info' && (
               <div>
                 <div style={{ background: 'rgba(255,255,255,0.03)', borderRadius: '10px', padding: '14px', marginBottom: '16px' }}>
@@ -217,8 +219,8 @@ export default function SociosTab({ socios, gymId, onRefreshSocios }: Props) {
                       <div style={{ fontSize: '16px', fontWeight: '700', textTransform: 'capitalize' }}>{modalSocio.tipo_membresia || '—'}</div>
                       <div style={{ fontSize: '12px', color: '#888', marginTop: '3px' }}>Vence: {modalSocio.membresia_vence || 'Sin fecha'}</div>
                     </div>
-                    <span style={{ fontSize: '11px', padding: '3px 10px', borderRadius: '20px', background: !modalSocio.membresia_activa ? 'rgba(255,255,255,0.06)' : getEstadoMembresia(modalSocio) === 'caducada' ? 'rgba(255,92,92,0.12)' : getEstadoMembresia(modalSocio) === 'pronto' ? 'rgba(255,184,77,0.12)' : 'rgba(200,245,66,0.12)', color: !modalSocio.membresia_activa ? '#555' : getEstadoMembresia(modalSocio) === 'caducada' ? '#ff5c5c' : getEstadoMembresia(modalSocio) === 'pronto' ? '#ffb84d' : '#c8f542' }}>
-                      {!modalSocio.membresia_activa ? 'Baja' : getEstadoMembresia(modalSocio) === 'caducada' ? 'Caducada' : getEstadoMembresia(modalSocio) === 'pronto' ? 'Vence pronto' : 'Activa'}
+                    <span style={{ fontSize: '11px', padding: '3px 10px', borderRadius: '20px', background: badgeEstado(modalSocio).bg, color: badgeEstado(modalSocio).color }}>
+                      {badgeEstado(modalSocio).label}
                     </span>
                   </div>
                 </div>
@@ -234,7 +236,6 @@ export default function SociosTab({ socios, gymId, onRefreshSocios }: Props) {
             )}
             {tabModal === 'historial' && <HistorialAsistencia userId={modalSocio.id} limit={100} compact={true} />}
             {tabModal === 'pagos' && <SocioPagosAdmin userId={modalSocio.id} onRefresh={onRefreshSocios} />}
-
             <button onClick={() => setModalSocio(null)} style={{ width: '100%', border: '1px solid rgba(255,255,255,0.07)', borderRadius: '10px', padding: '12px', background: 'transparent', color: '#888', fontSize: '14px', cursor: 'pointer', fontFamily: 'system-ui', marginTop: '10px' }}>
               Cerrar
             </button>
@@ -242,7 +243,6 @@ export default function SociosTab({ socios, gymId, onRefreshSocios }: Props) {
         </div>
       )}
 
-      {/* MODAL PAGO */}
       {modalPago && (
         <div onClick={(e) => { if (e.target === e.currentTarget) setModalPago(null) }}
           style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)', zIndex: 300, display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}>
@@ -250,7 +250,6 @@ export default function SociosTab({ socios, gymId, onRefreshSocios }: Props) {
             <div style={{ width: '36px', height: '4px', background: 'rgba(255,255,255,0.1)', borderRadius: '2px', margin: '0 auto 20px' }}></div>
             <div style={{ fontSize: '18px', fontWeight: '800', marginBottom: '2px' }}>Registrar pago</div>
             <div style={{ fontSize: '13px', color: '#888', marginBottom: '20px' }}>{modalPago.nombre}</div>
-
             <div style={{ marginBottom: '12px' }}>
               <label style={{ display: 'block', color: '#888', fontSize: '12px', marginBottom: '6px', fontWeight: '500', textTransform: 'uppercase' }}>Tipo de membresía</label>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px' }}>
@@ -262,11 +261,10 @@ export default function SociosTab({ socios, gymId, onRefreshSocios }: Props) {
                 ))}
               </div>
             </div>
-
             <div style={{ marginBottom: '12px' }}>
               <label style={{ display: 'block', color: '#888', fontSize: '12px', marginBottom: '6px', fontWeight: '500', textTransform: 'uppercase' }}>Método</label>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px' }}>
-                {METODOS.map(m => (
+                {METODOS_PAGO.map(m => (
                   <button key={m.value} onClick={() => setFormPago({ ...formPago, metodo: m.value })}
                     style={{ padding: '10px', borderRadius: '10px', border: `1px solid ${formPago.metodo === m.value ? 'rgba(200,245,66,0.5)' : 'rgba(255,255,255,0.07)'}`, background: formPago.metodo === m.value ? 'rgba(200,245,66,0.1)' : '#181818', color: formPago.metodo === m.value ? '#c8f542' : '#888', cursor: 'pointer', fontFamily: 'system-ui', fontSize: '12px', fontWeight: '500' }}>
                     {m.label}
@@ -274,7 +272,6 @@ export default function SociosTab({ socios, gymId, onRefreshSocios }: Props) {
                 ))}
               </div>
             </div>
-
             {formPago.metodo !== 'cortesia' && (
               <div style={{ marginBottom: '12px' }}>
                 <label style={{ display: 'block', color: '#888', fontSize: '12px', marginBottom: '6px', fontWeight: '500', textTransform: 'uppercase' }}>Estado</label>
@@ -286,14 +283,12 @@ export default function SociosTab({ socios, gymId, onRefreshSocios }: Props) {
                 </div>
               </div>
             )}
-
             <div style={{ marginBottom: '16px' }}>
               <label style={{ display: 'block', color: '#888', fontSize: '12px', marginBottom: '6px', fontWeight: '500', textTransform: 'uppercase' }}>Notas (opcional)</label>
               <input value={formPago.notas} onChange={e => setFormPago({ ...formPago, notas: e.target.value })}
                 placeholder={formPago.metodo === 'cortesia' ? 'Ej: Mes gratis por referido' : 'Ej: Pagó en recepción'}
-                style={{ ...inputStyle }} />
+                style={inputStyle} />
             </div>
-
             <div style={{ padding: '12px 16px', background: formPago.metodo === 'cortesia' ? 'rgba(168,85,247,0.08)' : 'rgba(200,245,66,0.06)', border: `1px solid ${formPago.metodo === 'cortesia' ? 'rgba(168,85,247,0.2)' : 'rgba(200,245,66,0.15)'}`, borderRadius: '10px', marginBottom: '16px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <span style={{ color: '#888', fontSize: '13px' }}>Importe</span>
@@ -302,13 +297,11 @@ export default function SociosTab({ socios, gymId, onRefreshSocios }: Props) {
                 </span>
               </div>
             </div>
-
             {msgPago && (
               <div style={{ marginBottom: '12px', padding: '10px 14px', borderRadius: '8px', fontSize: '13px', background: msgPago.includes('✅') ? 'rgba(200,245,66,0.1)' : 'rgba(255,92,92,0.1)', color: msgPago.includes('✅') ? '#c8f542' : '#ff5c5c' }}>
                 {msgPago}
               </div>
             )}
-
             <button onClick={guardarPago} disabled={guardandoPago}
               style={{ width: '100%', background: formPago.metodo === 'cortesia' ? '#a855f7' : '#c8f542', color: '#0f0f0f', border: 'none', borderRadius: '10px', padding: '13px', fontSize: '14px', fontWeight: '700', cursor: 'pointer', fontFamily: 'system-ui', opacity: guardandoPago ? 0.6 : 1, marginBottom: '10px' }}>
               {guardandoPago ? 'Guardando...' : formPago.metodo === 'cortesia' ? '🎁 Aplicar cortesía' : formPago.estado === 'pagado' ? '✅ Confirmar pago' : '⏳ Registrar pendiente'}

@@ -1,14 +1,33 @@
-// Fuente única de verdad para tipos y lógica de membresías
+// ─── Fuente única de verdad: tipos, constantes y lógica de membresías ────────
 
-export const TIPOS_MEMBRESIA = ['mensual', 'trimestral', 'semestral', 'anual'] as const
-export type TipoMembresia = typeof TIPOS_MEMBRESIA[number]
+export const TIPOS_MEMBRESIA_VALUES = ['mensual', 'trimestral', 'semestral', 'anual'] as const
+export type TipoMembresia = typeof TIPOS_MEMBRESIA_VALUES[number]
 
-// Duración en días de cada tipo
+export const TIPOS_MEMBRESIA: { value: TipoMembresia; label: string }[] = [
+  { value: 'mensual',    label: 'Mensual' },
+  { value: 'trimestral', label: 'Trimestral' },
+  { value: 'semestral',  label: 'Semestral' },
+  { value: 'anual',      label: 'Anual' },
+]
+
+export const IMPORTES: Record<TipoMembresia, number> = {
+  mensual:    49.99,
+  trimestral: 129.99,
+  semestral:  229.99,
+  anual:      399.99,
+}
+
+export const METODOS_PAGO: { value: string; label: string }[] = [
+  { value: 'efectivo',      label: '💵 Efectivo' },
+  { value: 'transferencia', label: '🏦 Transferencia' },
+  { value: 'cortesia',      label: '🎁 Cortesía (0€)' },
+]
+
 export const DURACION_MEMBRESIA: Record<TipoMembresia, number> = {
-  mensual: 30,
+  mensual:    30,
   trimestral: 90,
-  semestral: 180,
-  anual: 365,
+  semestral:  180,
+  anual:      365,
 }
 
 export function calcularFechaVencimiento(tipo: TipoMembresia, desde?: Date): string {
@@ -19,7 +38,12 @@ export function calcularFechaVencimiento(tipo: TipoMembresia, desde?: Date): str
   return vence.toISOString().split('T')[0]
 }
 
+// ─── Estado de membresía ──────────────────────────────────────────────────────
+// Valores normalizados usados en toda la app admin y socio
 export type EstadoMembresia = 'activa' | 'por_vencer' | 'caducada' | 'inactiva'
+
+// Alias legible para el panel admin (mantiene compatibilidad con lógica anterior)
+export type EstadoMembresiaAdmin = 'ok' | 'pronto' | 'caducada'
 
 export function getEstadoMembresia(perfil: {
   membresia_activa: boolean
@@ -27,14 +51,23 @@ export function getEstadoMembresia(perfil: {
 }): EstadoMembresia {
   if (!perfil.membresia_activa) return 'inactiva'
   if (!perfil.membresia_vence) return 'inactiva'
-
-  const hoy = new Date()
-  const vence = new Date(perfil.membresia_vence)
-  const diffDias = Math.ceil((vence.getTime() - hoy.getTime()) / (1000 * 60 * 60 * 24))
-
-  if (diffDias < 0) return 'caducada'
-  if (diffDias <= 7) return 'por_vencer'
+  const diff = getDiasRestantes(perfil.membresia_vence)
+  if (diff < 0) return 'caducada'
+  if (diff <= 7) return 'por_vencer'
   return 'activa'
+}
+
+// Versión admin con los valores que espera el panel (ok/pronto/caducada)
+export function getEstadoMembresiaAdmin(perfil: {
+  membresia_activa: boolean
+  membresia_vence: string | null
+}): EstadoMembresiaAdmin {
+  if (!perfil.membresia_activa) return 'caducada'
+  if (!perfil.membresia_vence) return 'ok'
+  const diff = getDiasRestantes(perfil.membresia_vence)
+  if (diff < 0) return 'caducada'
+  if (diff <= 7) return 'pronto'
+  return 'ok'
 }
 
 export function isMembresiaValida(perfil: {

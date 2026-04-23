@@ -1,38 +1,51 @@
 'use client'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
+import type { Pago } from '@/types/domain'
 
 const cardStyle = { background: '#1e1e1e', border: '1px solid rgba(255,255,255,0.07)', borderRadius: '12px', padding: '14px', marginBottom: '10px' }
 const inputStyle = { width: '100%', background: '#181818', border: '1px solid rgba(255,255,255,0.07)', borderRadius: '10px', padding: '10px 14px', color: '#f0f0f0', fontSize: '14px', outline: 'none', boxSizing: 'border-box' as const, fontFamily: 'system-ui' }
 
-export default function PagosTab() {
-  const [pagos, setPagos] = useState<any[]>([])
+interface Props {
+  onSociosChange?: () => void
+}
+
+export default function PagosTab({ onSociosChange }: Props) {
+  const [pagos, setPagos] = useState<Pago[]>([])
   const [loading, setLoading] = useState(false)
   const [filtroSocio, setFiltroSocio] = useState('')
   const [filtroEstado, setFiltroEstado] = useState('')
   const [filtroMes, setFiltroMes] = useState('')
 
-  useEffect(() => { cargar() }, [])
-
-  const cargar = async () => {
+  const cargar = useCallback(async () => {
     setLoading(true)
     try {
       const res = await fetch('/api/pagos')
       const data = await res.json()
       setPagos(data.pagos || [])
     } catch (err) {
-      console.error('Error cargando pagos:', err)
+      console.error('[PagosTab] Error cargando pagos:', err)
     } finally {
       setLoading(false)
     }
-  }
+  }, [])
+
+  useEffect(() => {
+    cargar()
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   const confirmarPago = async (pagoId: string) => {
-    await fetch('/api/pagos/manual', {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ pagoId }),
-    })
-    await cargar()
+    try {
+      await fetch('/api/pagos/manual', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ pagoId }),
+      })
+      await cargar()
+      onSociosChange?.()
+    } catch (err) {
+      console.error('[PagosTab] Error confirmando pago:', err)
+    }
   }
 
   const filtrados = pagos.filter(p => {
@@ -49,6 +62,13 @@ export default function PagosTab() {
   const totalCobrado = filtrados.filter(p => p.estado === 'pagado').reduce((s, p) => s + Number(p.importe), 0)
   const totalPendiente = filtrados.filter(p => p.estado === 'pendiente').reduce((s, p) => s + Number(p.importe), 0)
 
+  const metodoLabel = (metodo: string) => {
+    if (metodo === 'stripe') return '💳 Tarjeta'
+    if (metodo === 'efectivo') return '💵 Efectivo'
+    if (metodo === 'transferencia') return '🏦 Transferencia'
+    return '🎁 Cortesía'
+  }
+
   return (
     <div>
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '16px' }}>
@@ -61,7 +81,6 @@ export default function PagosTab() {
           <div style={{ fontSize: '11px', color: '#888', marginTop: '2px' }}>Pendiente</div>
         </div>
       </div>
-
       <div style={{ display: 'flex', gap: '8px', marginBottom: '16px', flexWrap: 'wrap' as const }}>
         <input placeholder="Buscar socio..." value={filtroSocio} onChange={e => setFiltroSocio(e.target.value)}
           style={{ ...inputStyle, flex: 1, minWidth: '120px', padding: '8px 12px', fontSize: '13px' }} />
@@ -74,7 +93,6 @@ export default function PagosTab() {
         <input type="month" value={filtroMes} onChange={e => setFiltroMes(e.target.value)}
           style={{ ...inputStyle, width: 'auto', padding: '8px 12px', fontSize: '13px', colorScheme: 'dark' }} />
       </div>
-
       {loading ? (
         <p style={{ color: '#888', textAlign: 'center', padding: '20px 0', fontSize: '13px' }}>Cargando...</p>
       ) : filtrados.length === 0 ? (
@@ -85,7 +103,7 @@ export default function PagosTab() {
             <div>
               <div style={{ fontSize: '14px', fontWeight: '700' }}>{p.perfiles?.nombre || 'Sin nombre'}</div>
               <div style={{ fontSize: '12px', color: '#888', marginTop: '2px', textTransform: 'capitalize' }}>
-                {p.tipo_membresia} · {p.metodo === 'stripe' ? '💳 Tarjeta' : p.metodo === 'efectivo' ? '💵 Efectivo' : p.metodo === 'transferencia' ? '🏦 Transferencia' : '🎁 Cortesía'}
+                {p.tipo_membresia} · {metodoLabel(p.metodo)}
               </div>
               <div style={{ fontSize: '11px', color: '#666', marginTop: '2px' }}>
                 {new Date(p.fecha_pago).toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' })}
