@@ -1,37 +1,53 @@
-import { createClient } from '@supabase/supabase-js'
 import { NextResponse } from 'next/server'
-
-// Usa service role para saltarse el RLS — igual que register-socio
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
+import { supabaseAdmin } from '@/lib/supabase/admin'
+import { isMembresiaValida } from '@/lib/domain/membresias'
 
 export async function POST(req: Request) {
   try {
-    const { token } = await req.json()
-    if (!token) return NextResponse.json({ error: 'Token requerido' }, { status: 400 })
+    // ─── 1. Validar payload ─────────────────────────────────────────────────────
+    const body = await req.json()
+    const { token } = body
 
-    // 1. Buscar perfil por qr_token
-    const { data: perfil } = await supabaseAdmin
+    if (!token || typeof token !== 'string' || token.trim().length === 0) {
+      return NextResponse.json({ error: 'Token requerido' }, { status: 400 })
+    }
+
+    // ─── 2. Buscar perfil por qr_token ─────────────────────────────────────────
+    const { data: perfil, error: perfilError } = await supabaseAdmin
       .from('perfiles')
-      .select('*')
-      .eq('qr_token', token)
+      .select('id, nombre, membresia_activa, membresia_vence')
+      .eq('qr_token', token.trim())
       .maybeSingle()
 
-    if (!perfil) return NextResponse.json({ error: 'QR no reconocido' }, { status: 404 })
-    if (!perfil.membresia_activa) return NextResponse.json({ error: 'Membresía no activa', nombre: perfil.nombre }, { status: 403 })
+    if (perfilError) {
+      console.error('[checkin] Error buscando perfil:', perfilError.message)
+      return NextResponse.json({ error: 'Error interno' }, { status: 500 })
+    }
 
-    // 2. Buscar reserva confirmada de hoy
+    if (!perfil) {
+      return NextResponse.json({ error: 'QR no reconocido' }, { status: 404 })
+    }
+
+    // ─── 3. Validar membresía (activa + fecha no vencida) ───────────────────────
+    if (!isMembresiaValida(perfil)) {
+      console.log(`[checkin] Membresía inválida para user: ${perfil.id}`)
+      return NextResponse.json(
+        { error: 'Membresía no activa o caducada', nombre: perfil.nombre },
+        { status: 403 }
+      )
+    }
+
     const hoy = new Date().toISOString().split('T')[0]
+
+    // ─── 4. Buscar reserva confirmada de hoy ───────────────────────────────────
     const { data: sesionesHoy } = await supabaseAdmin
       .from('sesiones')
       .select('id')
       .eq('fecha', hoy)
 
-    const sesionIds = (sesionesHoy || []).map((s: any) => s.id)
+    const sesionIds = (sesionesHoy ?? []).map((s: { id: string }) => s.id)
 
-    let reservaId = null
+    let reservaId: string | null = null
     if (sesionIds.length > 0) {
       const { data: reserva } = await supabaseAdmin
         .from('reservas')
@@ -41,29 +57,47 @@ export async function POST(req: Request) {
         .in('sesion_id', sesionIds)
         .maybeSingle()
 
-      reservaId = reserva?.id || null
+      reservaId = reserva?.id ?? null
     }
 
-    // 3. Sin reserva → acceso libre, registrar igualmente
+    // ─── 5. Acceso libre (sin reserva hoy) ─────────────────────────────────────
     if (!reservaId) {
+      // Evitar duplicado de acceso libre el mismo día
       const { data: yaAcceso } = await supabaseAdmin
         .from('asistencia')
         .select('id')
         .eq('user_id', perfil.id)
         .gte('check_in_at', `${hoy}T00:00:00`)
+        .lte('check_in_at', `${hoy}T23:59:59`)
         .maybeSingle()
 
-      if (!yaAcceso) {
-        await supabaseAdmin.from('asistencia').insert({
-          user_id: perfil.id,
-          metodo: 'qr',
+      if (yaAcceso) {
+        return NextResponse.json({
+          ok: true,
+          nombre: perfil.nombre,
+          msg: 'Acceso ya registrado hoy',
         })
       }
 
-      return NextResponse.json({ ok: true, nombre: perfil.nombre, msg: 'Acceso permitido · Sin reserva hoy' })
+      const { error: insertError } = await supabaseAdmin.from('asistencia').insert({
+        user_id: perfil.id,
+        metodo: 'qr',
+      })
+
+      if (insertError) {
+        console.error('[checkin] Error registrando acceso libre:', insertError.message)
+        return NextResponse.json({ error: 'Error al registrar acceso' }, { status: 500 })
+      }
+
+      console.log(`[checkin] Acceso libre: user=${perfil.id} | fecha=${hoy}`)
+      return NextResponse.json({
+        ok: true,
+        nombre: perfil.nombre,
+        msg: 'Acceso permitido · Sin reserva hoy',
+      })
     }
 
-    // 4. Comprobar si ya hizo check-in
+    // ─── 6. Check-in con reserva — evitar duplicado ─────────────────────────────
     const { data: yaCheckin } = await supabaseAdmin
       .from('asistencia')
       .select('id')
@@ -71,22 +105,35 @@ export async function POST(req: Request) {
       .maybeSingle()
 
     if (yaCheckin) {
-      return NextResponse.json({ ok: true, nombre: perfil.nombre, msg: 'Check-in ya registrado anteriormente' })
+      return NextResponse.json({
+        ok: true,
+        nombre: perfil.nombre,
+        msg: 'Check-in ya registrado anteriormente',
+      })
     }
 
-    // 5. Registrar asistencia
-    const { error } = await supabaseAdmin.from('asistencia').insert({
+    // ─── 7. Registrar asistencia ligada a reserva ───────────────────────────────
+    const { error: checkinError } = await supabaseAdmin.from('asistencia').insert({
       reserva_id: reservaId,
       user_id: perfil.id,
       metodo: 'qr',
     })
 
-    if (error) throw error
+    if (checkinError) {
+      console.error('[checkin] Error registrando check-in:', checkinError.message)
+      return NextResponse.json({ error: 'Error al registrar check-in' }, { status: 500 })
+    }
 
-    return NextResponse.json({ ok: true, nombre: perfil.nombre, msg: 'Check-in registrado ✅' })
+    console.log(`[checkin] Check-in registrado: user=${perfil.id} | reserva=${reservaId}`)
+    return NextResponse.json({
+      ok: true,
+      nombre: perfil.nombre,
+      msg: 'Check-in registrado ✅',
+    })
 
-  } catch (err: any) {
-    console.error('Error checkin:', err)
-    return NextResponse.json({ error: 'Error interno' }, { status: 500 })
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : 'Error desconocido'
+    console.error('[checkin] Error inesperado:', msg)
+    return NextResponse.json({ error: 'Error interno del servidor' }, { status: 500 })
   }
 }

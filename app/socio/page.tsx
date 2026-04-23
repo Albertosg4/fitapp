@@ -1,10 +1,11 @@
 'use client'
 import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import QRCode from 'qrcode'
 import CalendarioMes from '@/components/CalendarioMes'
 import HistorialAsistencia from '@/components/HistorialAsistencia'
+import HistorialPagos from '@/components/HistorialPagos'
 
 export default function SocioPage() {
   const [perfil, setPerfil] = useState<any>(null)
@@ -18,62 +19,55 @@ export default function SocioPage() {
   const [clasesDelDia, setClasesDelDia] = useState<any[]>([])
   const [qrUrl, setQrUrl] = useState('')
   const [userId, setUserId] = useState<string>('')
+  const [pagando, setPagando] = useState(false)
+  const [msgPago, setMsgPago] = useState('')
   const router = useRouter()
-
-  const dias = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo']
+  const searchParams = useSearchParams()
 
   useEffect(() => { init() }, [])
+
+  useEffect(() => {
+    const pago = searchParams.get('pago')
+    if (pago === 'ok') { setMsgPago('✅ Pago completado. Membresía renovada.'); setTab('pagos') }
+    if (pago === 'cancel') setMsgPago('❌ Pago cancelado.')
+  }, [searchParams])
 
   const init = async () => {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) { router.push('/'); return }
     setUserId(user.id)
-
     const { data: p } = await supabase.from('perfiles').select('*').eq('id', user.id).single()
     setPerfil(p)
-
     if (p?.qr_token) {
       const url = await QRCode.toDataURL(`${window.location.origin}/checkin?token=${p.qr_token}`)
       setQrUrl(url)
     }
-
     const { data: c } = await supabase.from('clases').select('*').eq('activa', true).order('dia_semana').order('hora_inicio')
     setClases(c || [])
-
     await cargarReservas(user.id)
     setLoading(false)
   }
 
   const cargarReservas = async (uid: string) => {
     const { data } = await supabase
-      .from('reservas')
-      .select('id, sesion_id, sesiones(clase_id, fecha)')
-      .eq('user_id', uid)
-      .eq('estado', 'confirmada')
-
-    setReservas(
-      (data || []).map((r: any) => ({
-        id: r.id,
-        sesion_id: r.sesion_id,
-        clase_id: r.sesiones?.clase_id,
-        fecha: r.sesiones?.fecha,
-      }))
-    )
+      .from('reservas').select('id, sesion_id, sesiones(clase_id, fecha)')
+      .eq('user_id', uid).eq('estado', 'confirmada')
+    setReservas((data || []).map((r: any) => ({
+      id: r.id, sesion_id: r.sesion_id,
+      clase_id: r.sesiones?.clase_id, fecha: r.sesiones?.fecha,
+    })))
   }
 
-  const getOcupacionFecha = async (claseId: string, fecha: string): Promise<{ sesionId: string | null, count: number }> => {
-    const { data: sesion } = await supabase
-      .from('sesiones').select('id').eq('clase_id', claseId).eq('fecha', fecha).maybeSingle()
+  const getOcupacionFecha = async (claseId: string, fecha: string) => {
+    const { data: sesion } = await supabase.from('sesiones').select('id').eq('clase_id', claseId).eq('fecha', fecha).maybeSingle()
     if (!sesion) return { sesionId: null, count: 0 }
-    const { count } = await supabase
-      .from('reservas').select('id', { count: 'exact', head: true }).eq('sesion_id', sesion.id).eq('estado', 'confirmada')
+    const { count } = await supabase.from('reservas').select('id', { count: 'exact', head: true }).eq('sesion_id', sesion.id).eq('estado', 'confirmada')
     return { sesionId: sesion.id, count: count || 0 }
   }
 
   const seleccionarDia = async (fecha: string, clasesD: any[]) => {
-    setClasesDelDia(clasesD)
-    setModalFecha(fecha)
-    const nuevaOcupacion: Record<string, { sesionId: string, count: number }> = { ...ocupacion }
+    setClasesDelDia(clasesD); setModalFecha(fecha)
+    const nuevaOcupacion: Record<string, any> = { ...ocupacion }
     for (const clase of clasesD) {
       const key = `${clase.id}_${fecha}`
       if (!nuevaOcupacion[key]) {
@@ -87,19 +81,16 @@ export default function SocioPage() {
   const estaReservadaEnFecha = (claseId: string, fecha: string) =>
     reservas.some(r => r.clase_id === claseId && r.fecha === fecha)
 
-  const getOrCreateSesion = async (claseId: string, fecha: string): Promise<string | null> => {
-    const { data: existing } = await supabase
-      .from('sesiones').select('id').eq('clase_id', claseId).eq('fecha', fecha).maybeSingle()
+  const getOrCreateSesion = async (claseId: string, fecha: string) => {
+    const { data: existing } = await supabase.from('sesiones').select('id').eq('clase_id', claseId).eq('fecha', fecha).maybeSingle()
     if (existing) return existing.id
-    const { data: nueva, error } = await supabase
-      .from('sesiones').insert({ clase_id: claseId, fecha }).select('id').single()
+    const { data: nueva, error } = await supabase.from('sesiones').insert({ clase_id: claseId, fecha }).select('id').single()
     if (error) return null
     return nueva.id
   }
 
   const reservar = async (claseId: string, fecha: string) => {
     if (!userId) return
-
     const reservaExistente = reservas.find(r => r.clase_id === claseId && r.fecha === fecha)
     if (reservaExistente) {
       await supabase.from('reservas').update({ estado: 'cancelada' }).eq('id', reservaExistente.id)
@@ -107,38 +98,52 @@ export default function SocioPage() {
       const key = `${claseId}_${fecha}`
       const ocup = ocupacion[key]
       if (ocup) setOcupacion({ ...ocupacion, [key]: { ...ocup, count: Math.max(0, ocup.count - 1) } })
-      setModal(null)
-      return
+      setModal(null); return
     }
-
     const clase = clases.find(c => c.id === claseId)
     if (!clase) return
-
     const sesionId = await getOrCreateSesion(claseId, fecha)
     if (!sesionId) { setModal(null); return }
-
     const key = `${claseId}_${fecha}`
     const ocupActual = ocupacion[key]?.count || 0
     if (ocupActual >= clase.aforo_max) { setModal(null); return }
-
-    const { data: reservaAnterior } = await supabase
-      .from('reservas').select('id').eq('sesion_id', sesionId).eq('user_id', userId).maybeSingle()
-
+    const { data: reservaAnterior } = await supabase.from('reservas').select('id').eq('sesion_id', sesionId).eq('user_id', userId).maybeSingle()
     if (reservaAnterior) {
       await supabase.from('reservas').update({ estado: 'confirmada' }).eq('id', reservaAnterior.id)
     } else {
       await supabase.from('reservas').insert({ sesion_id: sesionId, user_id: userId, estado: 'confirmada' })
     }
-
     await cargarReservas(userId)
     setOcupacion({ ...ocupacion, [key]: { sesionId, count: ocupActual + 1 } })
     setModal(null)
   }
 
+  const pagarMembresia = async (tipoMembresia: string) => {
+    if (!userId) return
+    setPagando(true)
+    try {
+      const res = await fetch('/api/stripe/checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId, tipoMembresia,
+          successUrl: `${window.location.origin}/socio?pago=ok`,
+          cancelUrl: `${window.location.origin}/socio?pago=cancel`,
+        }),
+      })
+      const data = await res.json()
+      if (data.url) window.location.href = data.url
+    } catch (err) {
+      console.error('Error pago:', err)
+    } finally {
+      setPagando(false)
+    }
+  }
+
   const getEstadoMembresia = () => {
     if (!perfil?.membresia_activa) return 'caducada'
     if (!perfil?.membresia_vence) return 'ok'
-    const diff = Math.ceil((new Date(perfil.membresia_vence).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))
+    const diff = Math.ceil((new Date(perfil.membresia_vence).getTime() - Date.now()) / 86400000)
     if (diff < 0) return 'caducada'
     if (diff <= 7) return 'pronto'
     return 'ok'
@@ -146,36 +151,35 @@ export default function SocioPage() {
 
   const getDiasRestantes = () => {
     if (!perfil?.membresia_vence) return 0
-    return Math.ceil((new Date(perfil.membresia_vence).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))
+    return Math.ceil((new Date(perfil.membresia_vence).getTime() - Date.now()) / 86400000)
   }
 
-  const logout = async () => {
-    await supabase.auth.signOut()
-    router.push('/')
-  }
+  const logout = async () => { await supabase.auth.signOut(); router.push('/') }
 
   const estadoMembresia = getEstadoMembresia()
   const diasRestantes = getDiasRestantes()
-
   const marcadores: Record<string, 'reservada' | 'disponible' | 'llena'> = {}
-  reservas.forEach(r => {
-    if (r.fecha) marcadores[r.fecha] = 'reservada'
-  })
+  reservas.forEach(r => { if (r.fecha) marcadores[r.fecha] = 'reservada' })
 
-  if (loading) {
-    return (
-      <div style={{ minHeight: '100vh', background: '#0f0f0f', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <p style={{ color: '#888', fontFamily: 'system-ui' }}>Cargando...</p>
-      </div>
-    )
-  }
+  const TIPOS_MEMBRESIA = [
+    { value: 'mensual', label: 'Mensual', precio: '49,99€' },
+    { value: 'trimestral', label: 'Trimestral', precio: '129,99€' },
+    { value: 'semestral', label: 'Semestral', precio: '229,99€' },
+    { value: 'anual', label: 'Anual', precio: '399,99€' },
+  ]
+
+  if (loading) return (
+    <div style={{ minHeight: '100vh', background: '#0f0f0f', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <p style={{ color: '#888', fontFamily: 'system-ui' }}>Cargando...</p>
+    </div>
+  )
 
   return (
     <div style={{ minHeight: '100vh', background: '#0f0f0f', color: '#f0f0f0', fontFamily: 'system-ui', paddingBottom: '80px' }}>
 
       {estadoMembresia === 'caducada' && (
         <div style={{ background: 'rgba(255,92,92,0.15)', borderBottom: '1px solid rgba(255,92,92,0.3)', padding: '10px 20px', fontSize: '13px', color: '#ff5c5c' }}>
-          ❌ Tu membresía ha caducado. Contacta con el gimnasio para renovarla.
+          ❌ Tu membresía ha caducado. Renuévala desde la pestaña Perfil.
         </div>
       )}
       {estadoMembresia === 'pronto' && (
@@ -183,30 +187,26 @@ export default function SocioPage() {
           ⚠️ Tu membresía vence en {diasRestantes} día{diasRestantes !== 1 ? 's' : ''}. Renuévala pronto.
         </div>
       )}
+      {msgPago && (
+        <div style={{ background: msgPago.includes('✅') ? 'rgba(200,245,66,0.1)' : 'rgba(255,92,92,0.1)', borderBottom: `1px solid ${msgPago.includes('✅') ? 'rgba(200,245,66,0.2)' : 'rgba(255,92,92,0.2)'}`, padding: '10px 20px', fontSize: '13px', color: msgPago.includes('✅') ? '#c8f542' : '#ff5c5c' }}>
+          {msgPago}
+        </div>
+      )}
 
-      {/* ── HEADER según tab ── */}
+      {/* HEADERS */}
       {tab === 'clases' && (
         <div style={{ background: 'linear-gradient(160deg, #1a2a0a 0%, #0f0f0f 60%)', padding: '28px 20px 20px', borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
           <div style={{ fontSize: '13px', color: '#888' }}>Buenos días,</div>
-          <div style={{ fontSize: '22px', fontWeight: '800' }}>
-            {perfil?.nombre || 'Socio'} <span style={{ color: '#c8f542' }}>👋</span>
-          </div>
+          <div style={{ fontSize: '22px', fontWeight: '800' }}>{perfil?.nombre || 'Socio'} <span style={{ color: '#c8f542' }}>👋</span></div>
           <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', marginTop: '10px', background: estadoMembresia === 'caducada' ? 'rgba(255,92,92,0.1)' : 'rgba(200,245,66,0.1)', border: `1px solid ${estadoMembresia === 'caducada' ? 'rgba(255,92,92,0.2)' : 'rgba(200,245,66,0.2)'}`, borderRadius: '20px', padding: '4px 12px', fontSize: '12px', color: estadoMembresia === 'caducada' ? '#ff5c5c' : '#c8f542' }}>
             <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: estadoMembresia === 'caducada' ? '#ff5c5c' : '#c8f542', display: 'inline-block' }}></span>
             {perfil?.tipo_membresia || 'Básica'} · {estadoMembresia === 'caducada' ? 'Caducada' : 'Activa'}
           </div>
         </div>
       )}
-      {tab === 'historial' && (
-        <div style={{ background: '#181818', borderBottom: '1px solid rgba(255,255,255,0.07)', padding: '16px 20px' }}>
-          <div style={{ fontSize: '18px', fontWeight: '800' }}>Mi historial</div>
-        </div>
-      )}
-      {tab === 'qr' && (
-        <div style={{ background: '#181818', borderBottom: '1px solid rgba(255,255,255,0.07)', padding: '16px 20px' }}>
-          <div style={{ fontSize: '18px', fontWeight: '800' }}>Mi acceso</div>
-        </div>
-      )}
+      {tab === 'historial' && <div style={{ background: '#181818', borderBottom: '1px solid rgba(255,255,255,0.07)', padding: '16px 20px' }}><div style={{ fontSize: '18px', fontWeight: '800' }}>Mi historial</div></div>}
+      {tab === 'pagos' && <div style={{ background: '#181818', borderBottom: '1px solid rgba(255,255,255,0.07)', padding: '16px 20px' }}><div style={{ fontSize: '18px', fontWeight: '800' }}>Mis pagos</div></div>}
+      {tab === 'qr' && <div style={{ background: '#181818', borderBottom: '1px solid rgba(255,255,255,0.07)', padding: '16px 20px' }}><div style={{ fontSize: '18px', fontWeight: '800' }}>Mi acceso</div></div>}
       {tab === 'perfil' && (
         <div style={{ background: '#181818', borderBottom: '1px solid rgba(255,255,255,0.07)', padding: '16px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div style={{ fontSize: '18px', fontWeight: '800' }}>Mi perfil</div>
@@ -214,17 +214,11 @@ export default function SocioPage() {
         </div>
       )}
 
-      {/* ── CLASES ── */}
+      {/* CLASES */}
       {tab === 'clases' && (
         <div style={{ padding: '20px' }}>
-          <CalendarioMes
-            clases={clases}
-            onSeleccionarDia={seleccionarDia}
-            marcadores={marcadores}
-          />
-          {modalFecha && clasesDelDia.length === 0 && (
-            <p style={{ color: '#888', textAlign: 'center', padding: '20px 0', fontSize: '13px' }}>Sin clases este día</p>
-          )}
+          <CalendarioMes clases={clases} onSeleccionarDia={seleccionarDia} marcadores={marcadores} />
+          {modalFecha && clasesDelDia.length === 0 && <p style={{ color: '#888', textAlign: 'center', padding: '20px 0', fontSize: '13px' }}>Sin clases este día</p>}
           {modalFecha && clasesDelDia.map(c => {
             const key = `${c.id}_${modalFecha}`
             const reservada = estaReservadaEnFecha(c.id, modalFecha)
@@ -234,12 +228,7 @@ export default function SocioPage() {
             const porcentaje = Math.min((ocupadas / c.aforo_max) * 100, 100)
             const colorBarra = porcentaje >= 90 ? '#ff5c5c' : porcentaje >= 60 ? '#ffb84d' : '#c8f542'
             return (
-              <div key={c.id} onClick={() => setModal({ ...c, fecha: modalFecha })} style={{
-                background: '#1e1e1e',
-                border: `1px solid ${reservada ? 'rgba(200,245,66,0.4)' : llena ? 'rgba(255,92,92,0.2)' : 'rgba(255,255,255,0.07)'}`,
-                borderLeft: reservada ? '3px solid #c8f542' : llena ? '3px solid #ff5c5c' : '1px solid rgba(255,255,255,0.07)',
-                borderRadius: '12px', padding: '16px', marginBottom: '12px', cursor: 'pointer'
-              }}>
+              <div key={c.id} onClick={() => setModal({ ...c, fecha: modalFecha })} style={{ background: '#1e1e1e', border: `1px solid ${reservada ? 'rgba(200,245,66,0.4)' : llena ? 'rgba(255,92,92,0.2)' : 'rgba(255,255,255,0.07)'}`, borderLeft: reservada ? '3px solid #c8f542' : llena ? '3px solid #ff5c5c' : '1px solid rgba(255,255,255,0.07)', borderRadius: '12px', padding: '16px', marginBottom: '12px', cursor: 'pointer' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '10px' }}>
                   <div>
                     <div style={{ fontSize: '17px', fontWeight: '700' }}>{c.nombre}</div>
@@ -258,14 +247,34 @@ export default function SocioPage() {
         </div>
       )}
 
-      {/* ── HISTORIAL ── */}
+      {/* HISTORIAL ASISTENCIA */}
       {tab === 'historial' && userId && (
         <div style={{ padding: '20px' }}>
           <HistorialAsistencia userId={userId} limit={50} compact={false} />
         </div>
       )}
 
-      {/* ── QR ── */}
+      {/* PAGOS */}
+      {tab === 'pagos' && userId && (
+        <div style={{ padding: '20px' }}>
+          <HistorialPagos userId={userId} compact={false} />
+          <div style={{ marginTop: '24px' }}>
+            <div style={{ fontSize: '11px', color: '#888', fontWeight: '600', letterSpacing: '1px', textTransform: 'uppercase', marginBottom: '12px' }}>Renovar membresía</div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+              {TIPOS_MEMBRESIA.map(t => (
+                <button key={t.value} onClick={() => pagarMembresia(t.value)} disabled={pagando}
+                  style={{ background: '#1e1e1e', border: '1px solid rgba(200,245,66,0.2)', borderRadius: '12px', padding: '12px', cursor: 'pointer', fontFamily: 'system-ui', textAlign: 'left', opacity: pagando ? 0.6 : 1 }}>
+                  <div style={{ fontSize: '13px', fontWeight: '700', color: '#c8f542' }}>{t.label}</div>
+                  <div style={{ fontSize: '11px', color: '#888', marginTop: '2px' }}>{t.precio}</div>
+                </button>
+              ))}
+            </div>
+            {pagando && <p style={{ color: '#888', fontSize: '12px', textAlign: 'center', marginTop: '8px' }}>Redirigiendo a pago...</p>}
+          </div>
+        </div>
+      )}
+
+      {/* QR */}
       {tab === 'qr' && (
         <div style={{ padding: '32px 20px', textAlign: 'center' }}>
           <div style={{ fontSize: '11px', color: '#888', fontWeight: '600', letterSpacing: '1px', textTransform: 'uppercase', marginBottom: '20px' }}>Tu acceso</div>
@@ -288,7 +297,7 @@ export default function SocioPage() {
         </div>
       )}
 
-      {/* ── PERFIL ── */}
+      {/* PERFIL */}
       {tab === 'perfil' && (
         <div>
           <div style={{ padding: '24px 20px', display: 'flex', alignItems: 'center', gap: '16px', borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
@@ -306,6 +315,11 @@ export default function SocioPage() {
             <div style={{ fontSize: '12px', color: estadoMembresia === 'caducada' ? '#ff5c5c' : estadoMembresia === 'pronto' ? '#ffb84d' : '#42f5b3', marginTop: '8px' }}>
               {estadoMembresia === 'caducada' ? '❌ Caducada' : estadoMembresia === 'pronto' ? `⚠️ Vence en ${diasRestantes} días` : `✓ Válida hasta ${perfil?.membresia_vence || 'N/A'}`}
             </div>
+          </div>
+          <div style={{ padding: '0 20px 20px' }}>
+            <button onClick={() => setTab('pagos')} style={{ width: '100%', background: 'rgba(200,245,66,0.08)', border: '1px solid rgba(200,245,66,0.2)', borderRadius: '12px', padding: '12px', color: '#c8f542', fontSize: '14px', fontWeight: '600', cursor: 'pointer', fontFamily: 'system-ui' }}>
+              💳 Ver mis pagos y renovar membresía
+            </button>
           </div>
           <div style={{ padding: '0 20px' }}>
             <div style={{ fontSize: '11px', color: '#888', fontWeight: '600', letterSpacing: '1px', textTransform: 'uppercase', marginBottom: '12px' }}>Clases reservadas</div>
@@ -328,16 +342,14 @@ export default function SocioPage() {
         </div>
       )}
 
-      {/* ── MODAL RESERVA ── */}
+      {/* MODAL RESERVA */}
       {modal && (
         <div onClick={(e) => { if (e.target === e.currentTarget) setModal(null) }}
           style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.8)', zIndex: 200, display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}>
           <div style={{ background: '#1e1e1e', border: '1px solid rgba(255,255,255,0.07)', borderRadius: '24px 24px 0 0', padding: '24px 20px 36px', width: '100%', maxWidth: '480px' }}>
             <div style={{ width: '36px', height: '4px', background: 'rgba(255,255,255,0.1)', borderRadius: '2px', margin: '0 auto 20px' }}></div>
             <div style={{ fontSize: '22px', fontWeight: '800', marginBottom: '4px' }}>{modal.nombre}</div>
-            <div style={{ fontSize: '13px', color: '#888', marginBottom: '20px' }}>
-              {modal.fecha} · {modal.hora_inicio} · {modal.duracion_min} min
-            </div>
+            <div style={{ fontSize: '13px', color: '#888', marginBottom: '20px' }}>{modal.fecha} · {modal.hora_inicio} · {modal.duracion_min} min</div>
             <div style={{ borderTop: '1px solid rgba(255,255,255,0.07)', paddingTop: '16px', marginBottom: '20px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', fontSize: '13px' }}>
                 <span style={{ color: '#888' }}>Ocupación</span>
@@ -354,12 +366,7 @@ export default function SocioPage() {
               const key = `${modal.id}_${modal.fecha}`
               const llena = (ocupacion[key]?.count ?? 0) >= modal.aforo_max && !estaReservadaEnFecha(modal.id, modal.fecha)
               return (
-                <button onClick={() => !llena && reservar(modal.id, modal.fecha)} disabled={llena} style={{
-                  width: '100%', border: 'none', borderRadius: '12px', padding: '14px',
-                  fontSize: '15px', fontWeight: '700', cursor: llena ? 'not-allowed' : 'pointer', fontFamily: 'system-ui',
-                  background: llena ? 'rgba(255,255,255,0.06)' : estaReservadaEnFecha(modal.id, modal.fecha) ? 'rgba(255,92,92,0.12)' : '#c8f542',
-                  color: llena ? '#555' : estaReservadaEnFecha(modal.id, modal.fecha) ? '#ff5c5c' : '#0f0f0f'
-                }}>
+                <button onClick={() => !llena && reservar(modal.id, modal.fecha)} disabled={llena} style={{ width: '100%', border: 'none', borderRadius: '12px', padding: '14px', fontSize: '15px', fontWeight: '700', cursor: llena ? 'not-allowed' : 'pointer', fontFamily: 'system-ui', background: llena ? 'rgba(255,255,255,0.06)' : estaReservadaEnFecha(modal.id, modal.fecha) ? 'rgba(255,92,92,0.12)' : '#c8f542', color: llena ? '#555' : estaReservadaEnFecha(modal.id, modal.fecha) ? '#ff5c5c' : '#0f0f0f' }}>
                   {llena ? 'Clase completa' : estaReservadaEnFecha(modal.id, modal.fecha) ? 'Cancelar reserva' : 'Reservar plaza'}
                 </button>
               )
@@ -368,16 +375,17 @@ export default function SocioPage() {
         </div>
       )}
 
-      {/* ── NAV INFERIOR ── */}
+      {/* NAV INFERIOR */}
       <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, background: 'rgba(18,18,18,0.95)', backdropFilter: 'blur(12px)', borderTop: '1px solid rgba(255,255,255,0.07)', display: 'flex', justifyContent: 'space-around', padding: '10px 0 20px' }}>
         {[
           { key: 'clases',    icon: '🗓',  label: 'Clases' },
           { key: 'historial', icon: '📋',  label: 'Historial' },
+          { key: 'pagos',     icon: '💳',  label: 'Pagos' },
           { key: 'qr',        icon: '⬛',  label: 'Mi QR' },
           { key: 'perfil',    icon: '👤',  label: 'Perfil' },
         ].map(n => (
           <button key={n.key} onClick={() => setTab(n.key)}
-            style={{ display: 'flex', flexDirection: 'column' as const, alignItems: 'center', gap: '3px', cursor: 'pointer', padding: '4px 16px', borderRadius: '10px', border: 'none', background: 'transparent', fontFamily: 'system-ui', color: tab === n.key ? '#c8f542' : '#888' }}>
+            style={{ display: 'flex', flexDirection: 'column' as const, alignItems: 'center', gap: '3px', cursor: 'pointer', padding: '4px 10px', borderRadius: '10px', border: 'none', background: 'transparent', fontFamily: 'system-ui', color: tab === n.key ? '#c8f542' : '#888' }}>
             <span style={{ fontSize: '20px' }}>{n.icon}</span>
             <span style={{ fontSize: '10px', fontWeight: '500' }}>{n.label}</span>
           </button>
