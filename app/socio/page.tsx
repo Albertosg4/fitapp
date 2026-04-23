@@ -2,48 +2,151 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
+import QRCode from 'qrcode'
+import CalendarioMes from '@/components/CalendarioMes'
 
 export default function SocioPage() {
   const [perfil, setPerfil] = useState<any>(null)
   const [clases, setClases] = useState<any[]>([])
-  const [reservas, setReservas] = useState<string[]>([])
+  const [reservas, setReservas] = useState<any[]>([])
+  const [ocupacion, setOcupacion] = useState<Record<string, { sesionId: string, count: number }>>({})
   const [tab, setTab] = useState('clases')
-  const [diaIdx, setDiaIdx] = useState(0)
   const [loading, setLoading] = useState(true)
   const [modal, setModal] = useState<any>(null)
+  const [modalFecha, setModalFecha] = useState<string>('')
+  const [clasesDelDia, setClasesDelDia] = useState<any[]>([])
+  const [qrUrl, setQrUrl] = useState('')
+  const [userId, setUserId] = useState<string>('')
   const router = useRouter()
 
   const dias = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo']
-  const diasCorto = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom']
 
-  useEffect(() => {
-    const today = (new Date().getDay() + 6) % 7
-    setDiaIdx(today)
-    init()
-  }, [])
+  useEffect(() => { init() }, [])
 
   const init = async () => {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) { router.push('/'); return }
+    setUserId(user.id)
 
     const { data: p } = await supabase.from('perfiles').select('*').eq('id', user.id).single()
     setPerfil(p)
 
+    if (p?.qr_token) {
+      const url = await QRCode.toDataURL(`${window.location.origin}/checkin?token=${p.qr_token}`)
+      setQrUrl(url)
+    }
+
     const { data: c } = await supabase.from('clases').select('*').eq('activa', true).order('dia_semana').order('hora_inicio')
     setClases(c || [])
 
+    await cargarReservas(user.id)
     setLoading(false)
   }
 
-  const reservar = async (claseId: string) => {
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return
-    if (reservas.includes(claseId)) {
-      setReservas(reservas.filter(r => r !== claseId))
-    } else {
-      setReservas([...reservas, claseId])
+  const cargarReservas = async (uid: string) => {
+    const { data } = await supabase
+      .from('reservas')
+      .select('id, sesion_id, sesiones(clase_id, fecha)')
+      .eq('user_id', uid)
+      .eq('estado', 'confirmada')
+
+    setReservas(
+      (data || []).map((r: any) => ({
+        id: r.id,
+        sesion_id: r.sesion_id,
+        clase_id: r.sesiones?.clase_id,
+        fecha: r.sesiones?.fecha,
+      }))
+    )
+  }
+
+  const getOcupacionFecha = async (claseId: string, fecha: string): Promise<{ sesionId: string | null, count: number }> => {
+    const { data: sesion } = await supabase
+      .from('sesiones').select('id').eq('clase_id', claseId).eq('fecha', fecha).maybeSingle()
+    if (!sesion) return { sesionId: null, count: 0 }
+    const { count } = await supabase
+      .from('reservas').select('id', { count: 'exact', head: true }).eq('sesion_id', sesion.id).eq('estado', 'confirmada')
+    return { sesionId: sesion.id, count: count || 0 }
+  }
+
+  const seleccionarDia = async (fecha: string, clasesD: any[]) => {
+    setClasesDelDia(clasesD)
+    setModalFecha(fecha)
+    // Cargar ocupación para cada clase de ese día
+    const nuevaOcupacion: Record<string, { sesionId: string, count: number }> = { ...ocupacion }
+    for (const clase of clasesD) {
+      const key = `${clase.id}_${fecha}`
+      if (!nuevaOcupacion[key]) {
+        const result = await getOcupacionFecha(clase.id, fecha)
+        nuevaOcupacion[key] = { sesionId: result.sesionId || '', count: result.count }
+      }
     }
+    setOcupacion(nuevaOcupacion)
+  }
+
+  const estaReservadaEnFecha = (claseId: string, fecha: string) =>
+    reservas.some(r => r.clase_id === claseId && r.fecha === fecha)
+
+  const getOrCreateSesion = async (claseId: string, fecha: string): Promise<string | null> => {
+    const { data: existing } = await supabase
+      .from('sesiones').select('id').eq('clase_id', claseId).eq('fecha', fecha).maybeSingle()
+    if (existing) return existing.id
+    const { data: nueva, error } = await supabase
+      .from('sesiones').insert({ clase_id: claseId, fecha }).select('id').single()
+    if (error) return null
+    return nueva.id
+  }
+
+  const reservar = async (claseId: string, fecha: string) => {
+    if (!userId) return
+
+    const reservaExistente = reservas.find(r => r.clase_id === claseId && r.fecha === fecha)
+    if (reservaExistente) {
+      await supabase.from('reservas').update({ estado: 'cancelada' }).eq('id', reservaExistente.id)
+      await cargarReservas(userId)
+      const key = `${claseId}_${fecha}`
+      const ocup = ocupacion[key]
+      if (ocup) setOcupacion({ ...ocupacion, [key]: { ...ocup, count: Math.max(0, ocup.count - 1) } })
+      setModal(null)
+      return
+    }
+
+    const clase = clases.find(c => c.id === claseId)
+    if (!clase) return
+
+    const sesionId = await getOrCreateSesion(claseId, fecha)
+    if (!sesionId) { setModal(null); return }
+
+    const key = `${claseId}_${fecha}`
+    const ocupActual = ocupacion[key]?.count || 0
+    if (ocupActual >= clase.aforo_max) { setModal(null); return }
+
+    const { data: reservaAnterior } = await supabase
+      .from('reservas').select('id').eq('sesion_id', sesionId).eq('user_id', userId).maybeSingle()
+
+    if (reservaAnterior) {
+      await supabase.from('reservas').update({ estado: 'confirmada' }).eq('id', reservaAnterior.id)
+    } else {
+      await supabase.from('reservas').insert({ sesion_id: sesionId, user_id: userId, estado: 'confirmada' })
+    }
+
+    await cargarReservas(userId)
+    setOcupacion({ ...ocupacion, [key]: { sesionId, count: ocupActual + 1 } })
     setModal(null)
+  }
+
+  const getEstadoMembresia = () => {
+    if (!perfil?.membresia_activa) return 'caducada'
+    if (!perfil?.membresia_vence) return 'ok'
+    const diff = Math.ceil((new Date(perfil.membresia_vence).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))
+    if (diff < 0) return 'caducada'
+    if (diff <= 7) return 'pronto'
+    return 'ok'
+  }
+
+  const getDiasRestantes = () => {
+    if (!perfil?.membresia_vence) return 0
+    return Math.ceil((new Date(perfil.membresia_vence).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))
   }
 
   const logout = async () => {
@@ -51,17 +154,14 @@ export default function SocioPage() {
     router.push('/')
   }
 
-  const clasesDia = clases.filter(c => c.dia_semana === diaIdx)
+  const estadoMembresia = getEstadoMembresia()
+  const diasRestantes = getDiasRestantes()
 
-  const inputStyle = {
-    padding: '10px 16px',
-    borderRadius: '40px',
-    border: 'none',
-    fontSize: '13px',
-    fontWeight: '500' as const,
-    cursor: 'pointer',
-    fontFamily: 'system-ui'
-  }
+  // Construir marcadores para el calendario
+  const marcadores: Record<string, 'reservada' | 'disponible' | 'llena'> = {}
+  reservas.forEach(r => {
+    if (r.fecha) marcadores[r.fecha] = 'reservada'
+  })
 
   if (loading) {
     return (
@@ -74,22 +174,32 @@ export default function SocioPage() {
   return (
     <div style={{ minHeight: '100vh', background: '#0f0f0f', color: '#f0f0f0', fontFamily: 'system-ui', paddingBottom: '80px' }}>
 
-      {/* Header */}
+      {estadoMembresia === 'caducada' && (
+        <div style={{ background: 'rgba(255,92,92,0.15)', borderBottom: '1px solid rgba(255,92,92,0.3)', padding: '10px 20px', fontSize: '13px', color: '#ff5c5c' }}>
+          ❌ Tu membresía ha caducado. Contacta con el gimnasio para renovarla.
+        </div>
+      )}
+      {estadoMembresia === 'pronto' && (
+        <div style={{ background: 'rgba(255,184,77,0.12)', borderBottom: '1px solid rgba(255,184,77,0.3)', padding: '10px 20px', fontSize: '13px', color: '#ffb84d' }}>
+          ⚠️ Tu membresía vence en {diasRestantes} día{diasRestantes !== 1 ? 's' : ''}. Renuévala pronto.
+        </div>
+      )}
+
       {tab === 'clases' && (
         <div style={{ background: 'linear-gradient(160deg, #1a2a0a 0%, #0f0f0f 60%)', padding: '28px 20px 20px', borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
           <div style={{ fontSize: '13px', color: '#888' }}>Buenos días,</div>
           <div style={{ fontSize: '22px', fontWeight: '800' }}>
             {perfil?.nombre || 'Socio'} <span style={{ color: '#c8f542' }}>👋</span>
           </div>
-          <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', marginTop: '10px', background: 'rgba(200,245,66,0.1)', border: '1px solid rgba(200,245,66,0.2)', borderRadius: '20px', padding: '4px 12px', fontSize: '12px', color: '#c8f542' }}>
-            <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#c8f542', display: 'inline-block' }}></span>
-            {perfil?.tipo_membresia || 'Básica'} · Activa
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', marginTop: '10px', background: estadoMembresia === 'caducada' ? 'rgba(255,92,92,0.1)' : 'rgba(200,245,66,0.1)', border: `1px solid ${estadoMembresia === 'caducada' ? 'rgba(255,92,92,0.2)' : 'rgba(200,245,66,0.2)'}`, borderRadius: '20px', padding: '4px 12px', fontSize: '12px', color: estadoMembresia === 'caducada' ? '#ff5c5c' : '#c8f542' }}>
+            <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: estadoMembresia === 'caducada' ? '#ff5c5c' : '#c8f542', display: 'inline-block' }}></span>
+            {perfil?.tipo_membresia || 'Básica'} · {estadoMembresia === 'caducada' ? 'Caducada' : 'Activa'}
           </div>
         </div>
       )}
 
       {tab === 'qr' && (
-        <div style={{ background: '#181818', borderBottom: '1px solid rgba(255,255,255,0.07)', padding: '16px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div style={{ background: '#181818', borderBottom: '1px solid rgba(255,255,255,0.07)', padding: '16px 20px' }}>
           <div style={{ fontSize: '18px', fontWeight: '800' }}>Mi acceso</div>
         </div>
       )}
@@ -101,62 +211,34 @@ export default function SocioPage() {
         </div>
       )}
 
-      {/* TAB CLASES */}
       {tab === 'clases' && (
         <div style={{ padding: '20px' }}>
-          <div style={{ fontSize: '11px', color: '#888', fontWeight: '600', letterSpacing: '1px', textTransform: 'uppercase', marginBottom: '12px' }}>Horario</div>
+          <CalendarioMes
+            clases={clases}
+            onSeleccionarDia={seleccionarDia}
+            marcadores={marcadores}
+          />
 
-          {/* Selector días */}
-          <div style={{ display: 'flex', gap: '8px', overflowX: 'auto', paddingBottom: '4px', marginBottom: '20px', scrollbarWidth: 'none' }}>
-            {diasCorto.map((d, i) => {
-              const fecha = new Date()
-              const todayIdx = (new Date().getDay() + 6) % 7
-              fecha.setDate(fecha.getDate() - todayIdx + i)
-              return (
-                <button
-                  key={i}
-                  onClick={() => setDiaIdx(i)}
-                  style={{
-                    flexShrink: 0,
-                    display: 'flex',
-                    flexDirection: 'column' as const,
-                    alignItems: 'center',
-                    gap: '2px',
-                    padding: '10px 14px',
-                    borderRadius: '10px',
-                    border: '1px solid',
-                    borderColor: diaIdx === i ? '#c8f542' : 'rgba(255,255,255,0.07)',
-                    background: diaIdx === i ? '#c8f542' : '#1e1e1e',
-                    cursor: 'pointer',
-                    fontFamily: 'system-ui'
-                  }}
-                >
-                  <span style={{ fontSize: '11px', color: diaIdx === i ? '#0f0f0f' : '#888', fontWeight: '500' }}>{d}</span>
-                  <span style={{ fontSize: '17px', fontWeight: '800', color: diaIdx === i ? '#0f0f0f' : '#f0f0f0' }}>{fecha.getDate()}</span>
-                </button>
-              )
-            })}
-          </div>
+          {modalFecha && clasesDelDia.length === 0 && (
+            <p style={{ color: '#888', textAlign: 'center', padding: '20px 0', fontSize: '13px' }}>Sin clases este día</p>
+          )}
 
-          {/* Lista clases */}
-          {clasesDia.length === 0 ? (
-            <p style={{ color: '#888', textAlign: 'center', padding: '40px 0' }}>Sin clases este día</p>
-          ) : clasesDia.map(c => {
-            const reservada = reservas.includes(c.id)
+          {modalFecha && clasesDelDia.map(c => {
+            const key = `${c.id}_${modalFecha}`
+            const reservada = estaReservadaEnFecha(c.id, modalFecha)
+            const ocupadas = ocupacion[key]?.count ?? 0
+            const libres = c.aforo_max - ocupadas
+            const llena = libres <= 0 && !reservada
+            const porcentaje = Math.min((ocupadas / c.aforo_max) * 100, 100)
+            const colorBarra = porcentaje >= 90 ? '#ff5c5c' : porcentaje >= 60 ? '#ffb84d' : '#c8f542'
+
             return (
-              <div
-                key={c.id}
-                onClick={() => setModal(c)}
-                style={{
-                  background: '#1e1e1e',
-                  border: `1px solid ${reservada ? 'rgba(200,245,66,0.4)' : 'rgba(255,255,255,0.07)'}`,
-                  borderLeft: reservada ? '3px solid #c8f542' : '1px solid rgba(255,255,255,0.07)',
-                  borderRadius: '12px',
-                  padding: '16px',
-                  marginBottom: '12px',
-                  cursor: 'pointer'
-                }}
-              >
+              <div key={c.id} onClick={() => setModal({ ...c, fecha: modalFecha })} style={{
+                background: '#1e1e1e',
+                border: `1px solid ${reservada ? 'rgba(200,245,66,0.4)' : llena ? 'rgba(255,92,92,0.2)' : 'rgba(255,255,255,0.07)'}`,
+                borderLeft: reservada ? '3px solid #c8f542' : llena ? '3px solid #ff5c5c' : '1px solid rgba(255,255,255,0.07)',
+                borderRadius: '12px', padding: '16px', marginBottom: '12px', cursor: 'pointer'
+              }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '10px' }}>
                   <div>
                     <div style={{ fontSize: '17px', fontWeight: '700' }}>{c.nombre}</div>
@@ -164,14 +246,14 @@ export default function SocioPage() {
                   </div>
                   <span style={{
                     fontSize: '11px', fontWeight: '600', borderRadius: '20px', padding: '3px 10px',
-                    background: reservada ? 'rgba(200,245,66,0.15)' : 'rgba(255,255,255,0.07)',
-                    color: reservada ? '#c8f542' : '#888'
+                    background: reservada ? 'rgba(200,245,66,0.15)' : llena ? 'rgba(255,92,92,0.15)' : 'rgba(255,255,255,0.07)',
+                    color: reservada ? '#c8f542' : llena ? '#ff5c5c' : '#888'
                   }}>
-                    {reservada ? '✓ Reservada' : `${c.aforo_max} plazas`}
+                    {reservada ? '✓ Reservada' : llena ? 'Llena' : `${libres}/${c.aforo_max} libres`}
                   </span>
                 </div>
                 <div style={{ height: '3px', background: 'rgba(255,255,255,0.06)', borderRadius: '2px', overflow: 'hidden' }}>
-                  <div style={{ height: '100%', width: reservada ? '60%' : '30%', background: '#c8f542', borderRadius: '2px' }}></div>
+                  <div style={{ height: '100%', width: `${porcentaje}%`, background: reservada ? '#c8f542' : colorBarra, borderRadius: '2px', transition: 'width 0.3s' }}></div>
                 </div>
               </div>
             )
@@ -179,27 +261,18 @@ export default function SocioPage() {
         </div>
       )}
 
-      {/* TAB QR */}
       {tab === 'qr' && (
         <div style={{ padding: '32px 20px', textAlign: 'center' }}>
           <div style={{ fontSize: '11px', color: '#888', fontWeight: '600', letterSpacing: '1px', textTransform: 'uppercase', marginBottom: '20px' }}>Tu acceso</div>
-          <div style={{ background: 'white', borderRadius: '20px', padding: '24px', margin: '0 auto 20px', width: '200px', height: '200px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <svg width="152" height="152" viewBox="0 0 100 100">
-              <rect x="5" y="5" width="35" height="35" rx="3" fill="none" stroke="#000" strokeWidth="3"/>
-              <rect x="12" y="12" width="21" height="21" rx="1" fill="#000"/>
-              <rect x="60" y="5" width="35" height="35" rx="3" fill="none" stroke="#000" strokeWidth="3"/>
-              <rect x="67" y="12" width="21" height="21" rx="1" fill="#000"/>
-              <rect x="5" y="60" width="35" height="35" rx="3" fill="none" stroke="#000" strokeWidth="3"/>
-              <rect x="12" y="67" width="21" height="21" rx="1" fill="#000"/>
-              <rect x="45" y="5" width="8" height="8" fill="#000"/><rect x="45" y="17" width="8" height="8" fill="#000"/>
-              <rect x="45" y="29" width="8" height="8" fill="#000"/><rect x="57" y="45" width="8" height="8" fill="#000"/>
-              <rect x="69" y="45" width="8" height="8" fill="#000"/><rect x="81" y="45" width="8" height="8" fill="#000"/>
-              <rect x="45" y="57" width="8" height="8" fill="#000"/><rect x="57" y="57" width="8" height="8" fill="#000"/>
-              <rect x="69" y="69" width="8" height="8" fill="#000"/><rect x="81" y="69" width="8" height="8" fill="#000"/>
-              <rect x="57" y="81" width="8" height="8" fill="#000"/><rect x="81" y="81" width="8" height="8" fill="#000"/>
-              <rect x="45" y="45" width="8" height="8" fill="#c8f542"/>
-            </svg>
-          </div>
+          {qrUrl ? (
+            <div style={{ background: 'white', borderRadius: '20px', padding: '24px', margin: '0 auto 20px', width: '200px', display: 'inline-block' }}>
+              <img src={qrUrl} alt="QR" style={{ width: '200px', height: '200px', display: 'block' }} />
+            </div>
+          ) : (
+            <div style={{ background: '#1e1e1e', borderRadius: '20px', padding: '24px', margin: '0 auto 20px', width: '200px', height: '200px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <span style={{ color: '#888', fontSize: '13px' }}>Generando QR...</span>
+            </div>
+          )}
           <div style={{ fontSize: '13px', color: '#888', marginBottom: '4px' }}>Tu identificador</div>
           <div style={{ fontFamily: 'monospace', fontSize: '22px', fontWeight: '800', color: '#c8f542', letterSpacing: '3px' }}>
             FIT-{perfil?.qr_token?.slice(0, 4).toUpperCase() || '0000'}
@@ -210,7 +283,6 @@ export default function SocioPage() {
         </div>
       )}
 
-      {/* TAB PERFIL */}
       {tab === 'perfil' && (
         <div>
           <div style={{ padding: '24px 20px', display: 'flex', alignItems: 'center', gap: '16px', borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
@@ -223,11 +295,11 @@ export default function SocioPage() {
             </div>
           </div>
 
-          <div style={{ margin: '16px 20px', background: 'linear-gradient(135deg, #1a2a0a, #162210)', border: '1px solid rgba(200,245,66,0.2)', borderRadius: '14px', padding: '18px' }}>
-            <div style={{ fontSize: '11px', color: '#888', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '6px' }}>Membresía activa</div>
-            <div style={{ fontSize: '20px', fontWeight: '800', color: '#c8f542' }}>{perfil?.tipo_membresia || 'Básica'}</div>
-            <div style={{ fontSize: '12px', color: '#42f5b3', marginTop: '8px' }}>
-              ✓ Válida hasta {perfil?.membresia_vence || 'N/A'}
+          <div style={{ margin: '16px 20px', background: estadoMembresia === 'caducada' ? 'linear-gradient(135deg, #2a0a0a, #1a0808)' : estadoMembresia === 'pronto' ? 'linear-gradient(135deg, #2a1a0a, #1a1208)' : 'linear-gradient(135deg, #1a2a0a, #162210)', border: `1px solid ${estadoMembresia === 'caducada' ? 'rgba(255,92,92,0.2)' : estadoMembresia === 'pronto' ? 'rgba(255,184,77,0.2)' : 'rgba(200,245,66,0.2)'}`, borderRadius: '14px', padding: '18px' }}>
+            <div style={{ fontSize: '11px', color: '#888', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '6px' }}>Membresía</div>
+            <div style={{ fontSize: '20px', fontWeight: '800', color: estadoMembresia === 'caducada' ? '#ff5c5c' : estadoMembresia === 'pronto' ? '#ffb84d' : '#c8f542' }}>{perfil?.tipo_membresia || 'Básica'}</div>
+            <div style={{ fontSize: '12px', color: estadoMembresia === 'caducada' ? '#ff5c5c' : estadoMembresia === 'pronto' ? '#ffb84d' : '#42f5b3', marginTop: '8px' }}>
+              {estadoMembresia === 'caducada' ? '❌ Caducada' : estadoMembresia === 'pronto' ? `⚠️ Vence en ${diasRestantes} días` : `✓ Válida hasta ${perfil?.membresia_vence || 'N/A'}`}
             </div>
           </div>
 
@@ -235,14 +307,14 @@ export default function SocioPage() {
             <div style={{ fontSize: '11px', color: '#888', fontWeight: '600', letterSpacing: '1px', textTransform: 'uppercase', marginBottom: '12px' }}>Clases reservadas</div>
             {reservas.length === 0 ? (
               <p style={{ color: '#888', fontSize: '13px' }}>No tienes reservas activas.</p>
-            ) : reservas.map(rid => {
-              const c = clases.find(x => x.id === rid)
+            ) : reservas.map(r => {
+              const c = clases.find(x => x.id === r.clase_id)
               if (!c) return null
               return (
-                <div key={rid} style={{ background: '#1e1e1e', border: '1px solid rgba(200,245,66,0.2)', borderRadius: '10px', padding: '12px 14px', marginBottom: '8px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div key={r.id} style={{ background: '#1e1e1e', border: '1px solid rgba(200,245,66,0.2)', borderRadius: '10px', padding: '12px 14px', marginBottom: '8px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <div>
                     <div style={{ fontWeight: '600', fontSize: '14px' }}>{c.nombre}</div>
-                    <div style={{ fontSize: '12px', color: '#888', marginTop: '2px' }}>{dias[c.dia_semana]} · {c.hora_inicio}</div>
+                    <div style={{ fontSize: '12px', color: '#888', marginTop: '2px' }}>{r.fecha} · {c.hora_inicio}</div>
                   </div>
                   <span style={{ fontSize: '11px', background: 'rgba(200,245,66,0.12)', color: '#c8f542', padding: '3px 10px', borderRadius: '20px' }}>✓</span>
                 </div>
@@ -252,54 +324,53 @@ export default function SocioPage() {
         </div>
       )}
 
-      {/* Modal reserva */}
       {modal && (
-        <div
-          onClick={(e) => { if (e.target === e.currentTarget) setModal(null) }}
-          style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.8)', zIndex: 200, display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}
-        >
+        <div onClick={(e) => { if (e.target === e.currentTarget) setModal(null) }}
+          style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.8)', zIndex: 200, display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}>
           <div style={{ background: '#1e1e1e', border: '1px solid rgba(255,255,255,0.07)', borderRadius: '24px 24px 0 0', padding: '24px 20px 36px', width: '100%', maxWidth: '480px' }}>
             <div style={{ width: '36px', height: '4px', background: 'rgba(255,255,255,0.1)', borderRadius: '2px', margin: '0 auto 20px' }}></div>
             <div style={{ fontSize: '22px', fontWeight: '800', marginBottom: '4px' }}>{modal.nombre}</div>
-            <div style={{ fontSize: '13px', color: '#888', marginBottom: '20px' }}>{dias[modal.dia_semana]} · {modal.hora_inicio} · {modal.duracion_min} min</div>
+            <div style={{ fontSize: '13px', color: '#888', marginBottom: '20px' }}>
+              {modal.fecha} · {modal.hora_inicio} · {modal.duracion_min} min
+            </div>
             <div style={{ borderTop: '1px solid rgba(255,255,255,0.07)', paddingTop: '16px', marginBottom: '20px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', fontSize: '13px' }}>
-                <span style={{ color: '#888' }}>Aforo</span><span>{modal.aforo_max} plazas</span>
+                <span style={{ color: '#888' }}>Ocupación</span>
+                <span>{ocupacion[`${modal.id}_${modal.fecha}`]?.count ?? 0} / {modal.aforo_max} plazas</span>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', fontSize: '13px', borderTop: '1px solid rgba(255,255,255,0.07)' }}>
                 <span style={{ color: '#888' }}>Estado</span>
-                <span style={{ color: reservas.includes(modal.id) ? '#c8f542' : '#888' }}>
-                  {reservas.includes(modal.id) ? '✓ Reservada' : 'No reservada'}
+                <span style={{ color: estaReservadaEnFecha(modal.id, modal.fecha) ? '#c8f542' : '#888' }}>
+                  {estaReservadaEnFecha(modal.id, modal.fecha) ? '✓ Reservada' : 'No reservada'}
                 </span>
               </div>
             </div>
-            <button
-              onClick={() => reservar(modal.id)}
-              style={{
-                width: '100%', border: 'none', borderRadius: '12px', padding: '14px',
-                fontSize: '15px', fontWeight: '700', cursor: 'pointer', fontFamily: 'system-ui',
-                background: reservas.includes(modal.id) ? 'rgba(255,92,92,0.12)' : '#c8f542',
-                color: reservas.includes(modal.id) ? '#ff5c5c' : '#0f0f0f'
-              }}
-            >
-              {reservas.includes(modal.id) ? 'Cancelar reserva' : 'Reservar plaza'}
-            </button>
+            {(() => {
+              const key = `${modal.id}_${modal.fecha}`
+              const llena = (ocupacion[key]?.count ?? 0) >= modal.aforo_max && !estaReservadaEnFecha(modal.id, modal.fecha)
+              return (
+                <button onClick={() => !llena && reservar(modal.id, modal.fecha)} disabled={llena} style={{
+                  width: '100%', border: 'none', borderRadius: '12px', padding: '14px',
+                  fontSize: '15px', fontWeight: '700', cursor: llena ? 'not-allowed' : 'pointer', fontFamily: 'system-ui',
+                  background: llena ? 'rgba(255,255,255,0.06)' : estaReservadaEnFecha(modal.id, modal.fecha) ? 'rgba(255,92,92,0.12)' : '#c8f542',
+                  color: llena ? '#555' : estaReservadaEnFecha(modal.id, modal.fecha) ? '#ff5c5c' : '#0f0f0f'
+                }}>
+                  {llena ? 'Clase completa' : estaReservadaEnFecha(modal.id, modal.fecha) ? 'Cancelar reserva' : 'Reservar plaza'}
+                </button>
+              )
+            })()}
           </div>
         </div>
       )}
 
-      {/* Bottom nav */}
       <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, background: 'rgba(18,18,18,0.95)', backdropFilter: 'blur(12px)', borderTop: '1px solid rgba(255,255,255,0.07)', display: 'flex', justifyContent: 'space-around', padding: '10px 0 20px' }}>
         {[
           { key: 'clases', icon: '🗓', label: 'Clases' },
           { key: 'qr', icon: '⬛', label: 'Mi QR' },
           { key: 'perfil', icon: '👤', label: 'Perfil' }
         ].map(n => (
-          <button
-            key={n.key}
-            onClick={() => setTab(n.key)}
-            style={{ display: 'flex', flexDirection: 'column' as const, alignItems: 'center', gap: '3px', cursor: 'pointer', padding: '4px 20px', borderRadius: '10px', border: 'none', background: 'transparent', fontFamily: 'system-ui', color: tab === n.key ? '#c8f542' : '#888' }}
-          >
+          <button key={n.key} onClick={() => setTab(n.key)}
+            style={{ display: 'flex', flexDirection: 'column' as const, alignItems: 'center', gap: '3px', cursor: 'pointer', padding: '4px 20px', borderRadius: '10px', border: 'none', background: 'transparent', fontFamily: 'system-ui', color: tab === n.key ? '#c8f542' : '#888' }}>
             <span style={{ fontSize: '20px' }}>{n.icon}</span>
             <span style={{ fontSize: '10px', fontWeight: '500' }}>{n.label}</span>
           </button>
