@@ -63,9 +63,14 @@ export function useAdminData() {
     await loadClases(gymId)
   }
 
-  const eliminarClase = async (id: string) => {
+  // Devuelve true si OK, lanza error si falla
+  const eliminarClase = async (id: string): Promise<void> => {
+    if (!gymId) throw new Error('gymId no disponible')
     const { error: err } = await supabase.from('clases').update({ activa: false }).eq('id', id)
-    if (err) { console.error('[useAdminData] eliminarClase:', err.message); return }
+    if (err) {
+      console.error('[useAdminData] eliminarClase:', err.message)
+      throw new Error(err.message)
+    }
     await loadClases(gymId)
   }
 

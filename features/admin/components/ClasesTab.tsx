@@ -1,5 +1,5 @@
 'use client'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
 import CalendarioMes from '@/components/CalendarioMes'
 import type { Clase, Reserva } from '@/types/domain'
@@ -13,7 +13,7 @@ interface ReservaConPerfil extends Reserva {
 
 interface Props {
   clases: Clase[]
-  onEliminarClase: (id: string) => void
+  onEliminarClase: (id: string) => Promise<void>
 }
 
 export default function ClasesTab({ clases, onEliminarClase }: Props) {
@@ -22,10 +22,34 @@ export default function ClasesTab({ clases, onEliminarClase }: Props) {
   const [modalClase, setModalClase] = useState<(Clase & { fecha: string }) | null>(null)
   const [reservasClase, setReservasClase] = useState<ReservaConPerfil[]>([])
   const [loadingReservas, setLoadingReservas] = useState(false)
+  const [eliminando, setEliminando] = useState<string | null>(null) // ID de clase en proceso de eliminar
+
+  // Recalcular clasesDelDia cuando cambie props.clases y haya fecha seleccionada
+  useEffect(() => {
+    if (!fechaSeleccionada) return
+    const diaSemanaIdx = new Date(fechaSeleccionada + 'T12:00:00').getDay()
+    // getDay devuelve 0=Dom, convertir a 0=Lun
+    const idx = (diaSemanaIdx + 6) % 7
+    setClasesDelDia(clases.filter(c => c.dia_semana === idx))
+  }, [clases, fechaSeleccionada])
 
   const seleccionarDia = (fecha: string, clasesD: Clase[]) => {
     setFechaSeleccionada(fecha)
     setClasesDelDia(clasesD)
+  }
+
+  const handleEliminar = async (e: React.MouseEvent, id: string) => {
+    e.stopPropagation()
+    if (eliminando) return // evitar doble click
+    setEliminando(id)
+    try {
+      await onEliminarClase(id)
+      // clasesDelDia se actualizará via useEffect cuando props.clases cambie
+    } catch (err) {
+      console.error('[ClasesTab] Error eliminando clase:', err)
+    } finally {
+      setEliminando(null)
+    }
   }
 
   const abrirModalClase = async (clase: Clase, fecha: string) => {
@@ -65,7 +89,7 @@ export default function ClasesTab({ clases, onEliminarClase }: Props) {
           {clasesDelDia.length === 0 ? (
             <p style={{ color: '#888', fontSize: '13px', textAlign: 'center', padding: '20px 0' }}>Sin clases este día</p>
           ) : clasesDelDia.map(c => (
-            <div key={c.id} style={{ ...cardStyle, cursor: 'pointer' }} onClick={() => abrirModalClase(c, fechaSeleccionada)}>
+            <div key={c.id} style={{ ...cardStyle, cursor: 'pointer', opacity: eliminando === c.id ? 0.5 : 1 }} onClick={() => abrirModalClase(c, fechaSeleccionada)}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                 <div>
                   <div style={{ fontSize: '16px', fontWeight: '700' }}>{c.nombre}</div>
@@ -73,8 +97,12 @@ export default function ClasesTab({ clases, onEliminarClase }: Props) {
                 </div>
                 <div style={{ display: 'flex', gap: '8px' }}>
                   <span style={{ fontSize: '11px', color: '#888', padding: '3px 8px', background: 'rgba(255,255,255,0.06)', borderRadius: '8px' }}>Ver reservas</span>
-                  <button onClick={(e) => { e.stopPropagation(); onEliminarClase(c.id) }}
-                    style={{ background: 'rgba(255,92,92,0.1)', border: '1px solid rgba(255,92,92,0.2)', borderRadius: '8px', padding: '6px 10px', fontSize: '13px', cursor: 'pointer', color: '#ff5c5c' }}>🗑</button>
+                  <button
+                    onClick={(e) => handleEliminar(e, c.id)}
+                    disabled={!!eliminando}
+                    style={{ background: 'rgba(255,92,92,0.1)', border: '1px solid rgba(255,92,92,0.2)', borderRadius: '8px', padding: '6px 10px', fontSize: '13px', cursor: eliminando ? 'not-allowed' : 'pointer', color: '#ff5c5c', opacity: eliminando === c.id ? 0.5 : 1 }}>
+                    {eliminando === c.id ? '...' : '🗑'}
+                  </button>
                 </div>
               </div>
             </div>
