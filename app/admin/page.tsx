@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
 import CalendarioMes from '@/components/CalendarioMes'
+import HistorialAsistencia from '@/components/HistorialAsistencia'
 
 const TIPOS_MEMBRESIA = [
   { value: 'mensual', label: 'Mensual', meses: 1 },
@@ -31,6 +32,8 @@ export default function AdminPage() {
   const [modalClase, setModalClase] = useState<any>(null)
   const [reservasClase, setReservasClase] = useState<any[]>([])
   const [loadingReservas, setLoadingReservas] = useState(false)
+  // ▶ NUEVO: controla qué pestaña se ve dentro del modal del socio
+  const [tabModalSocio, setTabModalSocio] = useState<'info' | 'historial'>('info')
   const router = useRouter()
 
   const dias = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo']
@@ -130,11 +133,13 @@ export default function AdminPage() {
     setLoadingSocio(false)
   }
 
+  // ▶ MODIFICADO: resetea también la pestaña interna del modal
   const abrirModalSocio = (socio: any) => {
     setModalSocio(socio)
     setMesesRenovar(1)
     setMsgRenovar('')
     setTipoEditando(socio.tipo_membresia)
+    setTabModalSocio('info')
   }
 
   const renovarMembresia = async () => {
@@ -187,6 +192,7 @@ export default function AdminPage() {
   return (
     <div style={{ minHeight: '100vh', background: '#0f0f0f', color: '#f0f0f0', fontFamily: 'system-ui' }}>
 
+      {/* ── HEADER ── */}
       <div style={{ background: '#181818', borderBottom: '1px solid rgba(255,255,255,0.07)', padding: '16px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div style={{ fontSize: '20px', fontWeight: '800' }}>
           JGS <span style={{ color: '#c8f542' }}>Fight Team</span>
@@ -197,6 +203,7 @@ export default function AdminPage() {
         </button>
       </div>
 
+      {/* ── STATS ── */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', padding: '16px 20px' }}>
         <div style={cardStyle}>
           <div style={{ fontSize: '28px', fontWeight: '800', color: '#c8f542' }}>{socios.filter(s => s.membresia_activa).length}</div>
@@ -208,6 +215,7 @@ export default function AdminPage() {
         </div>
       </div>
 
+      {/* ── TABS PRINCIPALES ── */}
       <div style={{ display: 'flex', borderBottom: '1px solid rgba(255,255,255,0.07)', padding: '0 20px', overflowX: 'auto' }}>
         {[
           { key: 'clases', label: 'Clases' },
@@ -229,10 +237,10 @@ export default function AdminPage() {
 
       <div style={{ padding: '16px 20px', paddingBottom: '40px' }}>
 
+        {/* ── TAB CLASES ── */}
         {tab === 'clases' && (
           <>
             <CalendarioMes clases={clases} onSeleccionarDia={seleccionarDia} />
-
             {fechaSeleccionada && (
               <div>
                 <div style={{ fontSize: '12px', color: '#888', fontWeight: '600', letterSpacing: '1px', textTransform: 'uppercase', marginBottom: '12px' }}>
@@ -260,7 +268,6 @@ export default function AdminPage() {
                 ))}
               </div>
             )}
-
             {!fechaSeleccionada && (
               <p style={{ color: '#888', fontSize: '13px', textAlign: 'center', padding: '20px 0' }}>
                 Toca un día del calendario para ver las clases
@@ -269,6 +276,7 @@ export default function AdminPage() {
           </>
         )}
 
+        {/* ── TAB SOCIOS ── */}
         {tab === 'socios' && (
           <>
             {socios.length === 0 ? (
@@ -302,6 +310,7 @@ export default function AdminPage() {
           </>
         )}
 
+        {/* ── TAB NUEVA CLASE ── */}
         {tab === 'nueva' && (
           <div>
             <div style={{ marginBottom: '12px' }}>
@@ -336,6 +345,7 @@ export default function AdminPage() {
           </div>
         )}
 
+        {/* ── TAB NUEVO SOCIO ── */}
         {tab === 'nuevo-socio' && (
           <div>
             <div style={{ marginBottom: '12px' }}>
@@ -368,7 +378,7 @@ export default function AdminPage() {
         )}
       </div>
 
-      {/* Modal clase — reservas */}
+      {/* ── MODAL CLASE — RESERVAS ── */}
       {modalClase && (
         <div onClick={(e) => { if (e.target === e.currentTarget) setModalClase(null) }}
           style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.8)', zIndex: 200, display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}>
@@ -396,46 +406,76 @@ export default function AdminPage() {
         </div>
       )}
 
-      {/* Modal socio */}
+      {/* ── MODAL SOCIO ── */}
       {modalSocio && (
         <div onClick={(e) => { if (e.target === e.currentTarget) setModalSocio(null) }}
           style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.8)', zIndex: 200, display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}>
-          <div style={{ background: '#1e1e1e', border: '1px solid rgba(255,255,255,0.07)', borderRadius: '24px 24px 0 0', padding: '24px 20px 36px', width: '100%', maxWidth: '480px' }}>
-            <div style={{ width: '36px', height: '4px', background: 'rgba(255,255,255,0.1)', borderRadius: '2px', margin: '0 auto 20px' }}></div>
+          <div style={{ background: '#1e1e1e', border: '1px solid rgba(255,255,255,0.07)', borderRadius: '24px 24px 0 0', padding: '24px 20px 36px', width: '100%', maxWidth: '480px', maxHeight: '85vh', overflowY: 'auto' }}>
+            <div style={{ width: '36px', height: '4px', background: 'rgba(255,255,255,0.1)', borderRadius: '2px', margin: '0 auto 16px' }}></div>
+
+            {/* Nombre y estado */}
             <div style={{ fontSize: '20px', fontWeight: '800', marginBottom: '4px' }}>{modalSocio.nombre}</div>
-            <div style={{ fontSize: '13px', color: '#888', marginBottom: '20px' }}>
+            <div style={{ fontSize: '13px', color: '#888', marginBottom: '16px' }}>
               Vence: {modalSocio.membresia_vence || 'N/A'} · {modalSocio.membresia_activa ? '🟢 Activo' : '🔴 Baja'}
             </div>
-            <div style={{ marginBottom: '16px' }}>
-              <label style={{ display: 'block', color: '#888', fontSize: '12px', marginBottom: '6px', fontWeight: '500', letterSpacing: '1px', textTransform: 'uppercase' }}>Tipo de membresía</label>
-              <select value={tipoEditando} onChange={e => setTipoEditando(e.target.value)}
-                style={{ width: '100%', background: '#181818', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '10px', padding: '10px 14px', color: '#f0f0f0', fontSize: '14px', outline: 'none', fontFamily: 'system-ui' }}>
-                {TIPOS_MEMBRESIA.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
-              </select>
+
+            {/* ▶ NUEVO: tabs Info / Historial dentro del modal */}
+            <div style={{ display: 'flex', background: 'rgba(255,255,255,0.05)', borderRadius: '10px', padding: '3px', marginBottom: '20px' }}>
+              {[
+                { key: 'info', label: '⚙️ Gestión' },
+                { key: 'historial', label: '📋 Historial' },
+              ].map(t => (
+                <button key={t.key} onClick={() => setTabModalSocio(t.key as 'info' | 'historial')}
+                  style={{ flex: 1, padding: '8px', fontSize: '13px', fontWeight: '500', border: 'none', borderRadius: '8px', cursor: 'pointer', fontFamily: 'system-ui', transition: 'all 0.15s',
+                    background: tabModalSocio === t.key ? '#2a2a2a' : 'transparent',
+                    color: tabModalSocio === t.key ? '#c8f542' : '#888'
+                  }}>
+                  {t.label}
+                </button>
+              ))}
             </div>
-            <div style={{ borderTop: '1px solid rgba(255,255,255,0.07)', paddingTop: '16px', marginBottom: '16px' }}>
-              <div style={{ fontSize: '12px', color: '#888', fontWeight: '600', letterSpacing: '1px', textTransform: 'uppercase', marginBottom: '12px' }}>Renovar membresía</div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                <select value={mesesRenovar} onChange={e => setMesesRenovar(parseInt(e.target.value))}
-                  style={{ flex: 1, background: '#181818', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '10px', padding: '10px 14px', color: '#f0f0f0', fontSize: '14px', outline: 'none', fontFamily: 'system-ui' }}>
-                  {Array.from({ length: 12 }, (_, i) => i + 1).map(m => (
-                    <option key={m} value={m}>{m} {m === 1 ? 'mes' : 'meses'}</option>
-                  ))}
-                </select>
-                <button onClick={renovarMembresia} disabled={renovando} style={{ background: '#c8f542', color: '#0f0f0f', border: 'none', borderRadius: '10px', padding: '10px 20px', fontSize: '14px', fontWeight: '700', cursor: 'pointer', fontFamily: 'system-ui', opacity: renovando ? 0.6 : 1, whiteSpace: 'nowrap' }}>
-                  {renovando ? '...' : 'Renovar'}
+
+            {/* ── Pestaña Gestión ── */}
+            {tabModalSocio === 'info' && (
+              <div>
+                <div style={{ marginBottom: '16px' }}>
+                  <label style={{ display: 'block', color: '#888', fontSize: '12px', marginBottom: '6px', fontWeight: '500', letterSpacing: '1px', textTransform: 'uppercase' }}>Tipo de membresía</label>
+                  <select value={tipoEditando} onChange={e => setTipoEditando(e.target.value)}
+                    style={{ width: '100%', background: '#181818', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '10px', padding: '10px 14px', color: '#f0f0f0', fontSize: '14px', outline: 'none', fontFamily: 'system-ui' }}>
+                    {TIPOS_MEMBRESIA.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
+                  </select>
+                </div>
+                <div style={{ borderTop: '1px solid rgba(255,255,255,0.07)', paddingTop: '16px', marginBottom: '16px' }}>
+                  <div style={{ fontSize: '12px', color: '#888', fontWeight: '600', letterSpacing: '1px', textTransform: 'uppercase', marginBottom: '12px' }}>Renovar membresía</div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <select value={mesesRenovar} onChange={e => setMesesRenovar(parseInt(e.target.value))}
+                      style={{ flex: 1, background: '#181818', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '10px', padding: '10px 14px', color: '#f0f0f0', fontSize: '14px', outline: 'none', fontFamily: 'system-ui' }}>
+                      {Array.from({ length: 12 }, (_, i) => i + 1).map(m => (
+                        <option key={m} value={m}>{m} {m === 1 ? 'mes' : 'meses'}</option>
+                      ))}
+                    </select>
+                    <button onClick={renovarMembresia} disabled={renovando} style={{ background: '#c8f542', color: '#0f0f0f', border: 'none', borderRadius: '10px', padding: '10px 20px', fontSize: '14px', fontWeight: '700', cursor: 'pointer', fontFamily: 'system-ui', opacity: renovando ? 0.6 : 1, whiteSpace: 'nowrap' }}>
+                      {renovando ? '...' : 'Renovar'}
+                    </button>
+                  </div>
+                  {msgRenovar && (
+                    <div style={{ marginTop: '12px', padding: '10px 14px', borderRadius: '8px', fontSize: '13px', background: msgRenovar.includes('✅') ? 'rgba(200,245,66,0.1)' : 'rgba(255,184,77,0.1)', color: msgRenovar.includes('✅') ? '#c8f542' : '#ffb84d', border: `1px solid ${msgRenovar.includes('✅') ? 'rgba(200,245,66,0.2)' : 'rgba(255,184,77,0.2)'}` }}>
+                      {msgRenovar}
+                    </div>
+                  )}
+                </div>
+                <button onClick={toggleActivarSocio} style={{ width: '100%', border: `1px solid ${modalSocio.membresia_activa ? 'rgba(255,92,92,0.3)' : 'rgba(200,245,66,0.3)'}`, borderRadius: '10px', padding: '12px', background: 'transparent', color: modalSocio.membresia_activa ? '#ff5c5c' : '#c8f542', fontSize: '14px', fontWeight: '600', cursor: 'pointer', fontFamily: 'system-ui', marginBottom: '10px' }}>
+                  {modalSocio.membresia_activa ? 'Dar de baja' : 'Reactivar socio'}
                 </button>
               </div>
-              {msgRenovar && (
-                <div style={{ marginTop: '12px', padding: '10px 14px', borderRadius: '8px', fontSize: '13px', background: msgRenovar.includes('✅') ? 'rgba(200,245,66,0.1)' : 'rgba(255,184,77,0.1)', color: msgRenovar.includes('✅') ? '#c8f542' : '#ffb84d', border: `1px solid ${msgRenovar.includes('✅') ? 'rgba(200,245,66,0.2)' : 'rgba(255,184,77,0.2)'}` }}>
-                  {msgRenovar}
-                </div>
-              )}
-            </div>
-            <button onClick={toggleActivarSocio} style={{ width: '100%', border: `1px solid ${modalSocio.membresia_activa ? 'rgba(255,92,92,0.3)' : 'rgba(200,245,66,0.3)'}`, borderRadius: '10px', padding: '12px', background: 'transparent', color: modalSocio.membresia_activa ? '#ff5c5c' : '#c8f542', fontSize: '14px', fontWeight: '600', cursor: 'pointer', fontFamily: 'system-ui', marginBottom: '10px' }}>
-              {modalSocio.membresia_activa ? 'Dar de baja' : 'Reactivar socio'}
-            </button>
-            <button onClick={() => setModalSocio(null)} style={{ width: '100%', border: '1px solid rgba(255,255,255,0.07)', borderRadius: '10px', padding: '12px', background: 'transparent', color: '#888', fontSize: '14px', cursor: 'pointer', fontFamily: 'system-ui' }}>
+            )}
+
+            {/* ▶ NUEVO: Pestaña Historial */}
+            {tabModalSocio === 'historial' && (
+              <HistorialAsistencia userId={modalSocio.id} limit={100} compact={true} />
+            )}
+
+            <button onClick={() => setModalSocio(null)} style={{ width: '100%', border: '1px solid rgba(255,255,255,0.07)', borderRadius: '10px', padding: '12px', background: 'transparent', color: '#888', fontSize: '14px', cursor: 'pointer', fontFamily: 'system-ui', marginTop: '10px' }}>
               Cerrar
             </button>
           </div>
