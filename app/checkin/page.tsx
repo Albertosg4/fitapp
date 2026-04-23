@@ -53,7 +53,22 @@ function CheckinInner() {
     }
 
     if (!reservaId) {
-      // Sin reserva pero membresía activa → acceso libre
+      // Sin reserva pero membresía activa → registrar acceso libre igualmente
+      const { data: yaAcceso } = await supabase
+        .from('asistencia')
+        .select('id')
+        .eq('user_id', perfil.id)
+        .gte('check_in_at', `${hoy}T00:00:00`)
+        .maybeSingle()
+
+      if (!yaAcceso) {
+        // ▶ CORREGIDO: añadir user_id para que aparezca en el historial
+        await supabase.from('asistencia').insert({
+          user_id: perfil.id,
+          metodo: 'qr',
+        })
+      }
+
       setEstado('ok')
       setMsg('Acceso permitido · Sin reserva hoy')
       return
@@ -73,7 +88,13 @@ function CheckinInner() {
     }
 
     // 5. Registrar asistencia
-    await supabase.from('asistencia').insert({ reserva_id: reservaId, metodo: 'qr' })
+    // ▶ CORREGIDO: añadir user_id para que aparezca en el historial
+    await supabase.from('asistencia').insert({
+      reserva_id: reservaId,
+      user_id: perfil.id,
+      metodo: 'qr',
+    })
+
     setEstado('ok')
     setMsg('Check-in registrado ✅')
   }
