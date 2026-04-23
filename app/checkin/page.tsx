@@ -2,7 +2,6 @@
 
 import { useEffect, useState, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
-import { supabase } from '@/lib/supabase'
 
 function CheckinInner() {
   const params = useSearchParams()
@@ -17,86 +16,30 @@ function CheckinInner() {
   }, [token])
 
   const procesarCheckin = async (qrToken: string) => {
-    // 1. Buscar perfil por qr_token
-    const { data: perfil } = await supabase
-      .from('perfiles')
-      .select('*')
-      .eq('qr_token', qrToken)
-      .maybeSingle()
+    try {
+      const res = await fetch('/api/checkin', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token: qrToken }),
+      })
 
-    if (!perfil) { setEstado('error'); setMsg('QR no reconocido'); return }
-    setNombre(perfil.nombre || 'Socio')
+      const data = await res.json()
 
-    // 2. Verificar membresía
-    if (!perfil.membresia_activa) { setEstado('error'); setMsg('Membresía no activa'); return }
-
-    // 3. Buscar reserva confirmada de hoy
-    const hoy = new Date().toISOString().split('T')[0]
-    const { data: sesionesHoy } = await supabase
-      .from('sesiones')
-      .select('id')
-      .eq('fecha', hoy)
-
-    const sesionIds = (sesionesHoy || []).map((s: any) => s.id)
-
-    let reservaId = null
-    if (sesionIds.length > 0) {
-      const { data: reserva } = await supabase
-        .from('reservas')
-        .select('id')
-        .eq('user_id', perfil.id)
-        .eq('estado', 'confirmada')
-        .in('sesion_id', sesionIds)
-        .maybeSingle()
-
-      reservaId = reserva?.id || null
-    }
-
-    if (!reservaId) {
-      // Sin reserva pero membresía activa → registrar acceso libre igualmente
-      const { data: yaAcceso } = await supabase
-        .from('asistencia')
-        .select('id')
-        .eq('user_id', perfil.id)
-        .gte('check_in_at', `${hoy}T00:00:00`)
-        .maybeSingle()
-
-      if (!yaAcceso) {
-        // ▶ CORREGIDO: añadir user_id para que aparezca en el historial
-        await supabase.from('asistencia').insert({
-          user_id: perfil.id,
-          metodo: 'qr',
-        })
+      if (!res.ok) {
+        setNombre(data.nombre || '')
+        setEstado('error')
+        setMsg(data.error || 'Error al procesar el check-in')
+        return
       }
 
+      setNombre(data.nombre || '')
       setEstado('ok')
-      setMsg('Acceso permitido · Sin reserva hoy')
-      return
+      setMsg(data.msg || 'Check-in registrado ✅')
+
+    } catch (err) {
+      setEstado('error')
+      setMsg('Error de conexión')
     }
-
-    // 4. Comprobar si ya hizo check-in
-    const { data: yaCheckin } = await supabase
-      .from('asistencia')
-      .select('id')
-      .eq('reserva_id', reservaId)
-      .maybeSingle()
-
-    if (yaCheckin) {
-      setEstado('ok')
-      setMsg('Check-in ya registrado anteriormente')
-      return
-    }
-
-    // 5. Registrar asistencia
-    // ▶ CORREGIDO: añadir user_id para que aparezca en el historial
-    await supabase.from('asistencia').insert({
-      reserva_id: reservaId,
-      user_id: perfil.id,
-      metodo: 'qr',
-    })
-
-    setEstado('ok')
-    setMsg('Check-in registrado ✅')
   }
 
   const bg = estado === 'loading' ? '#0f0f0f' : estado === 'ok' ? '#1a2a0a' : '#2a0a0a'
