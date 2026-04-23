@@ -51,7 +51,7 @@ export default function LoginPage() {
             fontFamily: 'system-ui', fontSize: '28px', fontWeight: '800',
             color: '#f0f0f0', letterSpacing: '-1px'
           }}>
-            Fit<span style={{ color: '#c8f542' }}>App</span>
+            JGS<span style={{ color: '#c8f542' }}>Fight Team</span>
           </h1>
           <p style={{ color: '#888', fontSize: '14px', marginTop: '6px' }}>
             Accede a tu cuenta
