@@ -144,14 +144,19 @@ function SocioPageInner() {
     if (!userId) return
     setPagando(true)
     try {
+      // Obtener token de sesión — el userId y las URLs se derivan en servidor
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session?.access_token) {
+        console.error('Sin sesión activa')
+        return
+      }
       const res = await fetch('/api/stripe/checkout', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          userId, tipoMembresia,
-          successUrl: `${window.location.origin}/socio?pago=ok`,
-          cancelUrl: `${window.location.origin}/socio?pago=cancel`,
-        }),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({ tipoMembresia }),
       })
       const data = await res.json()
       if (data.url) window.location.assign(data.url as string)

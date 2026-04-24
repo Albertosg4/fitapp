@@ -29,6 +29,19 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Metadata incompleta' }, { status: 400 })
     }
 
+    // Idempotencia: ignorar evento si el pago ya fue registrado
+    const stripePaymentId = (session.payment_intent as string) || session.id
+    const { data: pagoExistente } = await supabaseAdmin
+      .from('pagos')
+      .select('id')
+      .eq('stripe_payment_id', stripePaymentId)
+      .maybeSingle()
+
+    if (pagoExistente) {
+      console.log(`[stripe/webhook] Evento duplicado ignorado: ${stripePaymentId}`)
+      return NextResponse.json({ received: true })
+    }
+
     const meses = MESES_POR_TIPO[tipoMembresia] || 1
     const importe = IMPORTE_POR_TIPO[tipoMembresia] || (session.amount_total ? session.amount_total / 100 : 0)
 
