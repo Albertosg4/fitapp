@@ -37,6 +37,8 @@ export async function POST(req: Request) {
       )
     }
 
+    // Nota: aquí usamos toISOString para obtener la fecha UTC del servidor,
+    // que es la que Supabase almacena en timestamps. No es un uso de calendario local.
     const hoy = new Date().toISOString().split('T')[0]
 
     // ─── 4. Buscar reserva confirmada de hoy ───────────────────────────────────

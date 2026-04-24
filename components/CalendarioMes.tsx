@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import type { Clase } from '@/types/domain'
+import { formatLocalDate, getLunesSemana, getDiaSemanaLunesPrimero, addDays } from '@/lib/domain/fechas'
 
 interface Props {
   clases: Clase[]
@@ -13,50 +14,27 @@ const MESES_CORTO = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct'
 export default function CalendarioMes({ clases, onSeleccionarDia, marcadores = {} }: Props) {
   const hoy = new Date()
 
-  const getLunes = (fecha: Date) => {
-    const d = new Date(fecha)
-    const dia = (d.getDay() + 6) % 7
-    d.setDate(d.getDate() - dia)
-    d.setHours(0, 0, 0, 0)
-    return d
-  }
+  const [lunesSemana, setLunesSemana] = useState(getLunesSemana(hoy))
+  const [fechaSeleccionada, setFechaSeleccionada] = useState<string>(formatLocalDate(hoy))
 
-  const [lunesSemana, setLunesSemana] = useState(getLunes(hoy))
-  const [fechaSeleccionada, setFechaSeleccionada] = useState<string>(hoy.toISOString().split('T')[0])
+  const semana = Array.from({ length: 7 }, (_, i) => addDays(lunesSemana, i))
 
-  const semana = Array.from({ length: 7 }, (_, i) => {
-    const d = new Date(lunesSemana)
-    d.setDate(lunesSemana.getDate() + i)
-    return d
-  })
-
-  const irSemanaAnterior = () => {
-    const nueva = new Date(lunesSemana)
-    nueva.setDate(nueva.getDate() - 7)
-    setLunesSemana(nueva)
-  }
-
-  const irSemanaSiguiente = () => {
-    const nueva = new Date(lunesSemana)
-    nueva.setDate(nueva.getDate() + 7)
-    setLunesSemana(nueva)
-  }
-
-  const getFecha = (d: Date) => d.toISOString().split('T')[0]
+  const irSemanaAnterior = () => setLunesSemana(prev => addDays(prev, -7))
+  const irSemanaSiguiente = () => setLunesSemana(prev => addDays(prev, 7))
 
   const getClasesDelDia = (d: Date): Clase[] => {
-    const diaSemanaIdx = (d.getDay() + 6) % 7
+    const diaSemanaIdx = getDiaSemanaLunesPrimero(d)
     return clases.filter(c => c.dia_semana === diaSemanaIdx)
   }
 
   const seleccionar = (d: Date) => {
-    const fecha = getFecha(d)
+    const fecha = formatLocalDate(d)
     setFechaSeleccionada(fecha)
     onSeleccionarDia(fecha, getClasesDelDia(d))
   }
 
-  const esHoy = (d: Date) => getFecha(d) === getFecha(hoy)
-  const esSeleccionado = (d: Date) => getFecha(d) === fechaSeleccionada
+  const esHoy = (d: Date) => formatLocalDate(d) === formatLocalDate(hoy)
+  const esSeleccionado = (d: Date) => formatLocalDate(d) === fechaSeleccionada
 
   const mesInicio = semana[0]
   const mesFin = semana[6]
@@ -73,7 +51,7 @@ export default function CalendarioMes({ clases, onSeleccionarDia, marcadores = {
       </div>
       <div style={{ display: 'flex', gap: '6px', overflowX: 'auto', scrollbarWidth: 'none' }}>
         {semana.map((d, i) => {
-          const fecha = getFecha(d)
+          const fecha = formatLocalDate(d)
           const seleccionado = esSeleccionado(d)
           const hoyDia = esHoy(d)
           const tieneClases = getClasesDelDia(d).length > 0

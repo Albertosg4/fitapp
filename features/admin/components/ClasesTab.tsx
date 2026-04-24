@@ -4,6 +4,7 @@ import { supabase } from '@/lib/supabase'
 import CalendarioMes from '@/components/CalendarioMes'
 import type { Clase, Reserva } from '@/types/domain'
 import type { TipoMembresia } from '@/lib/domain/membresias'
+import { parseLocalDate, getDiaSemanaLunesPrimero } from '@/lib/domain/fechas'
 
 const cardStyle = { background: '#1e1e1e', border: '1px solid rgba(255,255,255,0.07)', borderRadius: '12px', padding: '14px', marginBottom: '10px' }
 
@@ -27,9 +28,7 @@ export default function ClasesTab({ clases, onEliminarClase }: Props) {
   // Recalcular clasesDelDia cuando cambie props.clases y haya fecha seleccionada
   useEffect(() => {
     if (!fechaSeleccionada) return
-    const diaSemanaIdx = new Date(fechaSeleccionada + 'T12:00:00').getDay()
-    // getDay devuelve 0=Dom, convertir a 0=Lun
-    const idx = (diaSemanaIdx + 6) % 7
+    const idx = getDiaSemanaLunesPrimero(parseLocalDate(fechaSeleccionada))
     setClasesDelDia(clases.filter(c => c.dia_semana === idx))
   }, [clases, fechaSeleccionada])
 

@@ -1,6 +1,9 @@
 import type { TipoMembresia } from '@/lib/domain/membresias'
 
-// ─── Clase ────────────────────────────────────────────────────────────────────
+// ─── Clase (LEGACY) ───────────────────────────────────────────────────────────
+// LEGACY: representa horarios recurrentes antiguos. No usar en nuevas pantallas.
+// Mantenida para compatibilidad con admin/socio existentes hasta que se complete
+// la migración al modelo actividades + horarios_clase + sesiones.
 export interface Clase {
   id: string
   gym_id: string
@@ -10,6 +13,59 @@ export interface Clase {
   duracion_min: number
   aforo_max: number
   activa: boolean
+}
+
+// ─── Actividad ────────────────────────────────────────────────────────────────
+// Define qué es una clase: nombre, descripción, color, etc.
+// Una actividad puede tener múltiples horarios recurrentes o clases puntuales.
+export interface Actividad {
+  id: string
+  gym_id: string
+  nombre: string
+  descripcion: string | null
+  color: string | null        // hex o nombre para UI
+  activa: boolean
+  created_at: string
+}
+
+// ─── HorarioClase ─────────────────────────────────────────────────────────────
+// Define una recurrencia semanal: "Boxeo los lunes a las 18:00".
+// Genera sesiones materializadas bajo demanda o por cron.
+export interface HorarioClase {
+  id: string
+  gym_id: string
+  actividad_id: string
+  dia_semana: number          // 0=Lunes … 6=Domingo
+  hora_inicio: string         // 'HH:MM'
+  duracion_min: number
+  aforo_max: number
+  profesor: string | null
+  fecha_inicio: string        // 'YYYY-MM-DD' — desde cuándo aplica
+  fecha_fin: string | null    // 'YYYY-MM-DD' — null = sin fin
+  activo: boolean
+  created_at: string
+}
+
+// ─── Sesion (ampliada) ────────────────────────────────────────────────────────
+// Representa una clase concreta en una fecha específica.
+// Puede venir de un HorarioClase recurrente o ser una clase puntual.
+// Las reservas siempre van contra sesiones.id.
+export interface Sesion {
+  id: string
+  // --- Campos legacy (mantener para compatibilidad con reservas existentes) ---
+  clase_id: string | null     // FK a clases (legacy), null si es nueva sesión
+  // --- Campos nuevos ---
+  horario_id: string | null   // FK a horarios_clase, null si es puntual
+  actividad_id: string | null // FK a actividades, null si es legacy
+  fecha: string               // 'YYYY-MM-DD'
+  hora_inicio: string | null  // override de hora si difiere del horario
+  duracion_min: number | null // override de duración si difiere del horario
+  aforo_max: number | null    // override de aforo si difiere del horario
+  profesor: string | null     // override de profesor
+  notas: string | null        // notas del admin para esta sesión concreta
+  estado: 'activa' | 'cancelada' // cancelada = no visible al socio
+  es_puntual: boolean         // true si es clase puntual (no recurrente)
+  created_at: string
 }
 
 // ─── Socio (perfil con rol=socio) ────────────────────────────────────────────
@@ -52,11 +108,4 @@ export interface Reserva {
     nombre: string
     tipo_membresia: TipoMembresia
   } | null
-}
-
-// ─── Sesión ──────────────────────────────────────────────────────────────────
-export interface Sesion {
-  id: string
-  clase_id: string
-  fecha: string   // 'YYYY-MM-DD'
 }
