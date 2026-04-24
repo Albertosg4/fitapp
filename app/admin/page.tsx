@@ -78,7 +78,7 @@ export default function AdminPage() {
           <div style={{ fontSize: '12px', color: '#888', marginTop: '2px' }}>Horarios activos</div>
         </div>
         <div style={{ background: '#1e1e1e', border: '1px solid rgba(255,255,255,0.07)', borderRadius: '12px', padding: '14px' }}>
-          <div style={{ fontSize: '28px', fontWeight: '800', color: '#ffb84d' }}>{stats.puntualasProximas}</div>
+          <div style={{ fontSize: '28px', fontWeight: '800', color: '#ffb84d' }}>{stats.puntualesProximas}</div>
           <div style={{ fontSize: '12px', color: '#888', marginTop: '2px' }}>Clases puntuales próximas</div>
         </div>
       </div>

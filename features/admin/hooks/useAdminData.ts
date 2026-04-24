@@ -7,14 +7,14 @@ import type { Socio } from '@/types/domain'
 export interface AdminStats {
   actividadesActivas: number
   horariosActivos: number
-  puntualasProximas: number
+  puntualesProximas: number
   sociosActivos: number
 }
 
 export function useAdminData() {
   const [socios, setSocios] = useState<Socio[]>([])
   const [gymId, setGymId] = useState('')
-  const [stats, setStats] = useState<AdminStats>({ actividadesActivas: 0, horariosActivos: 0, puntualasProximas: 0, sociosActivos: 0 })
+  const [stats, setStats] = useState<AdminStats>({ actividadesActivas: 0, horariosActivos: 0, puntualesProximas: 0, sociosActivos: 0 })
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const router = useRouter()
@@ -43,7 +43,7 @@ export function useAdminData() {
     if (mountedRef.current) setStats({
       actividadesActivas: actAct || 0,
       horariosActivos: horAct || 0,
-      puntualasProximas: puntProx || 0,
+      puntualesProximas: puntProx || 0,
       sociosActivos: socAct || 0,
     })
   }, [])
