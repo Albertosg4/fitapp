@@ -4,6 +4,9 @@ import { useAdminData } from '@/features/admin/hooks/useAdminData'
 import ClasesTab from '@/features/admin/components/ClasesTab'
 import SociosTab from '@/features/admin/components/SociosTab'
 import PagosTab from '@/features/admin/components/PagosTab'
+import ActividadesTab from '@/features/admin/components/ActividadesTab'
+import HorariosTab from '@/features/admin/components/HorariosTab'
+import ClasesPuntualesTab from '@/features/admin/components/ClasesPuntualesTab'
 import { supabase } from '@/lib/supabase'
 import { TIPOS_MEMBRESIA } from '@/lib/domain/membresias'
 import type { Clase } from '@/types/domain'
@@ -89,6 +92,9 @@ export default function AdminPage() {
       <div style={{ display: 'flex', borderBottom: '1px solid rgba(255,255,255,0.07)', padding: '0 20px', overflowX: 'auto' }}>
         {[
           { key: 'clases', label: 'Clases' },
+          { key: 'actividades', label: '🎯 Actividades' },
+          { key: 'horarios', label: '🔄 Horarios' },
+          { key: 'puntuales', label: '📅 Puntuales' },
           { key: 'socios', label: 'Socios' },
           { key: 'pagos', label: '💳 Pagos' },
           { key: 'nueva', label: '+ Clase' },
@@ -103,6 +109,12 @@ export default function AdminPage() {
       <div style={{ padding: '16px 20px', paddingBottom: '40px' }}>
 
         {tab === 'clases' && <ClasesTab clases={clases} onEliminarClase={eliminarClase} />}
+
+        {tab === 'actividades' && <ActividadesTab gymId={gymId} />}
+
+        {tab === 'horarios' && <HorariosTab gymId={gymId} />}
+
+        {tab === 'puntuales' && <ClasesPuntualesTab gymId={gymId} />}
 
         {tab === 'socios' && <SociosTab socios={socios} gymId={gymId} onRefreshSocios={loadSocios} />}
 
