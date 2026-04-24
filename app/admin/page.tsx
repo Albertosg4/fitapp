@@ -1,35 +1,22 @@
 'use client'
 import { useState } from 'react'
 import { useAdminData } from '@/features/admin/hooks/useAdminData'
-import ClasesTab from '@/features/admin/components/ClasesTab'
-import SociosTab from '@/features/admin/components/SociosTab'
-import PagosTab from '@/features/admin/components/PagosTab'
 import ActividadesTab from '@/features/admin/components/ActividadesTab'
 import HorariosTab from '@/features/admin/components/HorariosTab'
 import ClasesPuntualesTab from '@/features/admin/components/ClasesPuntualesTab'
+import SociosTab from '@/features/admin/components/SociosTab'
+import PagosTab from '@/features/admin/components/PagosTab'
 import { supabase } from '@/lib/supabase'
 import { TIPOS_MEMBRESIA } from '@/lib/domain/membresias'
-import type { Clase } from '@/types/domain'
 
 const inputStyle = { width: '100%', background: '#181818', border: '1px solid rgba(255,255,255,0.07)', borderRadius: '10px', padding: '10px 14px', color: '#f0f0f0', fontSize: '14px', outline: 'none', boxSizing: 'border-box' as const, fontFamily: 'system-ui' }
-const DIAS = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo']
 
 export default function AdminPage() {
-  const { clases, socios, gymId, loading, error, loadSocios, crearClase, eliminarClase, logout } = useAdminData()
-  const [tab, setTab] = useState('clases')
-
-  const [nueva, setNueva] = useState<Omit<Clase, 'id' | 'gym_id' | 'activa'>>({
-    nombre: '', dia_semana: 0, hora_inicio: '07:00', duracion_min: 60, aforo_max: 15,
-  })
+  const { socios, gymId, stats, loading, error, loadSocios, logout } = useAdminData()
+  const [tab, setTab] = useState('actividades')
   const [nuevoSocio, setNuevoSocio] = useState({ nombre: '', email: '', password: '', tipo_membresia: 'mensual' })
   const [msgSocio, setMsgSocio] = useState('')
   const [loadingSocio, setLoadingSocio] = useState(false)
-
-  const handleCrearClase = async () => {
-    await crearClase(nueva)
-    setNueva({ nombre: '', dia_semana: 0, hora_inicio: '07:00', duracion_min: 60, aforo_max: 15 })
-    setTab('clases')
-  }
 
   const registrarSocio = async () => {
     setMsgSocio(''); setLoadingSocio(true)
@@ -76,39 +63,44 @@ export default function AdminPage() {
         <button onClick={logout} style={{ background: 'rgba(255,92,92,0.12)', color: '#ff5c5c', border: '1px solid rgba(255,92,92,0.2)', borderRadius: '8px', padding: '6px 14px', fontSize: '13px', cursor: 'pointer', fontFamily: 'system-ui' }}>Salir</button>
       </div>
 
-      {/* STATS */}
+      {/* STATS — modelo nuevo */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', padding: '16px 20px' }}>
         <div style={{ background: '#1e1e1e', border: '1px solid rgba(255,255,255,0.07)', borderRadius: '12px', padding: '14px' }}>
-          <div style={{ fontSize: '28px', fontWeight: '800', color: '#c8f542' }}>{socios.filter(s => s.membresia_activa).length}</div>
+          <div style={{ fontSize: '28px', fontWeight: '800', color: '#c8f542' }}>{stats.sociosActivos}</div>
           <div style={{ fontSize: '12px', color: '#888', marginTop: '2px' }}>Socios activos</div>
         </div>
         <div style={{ background: '#1e1e1e', border: '1px solid rgba(255,255,255,0.07)', borderRadius: '12px', padding: '14px' }}>
-          <div style={{ fontSize: '28px', fontWeight: '800', color: '#5ca8ff' }}>{clases.length}</div>
-          <div style={{ fontSize: '12px', color: '#888', marginTop: '2px' }}>Clases activas</div>
+          <div style={{ fontSize: '28px', fontWeight: '800', color: '#5ca8ff' }}>{stats.actividadesActivas}</div>
+          <div style={{ fontSize: '12px', color: '#888', marginTop: '2px' }}>Actividades activas</div>
+        </div>
+        <div style={{ background: '#1e1e1e', border: '1px solid rgba(255,255,255,0.07)', borderRadius: '12px', padding: '14px' }}>
+          <div style={{ fontSize: '28px', fontWeight: '800', color: '#a855f7' }}>{stats.horariosActivos}</div>
+          <div style={{ fontSize: '12px', color: '#888', marginTop: '2px' }}>Horarios activos</div>
+        </div>
+        <div style={{ background: '#1e1e1e', border: '1px solid rgba(255,255,255,0.07)', borderRadius: '12px', padding: '14px' }}>
+          <div style={{ fontSize: '28px', fontWeight: '800', color: '#ffb84d' }}>{stats.puntualasProximas}</div>
+          <div style={{ fontSize: '12px', color: '#888', marginTop: '2px' }}>Clases puntuales próximas</div>
         </div>
       </div>
 
       {/* TABS */}
       <div style={{ display: 'flex', borderBottom: '1px solid rgba(255,255,255,0.07)', padding: '0 20px', overflowX: 'auto' }}>
         {[
-          { key: 'clases', label: 'Clases' },
-          { key: 'actividades', label: '🎯 Actividades' },
-          { key: 'horarios', label: '🔄 Horarios' },
-          { key: 'puntuales', label: '📅 Puntuales' },
-          { key: 'socios', label: 'Socios' },
-          { key: 'pagos', label: '💳 Pagos' },
-          { key: 'nueva', label: '+ Clase' },
-          { key: 'nuevo-socio', label: '+ Socio' },
+          { key: 'actividades',  label: '🎯 Actividades' },
+          { key: 'horarios',     label: '🔄 Horarios' },
+          { key: 'puntuales',    label: '📅 Puntuales' },
+          { key: 'socios',       label: 'Socios' },
+          { key: 'pagos',        label: '💳 Pagos' },
+          { key: 'nuevo-socio',  label: '+ Socio' },
         ].map(t => (
-          <button key={t.key} onClick={() => setTab(t.key)} style={{ padding: '12px 16px', fontSize: '13px', fontWeight: '500', color: tab === t.key ? '#c8f542' : '#888', borderTop: 'none', borderLeft: 'none', borderRight: 'none', borderBottom: tab === t.key ? '2px solid #c8f542' : '2px solid transparent', cursor: 'pointer', background: 'none', fontFamily: 'system-ui', whiteSpace: 'nowrap' }}>
+          <button key={t.key} onClick={() => setTab(t.key)}
+            style={{ padding: '12px 16px', fontSize: '13px', fontWeight: '500', color: tab === t.key ? '#c8f542' : '#888', borderTop: 'none', borderLeft: 'none', borderRight: 'none', borderBottom: tab === t.key ? '2px solid #c8f542' : '2px solid transparent', cursor: 'pointer', background: 'none', fontFamily: 'system-ui', whiteSpace: 'nowrap' }}>
             {t.label}
           </button>
         ))}
       </div>
 
       <div style={{ padding: '16px 20px', paddingBottom: '40px' }}>
-
-        {tab === 'clases' && <ClasesTab clases={clases} onEliminarClase={eliminarClase} />}
 
         {tab === 'actividades' && <ActividadesTab gymId={gymId} />}
 
@@ -118,41 +110,7 @@ export default function AdminPage() {
 
         {tab === 'socios' && <SociosTab socios={socios} gymId={gymId} onRefreshSocios={loadSocios} />}
 
-        {/* PagosTab notifica a SociosTab cuando se confirma un pago que afecta membresía */}
         {tab === 'pagos' && <PagosTab onSociosChange={loadSocios} />}
-
-        {/* NUEVA CLASE */}
-        {tab === 'nueva' && (
-          <div>
-            <div style={{ marginBottom: '12px' }}>
-              <label style={{ display: 'block', color: '#888', fontSize: '12px', marginBottom: '6px', fontWeight: '500' }}>NOMBRE</label>
-              <input style={inputStyle} placeholder="Ej: CrossFit Avanzado" value={nueva.nombre} onChange={e => setNueva({ ...nueva, nombre: e.target.value })} />
-            </div>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '10px' }}>
-              <div>
-                <label style={{ display: 'block', color: '#888', fontSize: '12px', marginBottom: '6px', fontWeight: '500' }}>DÍA</label>
-                <select style={inputStyle} value={nueva.dia_semana} onChange={e => setNueva({ ...nueva, dia_semana: parseInt(e.target.value) })}>
-                  {DIAS.map((d, i) => <option key={i} value={i}>{d}</option>)}
-                </select>
-              </div>
-              <div>
-                <label style={{ display: 'block', color: '#888', fontSize: '12px', marginBottom: '6px', fontWeight: '500' }}>HORA</label>
-                <input type="time" style={inputStyle} value={nueva.hora_inicio} onChange={e => setNueva({ ...nueva, hora_inicio: e.target.value })} />
-              </div>
-            </div>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '16px' }}>
-              <div>
-                <label style={{ display: 'block', color: '#888', fontSize: '12px', marginBottom: '6px', fontWeight: '500' }}>DURACIÓN (MIN)</label>
-                <input type="number" style={inputStyle} value={nueva.duracion_min} onChange={e => setNueva({ ...nueva, duracion_min: parseInt(e.target.value) })} />
-              </div>
-              <div>
-                <label style={{ display: 'block', color: '#888', fontSize: '12px', marginBottom: '6px', fontWeight: '500' }}>AFORO</label>
-                <input type="number" style={inputStyle} value={nueva.aforo_max} onChange={e => setNueva({ ...nueva, aforo_max: parseInt(e.target.value) })} />
-              </div>
-            </div>
-            <button onClick={handleCrearClase} style={{ background: '#c8f542', color: '#0f0f0f', border: 'none', borderRadius: '10px', padding: '13px', fontSize: '14px', fontWeight: '700', cursor: 'pointer', width: '100%', fontFamily: 'system-ui' }}>Añadir clase</button>
-          </div>
-        )}
 
         {/* NUEVO SOCIO */}
         {tab === 'nuevo-socio' && (
@@ -180,7 +138,8 @@ export default function AdminPage() {
                 {msgSocio}
               </div>
             )}
-            <button onClick={registrarSocio} disabled={loadingSocio} style={{ background: '#c8f542', color: '#0f0f0f', border: 'none', borderRadius: '10px', padding: '13px', fontSize: '14px', fontWeight: '700', cursor: 'pointer', width: '100%', fontFamily: 'system-ui', opacity: loadingSocio ? 0.6 : 1 }}>
+            <button onClick={registrarSocio} disabled={loadingSocio}
+              style={{ background: '#c8f542', color: '#0f0f0f', border: 'none', borderRadius: '10px', padding: '13px', fontSize: '14px', fontWeight: '700', cursor: 'pointer', width: '100%', fontFamily: 'system-ui', opacity: loadingSocio ? 0.6 : 1 }}>
               {loadingSocio ? 'Registrando...' : 'Registrar socio'}
             </button>
           </div>

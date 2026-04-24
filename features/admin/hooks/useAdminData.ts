@@ -2,12 +2,19 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
-import type { Clase, Socio } from '@/types/domain'
+import type { Socio } from '@/types/domain'
+
+export interface AdminStats {
+  actividadesActivas: number
+  horariosActivos: number
+  puntualasProximas: number
+  sociosActivos: number
+}
 
 export function useAdminData() {
-  const [clases, setClases] = useState<Clase[]>([])
   const [socios, setSocios] = useState<Socio[]>([])
   const [gymId, setGymId] = useState('')
+  const [stats, setStats] = useState<AdminStats>({ actividadesActivas: 0, horariosActivos: 0, puntualasProximas: 0, sociosActivos: 0 })
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const router = useRouter()
@@ -18,19 +25,27 @@ export function useAdminData() {
     return () => { mountedRef.current = false }
   }, [])
 
-  const loadClases = useCallback(async (gid: string) => {
-    const { data, error: err } = await supabase
-      .from('clases').select('*')
-      .eq('gym_id', gid).eq('activa', true).order('dia_semana')
-    if (err) console.error('[useAdminData] loadClases:', err.message)
-    if (mountedRef.current) setClases((data as Clase[]) || [])
-  }, [])
-
   const loadSocios = useCallback(async () => {
     const { data, error: err } = await supabase
       .from('perfiles').select('*').eq('rol', 'socio').order('nombre')
     if (err) console.error('[useAdminData] loadSocios:', err.message)
     if (mountedRef.current) setSocios((data as Socio[]) || [])
+  }, [])
+
+  const loadStats = useCallback(async (gid: string) => {
+    const hoy = new Date().toISOString().split('T')[0]
+    const [{ count: actAct }, { count: horAct }, { count: puntProx }, { count: socAct }] = await Promise.all([
+      supabase.from('actividades').select('id', { count: 'exact', head: true }).eq('gym_id', gid).eq('activa', true),
+      supabase.from('horarios_clase').select('id', { count: 'exact', head: true }).eq('gym_id', gid).eq('activo', true),
+      supabase.from('sesiones').select('id', { count: 'exact', head: true }).eq('es_puntual', true).eq('cancelada', false).gte('fecha', hoy),
+      supabase.from('perfiles').select('id', { count: 'exact', head: true }).eq('rol', 'socio').eq('membresia_activa', true),
+    ])
+    if (mountedRef.current) setStats({
+      actividadesActivas: actAct || 0,
+      horariosActivos: horAct || 0,
+      puntualasProximas: puntProx || 0,
+      sociosActivos: socAct || 0,
+    })
   }, [])
 
   const init = useCallback(async () => {
@@ -41,7 +56,7 @@ export function useAdminData() {
       if (gymError) throw new Error('No se pudo cargar el gimnasio')
       if (!gym) throw new Error('Gimnasio no encontrado')
       if (mountedRef.current) setGymId(gym.id)
-      await Promise.all([loadClases(gym.id), loadSocios()])
+      await Promise.all([loadSocios(), loadStats(gym.id)])
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Error al inicializar'
       console.error('[useAdminData] init error:', msg)
@@ -49,30 +64,12 @@ export function useAdminData() {
     } finally {
       if (mountedRef.current) setLoading(false)
     }
-  }, [router, loadClases, loadSocios])
+  }, [router, loadSocios, loadStats])
 
   useEffect(() => {
     init()
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
-
-  const crearClase = async (nueva: Omit<Clase, 'id' | 'gym_id' | 'activa'>) => {
-    if (!nueva.nombre.trim()) return
-    const { error: err } = await supabase.from('clases').insert({ ...nueva, gym_id: gymId })
-    if (err) { console.error('[useAdminData] crearClase:', err.message); return }
-    await loadClases(gymId)
-  }
-
-  // Devuelve true si OK, lanza error si falla
-  const eliminarClase = async (id: string): Promise<void> => {
-    if (!gymId) throw new Error('gymId no disponible')
-    const { error: err } = await supabase.from('clases').update({ activa: false }).eq('id', id)
-    if (err) {
-      console.error('[useAdminData] eliminarClase:', err.message)
-      throw new Error(err.message)
-    }
-    await loadClases(gymId)
-  }
 
   const toggleActivarSocio = async (socio: Socio): Promise<Socio> => {
     const nuevoEstado = !socio.membresia_activa
@@ -89,9 +86,9 @@ export function useAdminData() {
   }
 
   return {
-    clases, socios, gymId, loading, error,
-    loadClases, loadSocios,
-    crearClase, eliminarClase, toggleActivarSocio,
+    socios, gymId, stats, loading, error,
+    loadSocios, loadStats,
+    toggleActivarSocio,
     logout,
   }
 }

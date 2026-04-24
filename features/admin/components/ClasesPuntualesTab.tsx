@@ -87,10 +87,14 @@ export default function ClasesPuntualesTab({ gymId }: Props) {
   }
 
   const toggleCancelada = async (s: SesionPuntual) => {
-    // Cancelar no borra reservas existentes
     const { error } = await supabase
       .from('sesiones').update({ cancelada: !s.cancelada }).eq('id', s.id)
-    if (error) { console.error('[ClasesPuntualesTab] toggle:', error.message); return }
+    if (error) {
+      console.error('[ClasesPuntualesTab] toggle:', error.message)
+      setMsg('❌ Error al actualizar: ' + error.message)
+      return
+    }
+    setMsg(s.cancelada ? '✅ Clase reactivada' : '✅ Clase cancelada')
     await cargar()
   }
 
