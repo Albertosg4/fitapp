@@ -202,17 +202,26 @@ WHERE NOT EXISTS (
 
 -- ---------------------------------------------------------------------------
 -- 8. Backfill: vincular sesiones existentes a horario_id y actividad_id
+-- Nota: se vincula por clase_id directamente (no por dia_semana de la fecha)
+-- porque en datos de prueba las fechas pueden no coincidir con el dia_semana
+-- de la clase. En producción real esto sería equivalente.
 -- ---------------------------------------------------------------------------
 UPDATE sesiones s
 SET
-  actividad_id = m.actividad_id,
-  horario_id   = h.id
-FROM _clase_actividad_map m
-JOIN horarios_clase h ON h.actividad_id = m.actividad_id
-WHERE s.clase_id = m.clase_id
-  AND h.dia_semana = EXTRACT(DOW FROM s.fecha)::smallint % 7
-  -- Ajuste lunes=0: DOW da domingo=0, convertimos igual que la app
-  AND s.horario_id IS NULL;
+  actividad_id = sub.actividad_id,
+  horario_id   = sub.horario_id
+FROM (
+  SELECT
+    s2.id AS sesion_id,
+    a.id  AS actividad_id,
+    h.id  AS horario_id
+  FROM sesiones s2
+  JOIN clases c ON c.id = s2.clase_id
+  JOIN actividades a ON a.nombre = c.nombre AND a.gym_id = c.gym_id
+  JOIN horarios_clase h ON h.actividad_id = a.id AND h.dia_semana = c.dia_semana
+  WHERE s2.horario_id IS NULL
+) sub
+WHERE s.id = sub.sesion_id;
 
 -- Limpieza
 DROP TABLE IF EXISTS _clase_actividad_map;
