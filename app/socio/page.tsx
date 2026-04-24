@@ -4,17 +4,17 @@ import { supabase } from '@/lib/supabase'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { getEstadoMembresiaAdmin, getDiasRestantes } from '@/lib/domain/membresias'
 import { useSocioData } from '@/features/socio/hooks/useSocioData'
+import type { HorarioSocio } from '@/features/socio/hooks/useSocioData'
 import SocioClasesTab from '@/features/socio/components/SocioClasesTab'
 import SocioHistorialTab from '@/features/socio/components/SocioHistorialTab'
 import SocioPagosTab from '@/features/socio/components/SocioPagosTab'
 import SocioQRTab from '@/features/socio/components/SocioQRTab'
 import SocioPerfilTab from '@/features/socio/components/SocioPerfilTab'
-import type { Clase } from '@/types/domain'
 
 function SocioPageInner() {
   const {
     perfil,
-    clases,
+    horarios,
     reservas,
     ocupacion,
     qrUrl,
@@ -22,15 +22,15 @@ function SocioPageInner() {
     loading, setLoading,
     cargarReservas,
     cargarPerfil,
-    cargarClases,
+    cargarHorarios,
     actualizarOcupacion,
     reservar,
   } = useSocioData()
 
   const [tab, setTab] = useState('clases')
-  const [modal, setModal] = useState<(Clase & { fecha: string }) | null>(null)
+  const [modal, setModal] = useState<(HorarioSocio & { fecha: string }) | null>(null)
   const [modalFecha, setModalFecha] = useState<string>('')
-  const [clasesDelDia, setClasesDelDia] = useState<Clase[]>([])
+  const [horariosDelDia, setHorariosDelDia] = useState<HorarioSocio[]>([])
   const [pagando, setPagando] = useState(false)
   const [msgPago, setMsgPago] = useState('')
   const router = useRouter()
@@ -41,10 +41,10 @@ function SocioPageInner() {
     if (!user) { router.push('/'); return }
     setUserId(user.id)
     await cargarPerfil(user.id)
-    await cargarClases()
+    await cargarHorarios()
     await cargarReservas(user.id)
     setLoading(false)
-  }, [router, setUserId, cargarPerfil, cargarClases, cargarReservas, setLoading])
+  }, [router, setUserId, cargarPerfil, cargarHorarios, cargarReservas, setLoading])
 
   useEffect(() => {
     init()
@@ -52,12 +52,8 @@ function SocioPageInner() {
   }, [])
 
   const procesarResultadoPago = useCallback((pago: string) => {
-    if (pago === 'ok') {
-      setMsgPago('✅ Pago completado. Membresía renovada.')
-      setTab('pagos')
-    } else if (pago === 'cancel') {
-      setMsgPago('❌ Pago cancelado.')
-    }
+    if (pago === 'ok') { setMsgPago('✅ Pago completado. Membresía renovada.'); setTab('pagos') }
+    else if (pago === 'cancel') { setMsgPago('❌ Pago cancelado.') }
   }, [])
 
   useEffect(() => {
@@ -66,15 +62,15 @@ function SocioPageInner() {
     procesarResultadoPago(pago)
   }, [searchParams, procesarResultadoPago])
 
-  const seleccionarDia = async (fecha: string, clasesD: Clase[]) => {
-    setClasesDelDia(clasesD)
+  const seleccionarDia = async (fecha: string, horariosD: HorarioSocio[]) => {
+    setHorariosDelDia(horariosD)
     setModalFecha(fecha)
-    await actualizarOcupacion(fecha, clasesD)
+    await actualizarOcupacion(fecha, horariosD)
   }
 
-  const handleReservar = async (claseId: string, fecha: string) => {
+  const handleReservar = async (horarioId: string, fecha: string) => {
     if (!userId) return
-    await reservar(claseId, fecha, userId, clases, reservas, ocupacion)
+    await reservar(horarioId, fecha, userId, horarios, reservas, ocupacion)
     setModal(null)
   }
 
@@ -91,11 +87,8 @@ function SocioPageInner() {
       })
       const data = await res.json()
       if (data.url) window.location.assign(data.url as string)
-    } catch (err) {
-      console.error('Error pago:', err)
-    } finally {
-      setPagando(false)
-    }
+    } catch (err) { console.error('Error pago:', err) }
+    finally { setPagando(false) }
   }
 
   const logout = async () => { await supabase.auth.signOut(); router.push('/') }
@@ -103,8 +96,8 @@ function SocioPageInner() {
   const estadoMembresia = perfil ? getEstadoMembresiaAdmin(perfil) : 'ok'
   const diasRestantes = perfil?.membresia_vence ? getDiasRestantes(perfil.membresia_vence) : 0
 
-  const estaReservadaEnFecha = (claseId: string, fecha: string) =>
-    reservas.some(r => r.clase_id === claseId && r.fecha === fecha)
+  const estaReservadoEnFecha = (horarioId: string, fecha: string) =>
+    reservas.some(r => r.horario_id === horarioId && r.fecha === fecha)
 
   if (loading) return (
     <div style={{ minHeight: '100vh', background: '#0f0f0f', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -136,11 +129,11 @@ function SocioPageInner() {
       {tab === 'clases' && (
         <SocioClasesTab
           perfil={perfil}
-          clases={clases}
+          horarios={horarios}
           reservas={reservas}
           ocupacion={ocupacion}
           modalFecha={modalFecha}
-          clasesDelDia={clasesDelDia}
+          horariosDelDia={horariosDelDia}
           onSeleccionarDia={seleccionarDia}
           onAbrirModal={setModal}
         />
@@ -152,7 +145,7 @@ function SocioPageInner() {
         <SocioPerfilTab
           perfil={perfil}
           reservas={reservas}
-          clases={clases}
+          horarios={horarios}
           onVerPagos={() => setTab('pagos')}
           onLogout={logout}
         />
@@ -164,8 +157,11 @@ function SocioPageInner() {
           style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.8)', zIndex: 200, display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}>
           <div style={{ background: '#1e1e1e', border: '1px solid rgba(255,255,255,0.07)', borderRadius: '24px 24px 0 0', padding: '24px 20px 36px', width: '100%', maxWidth: '480px' }}>
             <div style={{ width: '36px', height: '4px', background: 'rgba(255,255,255,0.1)', borderRadius: '2px', margin: '0 auto 20px' }}></div>
-            <div style={{ fontSize: '22px', fontWeight: '800', marginBottom: '4px' }}>{modal.nombre}</div>
-            <div style={{ fontSize: '13px', color: '#888', marginBottom: '20px' }}>{modal.fecha} · {modal.hora_inicio} · {modal.duracion_min} min</div>
+            <div style={{ fontSize: '22px', fontWeight: '800', marginBottom: '4px' }}>{modal.actividad_nombre}</div>
+            <div style={{ fontSize: '13px', color: '#888', marginBottom: '20px' }}>
+              {modal.fecha} · {modal.hora_inicio} · {modal.duracion_min} min
+              {modal.profesor && <span style={{ color: '#5ca8ff' }}> · {modal.profesor}</span>}
+            </div>
             <div style={{ borderTop: '1px solid rgba(255,255,255,0.07)', paddingTop: '16px', marginBottom: '20px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', fontSize: '13px' }}>
                 <span style={{ color: '#888' }}>Ocupación</span>
@@ -173,18 +169,18 @@ function SocioPageInner() {
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', fontSize: '13px', borderTop: '1px solid rgba(255,255,255,0.07)' }}>
                 <span style={{ color: '#888' }}>Estado</span>
-                <span style={{ color: estaReservadaEnFecha(modal.id, modal.fecha) ? '#c8f542' : '#888' }}>
-                  {estaReservadaEnFecha(modal.id, modal.fecha) ? '✓ Reservada' : 'No reservada'}
+                <span style={{ color: estaReservadoEnFecha(modal.id, modal.fecha) ? '#c8f542' : '#888' }}>
+                  {estaReservadoEnFecha(modal.id, modal.fecha) ? '✓ Reservada' : 'No reservada'}
                 </span>
               </div>
             </div>
             {(() => {
               const key = `${modal.id}_${modal.fecha}`
-              const llena = (ocupacion[key]?.count ?? 0) >= modal.aforo_max && !estaReservadaEnFecha(modal.id, modal.fecha)
+              const llena = (ocupacion[key]?.count ?? 0) >= modal.aforo_max && !estaReservadoEnFecha(modal.id, modal.fecha)
               return (
                 <button onClick={() => !llena && handleReservar(modal.id, modal.fecha)} disabled={llena}
-                  style={{ width: '100%', border: 'none', borderRadius: '12px', padding: '14px', fontSize: '15px', fontWeight: '700', cursor: llena ? 'not-allowed' : 'pointer', fontFamily: 'system-ui', background: llena ? 'rgba(255,255,255,0.06)' : estaReservadaEnFecha(modal.id, modal.fecha) ? 'rgba(255,92,92,0.12)' : '#c8f542', color: llena ? '#555' : estaReservadaEnFecha(modal.id, modal.fecha) ? '#ff5c5c' : '#0f0f0f' }}>
-                  {llena ? 'Clase completa' : estaReservadaEnFecha(modal.id, modal.fecha) ? 'Cancelar reserva' : 'Reservar plaza'}
+                  style={{ width: '100%', border: 'none', borderRadius: '12px', padding: '14px', fontSize: '15px', fontWeight: '700', cursor: llena ? 'not-allowed' : 'pointer', fontFamily: 'system-ui', background: llena ? 'rgba(255,255,255,0.06)' : estaReservadoEnFecha(modal.id, modal.fecha) ? 'rgba(255,92,92,0.12)' : '#c8f542', color: llena ? '#555' : estaReservadoEnFecha(modal.id, modal.fecha) ? '#ff5c5c' : '#0f0f0f' }}>
+                  {llena ? 'Clase completa' : estaReservadoEnFecha(modal.id, modal.fecha) ? 'Cancelar reserva' : 'Reservar plaza'}
                 </button>
               )
             })()}

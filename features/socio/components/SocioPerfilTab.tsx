@@ -1,17 +1,17 @@
 'use client'
 import type { Socio } from '@/types/domain'
-import type { ReservaLocal } from '@/features/socio/hooks/useSocioData'
+import type { ReservaLocal, HorarioSocio } from '@/features/socio/hooks/useSocioData'
 import { getEstadoMembresiaAdmin, getDiasRestantes } from '@/lib/domain/membresias'
 
 interface Props {
   perfil: Socio | null
   reservas: ReservaLocal[]
-  clases: { id: string; nombre: string; hora_inicio: string }[]
+  horarios: HorarioSocio[]
   onVerPagos: () => void
   onLogout: () => void
 }
 
-export default function SocioPerfilTab({ perfil, reservas, clases, onVerPagos, onLogout }: Props) {
+export default function SocioPerfilTab({ perfil, reservas, horarios, onVerPagos, onLogout }: Props) {
   const estadoMembresia = perfil ? getEstadoMembresiaAdmin(perfil) : 'ok'
   const diasRestantes = perfil?.membresia_vence ? getDiasRestantes(perfil.membresia_vence) : 0
 
@@ -51,13 +51,12 @@ export default function SocioPerfilTab({ perfil, reservas, clases, onVerPagos, o
         {reservas.length === 0 ? (
           <p style={{ color: '#888', fontSize: '13px' }}>No tienes reservas activas.</p>
         ) : reservas.map(r => {
-          const c = clases.find(x => x.id === r.clase_id)
-          if (!c) return null
+          const h = horarios.find(x => x.id === r.horario_id)
           return (
             <div key={r.id} style={{ background: '#1e1e1e', border: '1px solid rgba(200,245,66,0.2)', borderRadius: '10px', padding: '12px 14px', marginBottom: '8px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <div>
-                <div style={{ fontWeight: '600', fontSize: '14px' }}>{c.nombre}</div>
-                <div style={{ fontSize: '12px', color: '#888', marginTop: '2px' }}>{r.fecha} · {c.hora_inicio}</div>
+                <div style={{ fontWeight: '600', fontSize: '14px' }}>{h?.actividad_nombre ?? '—'}</div>
+                <div style={{ fontSize: '12px', color: '#888', marginTop: '2px' }}>{r.fecha} · {h?.hora_inicio ?? '—'}</div>
               </div>
               <span style={{ fontSize: '11px', background: 'rgba(200,245,66,0.12)', color: '#c8f542', padding: '3px 10px', borderRadius: '20px' }}>✓</span>
             </div>

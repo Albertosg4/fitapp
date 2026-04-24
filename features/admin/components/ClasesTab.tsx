@@ -1,10 +1,12 @@
 'use client'
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
-import CalendarioMes from '@/components/CalendarioMes'
 import type { Clase, Reserva } from '@/types/domain'
 import type { TipoMembresia } from '@/lib/domain/membresias'
-import { parseLocalDate, getDiaSemanaLunesPrimero } from '@/lib/domain/fechas'
+import { parseLocalDate, getDiaSemanaLunesPrimero, formatLocalDate } from '@/lib/domain/fechas'
+
+// LEGACY: componente no visible en UI. Mantenido para compatibilidad TypeScript.
+// No usar en nuevas pantallas.
 
 const cardStyle = { background: '#1e1e1e', border: '1px solid rgba(255,255,255,0.07)', borderRadius: '12px', padding: '14px', marginBottom: '10px' }
 
@@ -32,9 +34,10 @@ export default function ClasesTab({ clases, onEliminarClase }: Props) {
     setClasesDelDia(clases.filter(c => c.dia_semana === idx))
   }, [clases, fechaSeleccionada])
 
-  const seleccionarDia = (fecha: string, clasesD: Clase[]) => {
+  const seleccionarDia = (fecha: string) => {
     setFechaSeleccionada(fecha)
-    setClasesDelDia(clasesD)
+    const idx = getDiaSemanaLunesPrimero(parseLocalDate(fecha))
+    setClasesDelDia(clases.filter(c => c.dia_semana === idx))
   }
 
   const handleEliminar = async (e: React.MouseEvent, id: string) => {
@@ -80,7 +83,12 @@ export default function ClasesTab({ clases, onEliminarClase }: Props) {
 
   return (
     <>
-      <CalendarioMes clases={clases} onSeleccionarDia={seleccionarDia} />
+      {/* Selector de fecha simple — reemplaza CalendarioMes legacy */}
+      <div style={{ marginBottom: '16px' }}>
+        <input type="date" value={fechaSeleccionada} onChange={e => seleccionarDia(e.target.value)}
+          defaultValue={formatLocalDate(new Date())}
+          style={{ background: '#1e1e1e', border: '1px solid rgba(255,255,255,0.07)', borderRadius: '10px', padding: '10px 14px', color: '#f0f0f0', fontSize: '14px', fontFamily: 'system-ui', outline: 'none' }} />
+      </div>
 
       {fechaSeleccionada && (
         <div>
