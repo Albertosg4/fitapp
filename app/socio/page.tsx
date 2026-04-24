@@ -2,63 +2,47 @@
 import { useEffect, useState, useCallback, Suspense } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useRouter, useSearchParams } from 'next/navigation'
-import QRCode from 'qrcode'
 import CalendarioMes from '@/components/CalendarioMes'
 import HistorialAsistencia from '@/components/HistorialAsistencia'
 import HistorialPagos from '@/components/HistorialPagos'
 import { getEstadoMembresiaAdmin, getDiasRestantes, TIPOS_MEMBRESIA } from '@/lib/domain/membresias'
-import type { Clase, Socio, Reserva } from '@/types/domain'
-
-interface ReservaLocal {
-  id: string
-  sesion_id: string
-  clase_id: string
-  fecha: string
-}
+import { useSocioData } from '@/features/socio/hooks/useSocioData'
+import type { Clase } from '@/types/domain'
 
 function SocioPageInner() {
-  const [perfil, setPerfil] = useState<Socio | null>(null)
-  const [clases, setClases] = useState<Clase[]>([])
-  const [reservas, setReservas] = useState<ReservaLocal[]>([])
-  const [ocupacion, setOcupacion] = useState<Record<string, { sesionId: string, count: number }>>({})
+  const {
+    perfil,
+    clases,
+    reservas,
+    ocupacion,
+    qrUrl,
+    userId, setUserId,
+    loading, setLoading,
+    cargarReservas,
+    cargarPerfil,
+    cargarClases,
+    actualizarOcupacion,
+    reservar,
+  } = useSocioData()
+
   const [tab, setTab] = useState('clases')
-  const [loading, setLoading] = useState(true)
   const [modal, setModal] = useState<(Clase & { fecha: string }) | null>(null)
   const [modalFecha, setModalFecha] = useState<string>('')
   const [clasesDelDia, setClasesDelDia] = useState<Clase[]>([])
-  const [qrUrl, setQrUrl] = useState('')
-  const [userId, setUserId] = useState<string>('')
   const [pagando, setPagando] = useState(false)
   const [msgPago, setMsgPago] = useState('')
   const router = useRouter()
   const searchParams = useSearchParams()
 
-  const cargarReservas = useCallback(async (uid: string) => {
-    const { data } = await supabase
-      .from('reservas').select('id, sesion_id, sesiones(clase_id, fecha)')
-      .eq('user_id', uid).eq('estado', 'confirmada')
-    type RawR = { id: string; sesion_id: string; sesiones: unknown }
-    setReservas(((data || []) as unknown as RawR[]).map(r => {
-      const s = (Array.isArray(r.sesiones) ? r.sesiones[0] : r.sesiones) as { clase_id: string; fecha: string } | null
-      return { id: r.id, sesion_id: r.sesion_id, clase_id: s?.clase_id ?? '', fecha: s?.fecha ?? '' }
-    }))
-  }, [])
-
   const init = useCallback(async () => {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) { router.push('/'); return }
     setUserId(user.id)
-    const { data: p } = await supabase.from('perfiles').select('*').eq('id', user.id).single()
-    setPerfil(p as Socio)
-    if (p?.qr_token) {
-      const url = await QRCode.toDataURL(`${window.location.origin}/checkin?token=${p.qr_token}`)
-      setQrUrl(url)
-    }
-    const { data: c } = await supabase.from('clases').select('*').eq('activa', true).order('dia_semana').order('hora_inicio')
-    setClases((c as Clase[]) || [])
+    await cargarPerfil(user.id)
+    await cargarClases()
     await cargarReservas(user.id)
     setLoading(false)
-  }, [router, cargarReservas])
+  }, [router, setUserId, cargarPerfil, cargarClases, cargarReservas, setLoading])
 
   useEffect(() => {
     init()
@@ -80,63 +64,18 @@ function SocioPageInner() {
     procesarResultadoPago(pago)
   }, [searchParams, procesarResultadoPago])
 
-  const getOcupacionFecha = async (claseId: string, fecha: string) => {
-    const { data: sesion } = await supabase.from('sesiones').select('id').eq('clase_id', claseId).eq('fecha', fecha).maybeSingle()
-    if (!sesion) return { sesionId: null, count: 0 }
-    const { count } = await supabase.from('reservas').select('id', { count: 'exact', head: true }).eq('sesion_id', sesion.id).eq('estado', 'confirmada')
-    return { sesionId: sesion.id, count: count || 0 }
-  }
-
   const seleccionarDia = async (fecha: string, clasesD: Clase[]) => {
-    setClasesDelDia(clasesD); setModalFecha(fecha)
-    const nuevaOcupacion: Record<string, { sesionId: string; count: number }> = { ...ocupacion }
-    for (const clase of clasesD) {
-      const key = `${clase.id}_${fecha}`
-      if (!nuevaOcupacion[key]) {
-        const result = await getOcupacionFecha(clase.id, fecha)
-        nuevaOcupacion[key] = { sesionId: result.sesionId || '', count: result.count }
-      }
-    }
-    setOcupacion(nuevaOcupacion)
+    setClasesDelDia(clasesD)
+    setModalFecha(fecha)
+    await actualizarOcupacion(fecha, clasesD)
   }
 
   const estaReservadaEnFecha = (claseId: string, fecha: string) =>
     reservas.some(r => r.clase_id === claseId && r.fecha === fecha)
 
-  const getOrCreateSesion = async (claseId: string, fecha: string) => {
-    const { data: existing } = await supabase.from('sesiones').select('id').eq('clase_id', claseId).eq('fecha', fecha).maybeSingle()
-    if (existing) return existing.id
-    const { data: nueva, error } = await supabase.from('sesiones').insert({ clase_id: claseId, fecha }).select('id').single()
-    if (error) return null
-    return nueva.id
-  }
-
-  const reservar = async (claseId: string, fecha: string) => {
+  const handleReservar = async (claseId: string, fecha: string) => {
     if (!userId) return
-    const reservaExistente = reservas.find(r => r.clase_id === claseId && r.fecha === fecha)
-    if (reservaExistente) {
-      await supabase.from('reservas').update({ estado: 'cancelada' }).eq('id', reservaExistente.id)
-      await cargarReservas(userId)
-      const key = `${claseId}_${fecha}`
-      const ocup = ocupacion[key]
-      if (ocup) setOcupacion({ ...ocupacion, [key]: { ...ocup, count: Math.max(0, ocup.count - 1) } })
-      setModal(null); return
-    }
-    const clase = clases.find(c => c.id === claseId)
-    if (!clase) return
-    const sesionId = await getOrCreateSesion(claseId, fecha)
-    if (!sesionId) { setModal(null); return }
-    const key = `${claseId}_${fecha}`
-    const ocupActual = ocupacion[key]?.count || 0
-    if (ocupActual >= clase.aforo_max) { setModal(null); return }
-    const { data: reservaAnterior } = await supabase.from('reservas').select('id').eq('sesion_id', sesionId).eq('user_id', userId).maybeSingle()
-    if (reservaAnterior) {
-      await supabase.from('reservas').update({ estado: 'confirmada' }).eq('id', (reservaAnterior as Reserva).id)
-    } else {
-      await supabase.from('reservas').insert({ sesion_id: sesionId, user_id: userId, estado: 'confirmada' })
-    }
-    await cargarReservas(userId)
-    setOcupacion({ ...ocupacion, [key]: { sesionId, count: ocupActual + 1 } })
+    await reservar(claseId, fecha, userId, clases, reservas, ocupacion)
     setModal(null)
   }
 
@@ -363,7 +302,7 @@ function SocioPageInner() {
               const key = `${modal.id}_${modal.fecha}`
               const llena = (ocupacion[key]?.count ?? 0) >= modal.aforo_max && !estaReservadaEnFecha(modal.id, modal.fecha)
               return (
-                <button onClick={() => !llena && reservar(modal.id, modal.fecha)} disabled={llena} style={{ width: '100%', border: 'none', borderRadius: '12px', padding: '14px', fontSize: '15px', fontWeight: '700', cursor: llena ? 'not-allowed' : 'pointer', fontFamily: 'system-ui', background: llena ? 'rgba(255,255,255,0.06)' : estaReservadaEnFecha(modal.id, modal.fecha) ? 'rgba(255,92,92,0.12)' : '#c8f542', color: llena ? '#555' : estaReservadaEnFecha(modal.id, modal.fecha) ? '#ff5c5c' : '#0f0f0f' }}>
+                <button onClick={() => !llena && handleReservar(modal.id, modal.fecha)} disabled={llena} style={{ width: '100%', border: 'none', borderRadius: '12px', padding: '14px', fontSize: '15px', fontWeight: '700', cursor: llena ? 'not-allowed' : 'pointer', fontFamily: 'system-ui', background: llena ? 'rgba(255,255,255,0.06)' : estaReservadaEnFecha(modal.id, modal.fecha) ? 'rgba(255,92,92,0.12)' : '#c8f542', color: llena ? '#555' : estaReservadaEnFecha(modal.id, modal.fecha) ? '#ff5c5c' : '#0f0f0f' }}>
                   {llena ? 'Clase completa' : estaReservadaEnFecha(modal.id, modal.fecha) ? 'Cancelar reserva' : 'Reservar plaza'}
                 </button>
               )
