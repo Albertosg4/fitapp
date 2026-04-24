@@ -50,22 +50,25 @@ export interface HorarioClase {
 // Representa una clase concreta en una fecha específica.
 // Puede venir de un HorarioClase recurrente o ser una clase puntual.
 // Las reservas siempre van contra sesiones.id.
+//
+// Nota BD real: la columna de cancelación se llama `cancelada boolean` (legacy).
+// Los campos nuevos (horario_id, actividad_id, etc.) se añaden en Fase B.
 export interface Sesion {
   id: string
-  // --- Campos legacy (mantener para compatibilidad con reservas existentes) ---
-  clase_id: string | null     // FK a clases (legacy), null si es nueva sesión
-  // --- Campos nuevos ---
+  // --- Campos legacy ---
+  clase_id: string | null     // FK a clases (legacy)
+  cancelada: boolean | null   // campo original en BD — true = no visible al socio
+  created_at: string | null
+  // --- Campos nuevos (Fase B) ---
   horario_id: string | null   // FK a horarios_clase, null si es puntual
-  actividad_id: string | null // FK a actividades, null si es legacy
+  actividad_id: string | null // FK a actividades
   fecha: string               // 'YYYY-MM-DD'
   hora_inicio: string | null  // override de hora si difiere del horario
-  duracion_min: number | null // override de duración si difiere del horario
-  aforo_max: number | null    // override de aforo si difiere del horario
-  profesor: string | null     // override de profesor
-  notas: string | null        // notas del admin para esta sesión concreta
-  estado: 'activa' | 'cancelada' // cancelada = no visible al socio
+  duracion_min: number | null // override de duración
+  aforo_max: number | null    // override de aforo
+  profesor: string | null
+  notas: string | null
   es_puntual: boolean         // true si es clase puntual (no recurrente)
-  created_at: string
 }
 
 // ─── Socio (perfil con rol=socio) ────────────────────────────────────────────
