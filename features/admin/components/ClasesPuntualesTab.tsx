@@ -87,40 +87,90 @@ export default function ClasesPuntualesTab({ gymId }: Props) {
 
   useEffect(() => { cargar() }, [cargar])
 
+  const getAuthHeaders = useCallback(async () => {
+    const { data, error } = await supabase.auth.getSession()
+    if (error) throw new Error(error.message)
+    const token = data.session?.access_token
+    if (!token) throw new Error('No se encontró sesión activa')
+
+    return {
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    }
+  }, [])
+
   const crear = async () => {
     if (!form.fecha) { setMsg('❌ La fecha es obligatoria'); return }
-    if (!form.actividad_id && !form.nombre_libre.trim()) { setMsg('❌ Selecciona actividad o escribe un nombre'); return }
-    setGuardando(true); setMsg('')
-    const { error } = await supabase.from('sesiones').insert({
-      actividad_id: form.actividad_id || null,
-      fecha: form.fecha,
-      hora_inicio: form.hora_inicio || null,
-      duracion_min: form.duracion_min || null,
-      aforo_max: form.aforo_max || null,
-      profesor: form.profesor.trim() || null,
-      notas: form.notas.trim() || null,
-      es_puntual: true,
-      cancelada: false,
-    })
-    if (error) { setMsg('❌ Error: ' + error.message) }
-    else {
+    if (!form.actividad_id) {
+      setMsg('❌ Selecciona una actividad. Las clases puntuales sin actividad quedan deshabilitadas hasta añadir gym_id a sesiones.')
+      return
+    }
+
+    setGuardando(true)
+    setMsg('')
+    try {
+      const headers = await getAuthHeaders()
+      const res = await fetch('/api/admin/sesiones', {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({
+          actividad_id: form.actividad_id,
+          fecha: form.fecha,
+          hora_inicio: form.hora_inicio || null,
+          duracion_min: form.duracion_min || null,
+          aforo_max: form.aforo_max || null,
+          profesor: form.profesor.trim() || null,
+          notas: form.notas.trim() || null,
+        }),
+      })
+
+      const json = await res.json().catch(() => null) as { error?: string } | null
+      if (!res.ok) {
+        const errorMsg = json?.error || 'Error al crear clase puntual'
+        console.error('[ClasesPuntualesTab] crear:', errorMsg)
+        setMsg(`❌ ${errorMsg}`)
+        return
+      }
+
       setMsg('✅ Clase puntual creada')
       setForm(f => ({ ...f, nombre_libre: '', notas: '', profesor: '' }))
       await cargar()
+    } catch (error: unknown) {
+      const errorMsg = error instanceof Error ? error.message : 'Error inesperado'
+      console.error('[ClasesPuntualesTab] crear:', errorMsg)
+      setMsg(`❌ ${errorMsg}`)
+    } finally {
+      setGuardando(false)
     }
-    setGuardando(false)
   }
 
   const toggleCancelada = async (s: SesionPuntual) => {
-    const { error } = await supabase
-      .from('sesiones').update({ cancelada: !s.cancelada }).eq('id', s.id)
-    if (error) {
-      console.error('[ClasesPuntualesTab] toggle:', error.message)
-      setMsg('❌ Error al actualizar: ' + error.message)
-      return
+    try {
+      const headers = await getAuthHeaders()
+      const res = await fetch('/api/admin/sesiones', {
+        method: 'PATCH',
+        headers,
+        body: JSON.stringify({
+          id: s.id,
+          cancelada: !s.cancelada,
+        }),
+      })
+
+      const json = await res.json().catch(() => null) as { error?: string } | null
+      if (!res.ok) {
+        const errorMsg = json?.error || 'Error al actualizar clase puntual'
+        console.error('[ClasesPuntualesTab] toggleCancelada:', errorMsg)
+        setMsg(`❌ ${errorMsg}`)
+        return
+      }
+
+      setMsg(s.cancelada ? '✅ Clase reactivada' : '✅ Clase cancelada')
+      await cargar()
+    } catch (error: unknown) {
+      const errorMsg = error instanceof Error ? error.message : 'Error inesperado'
+      console.error('[ClasesPuntualesTab] toggleCancelada:', errorMsg)
+      setMsg(`❌ ${errorMsg}`)
     }
-    setMsg(s.cancelada ? '✅ Clase reactivada' : '✅ Clase cancelada')
-    await cargar()
   }
 
   if (loading) return <p style={{ color: '#888', textAlign: 'center', padding: '40px 0', fontSize: '13px' }}>Cargando...</p>
