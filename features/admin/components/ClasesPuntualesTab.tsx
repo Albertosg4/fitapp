@@ -43,14 +43,39 @@ export default function ClasesPuntualesTab({ gymId }: Props) {
   const [msg, setMsg] = useState('')
 
   const cargar = useCallback(async () => {
-    const [{ data: ses }, { data: act }] = await Promise.all([
-      supabase.from('sesiones')
+    const { data: act, error: actError } = await supabase
+      .from('actividades')
+      .select('*')
+      .eq('gym_id', gymId)
+      .eq('activa', true)
+      .order('nombre')
+
+    if (actError) {
+      console.error('[ClasesPuntualesTab] cargar actividades:', actError.message)
+    }
+
+    const actividadIds = (act || []).map(a => String(a.id))
+    let ses: SesionPuntual[] | null = []
+
+    if (actividadIds.length > 0) {
+      const { data: sesionesData, error: sesError } = await supabase
+        .from('sesiones')
         .select('id, fecha, hora_inicio, duracion_min, aforo_max, profesor, notas, cancelada, es_puntual, actividad_id, actividad:actividades(nombre, color)')
         .eq('es_puntual', true)
+        .in('actividad_id', actividadIds)
         .order('fecha', { ascending: false })
-        .limit(50),
-      supabase.from('actividades').select('*').eq('gym_id', gymId).eq('activa', true).order('nombre'),
-    ])
+        .limit(50)
+
+      if (sesError) {
+        console.error('[ClasesPuntualesTab] cargar sesiones:', sesError.message)
+      } else {
+        ses = sesionesData as unknown as SesionPuntual[]
+      }
+    } else {
+      // Límite conocido: si una sesión puntual no tiene actividad_id, no puede aislarse por gym_id sin columna directa en sesiones.
+      ses = []
+    }
+
     setSesiones((ses as unknown as SesionPuntual[]) || [])
     setActividades((act as Actividad[]) || [])
     if (act && act.length > 0 && !form.actividad_id) {
