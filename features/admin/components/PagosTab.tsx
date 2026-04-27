@@ -10,7 +10,7 @@ interface Props {
   onSociosChange?: () => void
 }
 
-/** Obtiene el access_token de la sesión activa de Supabase */
+/** Obtiene headers con Bearer token de la sesión activa */
 async function getAuthHeaders(): Promise<HeadersInit> {
   const { data: { session } } = await supabase.auth.getSession()
   const token = session?.access_token ?? ''
@@ -23,19 +23,28 @@ async function getAuthHeaders(): Promise<HeadersInit> {
 export default function PagosTab({ onSociosChange }: Props) {
   const [pagos, setPagos] = useState<Pago[]>([])
   const [loading, setLoading] = useState(false)
+  const [errorMsg, setErrorMsg] = useState('')
   const [filtroSocio, setFiltroSocio] = useState('')
   const [filtroEstado, setFiltroEstado] = useState('')
   const [filtroMes, setFiltroMes] = useState('')
 
   const cargar = useCallback(async () => {
     setLoading(true)
+    setErrorMsg('')
     try {
       const headers = await getAuthHeaders()
       const res = await fetch('/api/pagos', { headers })
       const data = await res.json()
+      if (!res.ok) {
+        const msg = data.error || `Error ${res.status}`
+        console.error('[PagosTab] cargar:', msg)
+        setErrorMsg(msg)
+        return
+      }
       setPagos(data.pagos || [])
     } catch (err) {
-      console.error('[PagosTab] Error cargando pagos:', err)
+      console.error('[PagosTab] cargar error:', err)
+      setErrorMsg('Error de conexión al cargar pagos')
     } finally {
       setLoading(false)
     }
@@ -49,15 +58,20 @@ export default function PagosTab({ onSociosChange }: Props) {
   const confirmarPago = async (pagoId: string) => {
     try {
       const headers = await getAuthHeaders()
-      await fetch('/api/pagos/manual', {
+      const res = await fetch('/api/pagos/manual', {
         method: 'PATCH',
         headers,
         body: JSON.stringify({ pagoId }),
       })
+      const data = await res.json()
+      if (!res.ok) {
+        console.error('[PagosTab] confirmarPago error:', data.error || res.status)
+        return
+      }
       await cargar()
       onSociosChange?.()
     } catch (err) {
-      console.error('[PagosTab] Error confirmando pago:', err)
+      console.error('[PagosTab] confirmarPago error:', err)
     }
   }
 
@@ -108,6 +122,8 @@ export default function PagosTab({ onSociosChange }: Props) {
       </div>
       {loading ? (
         <p style={{ color: '#888', textAlign: 'center', padding: '20px 0', fontSize: '13px' }}>Cargando...</p>
+      ) : errorMsg ? (
+        <p style={{ color: '#ff5c5c', textAlign: 'center', padding: '20px 0', fontSize: '13px' }}>{errorMsg}</p>
       ) : filtrados.length === 0 ? (
         <p style={{ color: '#888', textAlign: 'center', padding: '20px 0', fontSize: '13px' }}>Sin pagos registrados</p>
       ) : filtrados.map(p => (

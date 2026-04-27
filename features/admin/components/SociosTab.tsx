@@ -8,7 +8,7 @@ import type { Socio, Pago } from '@/types/domain'
 const cardStyle = { background: '#1e1e1e', border: '1px solid rgba(255,255,255,0.07)', borderRadius: '12px', padding: '14px', marginBottom: '10px' }
 const inputStyle = { width: '100%', background: '#181818', border: '1px solid rgba(255,255,255,0.07)', borderRadius: '10px', padding: '10px 14px', color: '#f0f0f0', fontSize: '14px', outline: 'none', boxSizing: 'border-box' as const, fontFamily: 'system-ui' }
 
-/** Obtiene el access_token de la sesión activa de Supabase */
+/** Obtiene headers con Bearer token de la sesión activa */
 async function getAuthHeaders(): Promise<HeadersInit> {
   const { data: { session } } = await supabase.auth.getSession()
   const token = session?.access_token ?? ''
@@ -18,16 +18,33 @@ async function getAuthHeaders(): Promise<HeadersInit> {
   }
 }
 
+// ─── Subcomponente: historial de pagos de un socio ───────────────────────────
+// Lee vía /api/pagos?userId=xxx (API protegida) en lugar de supabase.from directamente
+
 function SocioPagosAdmin({ userId, onRefresh }: { userId: string; onRefresh: () => void }) {
   const [pagos, setPagos] = useState<Pago[]>([])
   const [loading, setLoading] = useState(true)
+  const [errorMsg, setErrorMsg] = useState('')
 
   const cargar = useCallback(async () => {
-    const { data } = await supabase
-      .from('pagos').select('*')
-      .eq('user_id', userId).order('fecha_pago', { ascending: false })
-    setPagos((data as Pago[]) || [])
-    setLoading(false)
+    setErrorMsg('')
+    try {
+      const headers = await getAuthHeaders()
+      const res = await fetch(`/api/pagos?userId=${encodeURIComponent(userId)}`, { headers })
+      const data = await res.json()
+      if (!res.ok) {
+        const msg = data.error || `Error ${res.status}`
+        console.error('[SocioPagosAdmin] cargar:', msg)
+        setErrorMsg(msg)
+        return
+      }
+      setPagos((data.pagos as Pago[]) || [])
+    } catch (err) {
+      console.error('[SocioPagosAdmin] cargar error:', err)
+      setErrorMsg('Error de conexión al cargar pagos')
+    } finally {
+      setLoading(false)
+    }
   }, [userId])
 
   useEffect(() => {
@@ -38,19 +55,25 @@ function SocioPagosAdmin({ userId, onRefresh }: { userId: string; onRefresh: () 
   const confirmar = async (pagoId: string) => {
     try {
       const headers = await getAuthHeaders()
-      await fetch('/api/pagos/manual', {
+      const res = await fetch('/api/pagos/manual', {
         method: 'PATCH',
         headers,
         body: JSON.stringify({ pagoId }),
       })
+      const data = await res.json()
+      if (!res.ok) {
+        console.error('[SocioPagosAdmin] confirmar error:', data.error || res.status)
+        return
+      }
       await cargar()
       onRefresh()
     } catch (err) {
-      console.error('[SocioPagosAdmin] Error confirmando pago:', err)
+      console.error('[SocioPagosAdmin] confirmar error:', err)
     }
   }
 
   if (loading) return <p style={{ color: '#888', fontSize: '13px', textAlign: 'center', padding: '20px 0' }}>Cargando...</p>
+  if (errorMsg) return <p style={{ color: '#ff5c5c', fontSize: '13px', textAlign: 'center', padding: '20px 0' }}>{errorMsg}</p>
   if (pagos.length === 0) return <p style={{ color: '#888', fontSize: '13px', textAlign: 'center', padding: '20px 0' }}>Sin pagos registrados</p>
 
   const total = pagos.filter(p => p.estado === 'pagado' && p.metodo !== 'cortesia').reduce((s, p) => s + Number(p.importe), 0)
@@ -108,6 +131,8 @@ function SocioPagosAdmin({ userId, onRefresh }: { userId: string; onRefresh: () 
   )
 }
 
+// ─── Componente principal ────────────────────────────────────────────────────
+
 interface Props {
   socios: Socio[]
   gymId: string
@@ -145,7 +170,6 @@ export default function SociosTab({ socios, gymId: _gymId, onRefreshSocios }: Pr
     setGuardandoPago(true); setMsgPago('')
     try {
       const headers = await getAuthHeaders()
-      // gymId ya NO se envía desde el cliente — el servidor lo deriva del token
       const res = await fetch('/api/pagos/manual', {
         method: 'POST',
         headers,
@@ -158,6 +182,10 @@ export default function SociosTab({ socios, gymId: _gymId, onRefreshSocios }: Pr
         }),
       })
       const data = await res.json()
+      if (!res.ok) {
+        setMsgPago('❌ Error: ' + (data.error || `Error ${res.status}`))
+        return
+      }
       if (data.ok) {
         const esCortesia = formPago.metodo === 'cortesia'
         setMsgPago(formPago.estado === 'pagado' || esCortesia

@@ -17,11 +17,27 @@ export const IMPORTES: Record<TipoMembresia, number> = {
   anual:      399.99,
 }
 
+/** Meses de vigencia por tipo — fuente única para APIs de pagos */
+export const MESES_POR_TIPO: Record<TipoMembresia, number> = {
+  mensual:    1,
+  trimestral: 3,
+  semestral:  6,
+  anual:      12,
+}
+
 export const METODOS_PAGO: { value: string; label: string }[] = [
   { value: 'efectivo',      label: '💵 Efectivo' },
   { value: 'transferencia', label: '🏦 Transferencia' },
   { value: 'cortesia',      label: '🎁 Cortesía (0€)' },
 ]
+
+/** Valores válidos de método de pago para validación server-side */
+export const METODOS_PAGO_VALUES = ['efectivo', 'transferencia', 'cortesia'] as const
+export type MetodoPago = typeof METODOS_PAGO_VALUES[number]
+
+/** Valores válidos de estado de pago para validación server-side */
+export const ESTADOS_PAGO_VALUES = ['pagado', 'pendiente'] as const
+export type EstadoPago = typeof ESTADOS_PAGO_VALUES[number]
 
 export const DURACION_MEMBRESIA: Record<TipoMembresia, number> = {
   mensual:    30,
@@ -39,10 +55,7 @@ export function calcularFechaVencimiento(tipo: TipoMembresia, desde?: Date): str
 }
 
 // ─── Estado de membresía ──────────────────────────────────────────────────────
-// Valores normalizados usados en toda la app admin y socio
 export type EstadoMembresia = 'activa' | 'por_vencer' | 'caducada' | 'inactiva'
-
-// Alias legible para el panel admin (mantiene compatibilidad con lógica anterior)
 export type EstadoMembresiaAdmin = 'ok' | 'pronto' | 'caducada'
 
 export function getEstadoMembresia(perfil: {
@@ -57,7 +70,6 @@ export function getEstadoMembresia(perfil: {
   return 'activa'
 }
 
-// Versión admin con los valores que espera el panel (ok/pronto/caducada)
 export function getEstadoMembresiaAdmin(perfil: {
   membresia_activa: boolean
   membresia_vence: string | null
