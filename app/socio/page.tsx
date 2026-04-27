@@ -21,6 +21,7 @@ function SocioPageInner() {
     userId, setUserId,
     loading, setLoading,
     reservaError, setReservaError,
+    isReservaEnCurso,
     cargarReservas,
     cargarPerfil,
     cargarHorarios,
@@ -75,7 +76,7 @@ function SocioPageInner() {
   const handleReservar = async (horarioId: string, fecha: string) => {
     if (!userId) return
     setReservaError('')
-    const result = await reservar(horarioId, fecha, userId, horarios, reservas, ocupacion)
+    const result = await reservar(horarioId, fecha, userId, horariosDelDia)
     if (result.ok) {
       setModal(null)
     }
@@ -193,10 +194,12 @@ function SocioPageInner() {
             {(() => {
               const key = `${modal.id}_${modal.fecha}`
               const llena = (ocupacion[key]?.count ?? 0) >= modal.aforo_max && !estaReservadoEnFecha(modal.id, modal.fecha)
+              const procesando = isReservaEnCurso(modal.id, modal.fecha)
+              const deshabilitado = llena || procesando
               return (
-                <button onClick={() => !llena && handleReservar(modal.id, modal.fecha)} disabled={llena}
-                  style={{ width: '100%', border: 'none', borderRadius: '12px', padding: '14px', fontSize: '15px', fontWeight: '700', cursor: llena ? 'not-allowed' : 'pointer', fontFamily: 'system-ui', background: llena ? 'rgba(255,255,255,0.06)' : estaReservadoEnFecha(modal.id, modal.fecha) ? 'rgba(255,92,92,0.12)' : '#c8f542', color: llena ? '#555' : estaReservadoEnFecha(modal.id, modal.fecha) ? '#ff5c5c' : '#0f0f0f' }}>
-                  {llena ? 'Clase completa' : estaReservadoEnFecha(modal.id, modal.fecha) ? 'Cancelar reserva' : 'Reservar plaza'}
+                <button onClick={() => !deshabilitado && handleReservar(modal.id, modal.fecha)} disabled={deshabilitado}
+                  style={{ width: '100%', border: 'none', borderRadius: '12px', padding: '14px', fontSize: '15px', fontWeight: '700', cursor: deshabilitado ? 'not-allowed' : 'pointer', fontFamily: 'system-ui', background: deshabilitado ? 'rgba(255,255,255,0.06)' : estaReservadoEnFecha(modal.id, modal.fecha) ? 'rgba(255,92,92,0.12)' : '#c8f542', color: deshabilitado ? '#555' : estaReservadoEnFecha(modal.id, modal.fecha) ? '#ff5c5c' : '#0f0f0f' }}>
+                  {procesando ? 'Procesando...' : llena ? 'Clase completa' : estaReservadoEnFecha(modal.id, modal.fecha) ? 'Cancelar reserva' : 'Reservar plaza'}
                 </button>
               )
             })()}

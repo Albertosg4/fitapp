@@ -101,6 +101,7 @@ export async function POST(req: Request) {
   // 4. Intentar RPC atómica con cliente autenticado como el usuario real
   //    token siempre existe aquí porque requireSocio ya lo validó
   if (token) {
+    console.info('[reservas/toggle] usando RPC')
     const supabaseUser = createUserClient(token)
 
     const { data: rpcData, error: rpcError } = await supabaseUser.rpc('toggle_reserva', {
@@ -132,7 +133,9 @@ export async function POST(req: Request) {
     }
 
     // rpcNoExiste → continuar al fallback JS
-    console.warn('[reservas/toggle] RPC toggle_reserva no disponible, usando fallback JS')
+    console.warn(`[reservas/toggle] usando fallback JS (motivo: ${rpcError?.code ?? 'desconocido'} ${rpcError?.message ?? ''})`)
+  } else {
+    console.warn('[reservas/toggle] usando fallback JS (motivo: token ausente tras requireSocio)')
   }
 
   // ─── FALLBACK JS ─────────────────────────────────────────────────────────────
