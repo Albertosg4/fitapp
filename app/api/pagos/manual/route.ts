@@ -71,8 +71,9 @@ export async function POST(req: Request) {
     const meses = MESES_POR_TIPO[tipo]
     const importe = esCortesia ? 0 : IMPORTES[tipo]
 
+    let nuevaFecha: string | null = null
     if (estadoFinal === 'pagado') {
-      const nuevaFecha = calcularNuevaFechaVencimiento(tipo, socioPerfil.membresia_vence)
+      nuevaFecha = calcularNuevaFechaVencimiento(tipo, socioPerfil.membresia_vence)
       await supabaseAdmin.from('perfiles').update({
         membresia_activa: true,
         membresia_vence: nuevaFecha,
@@ -92,7 +93,13 @@ export async function POST(req: Request) {
     }).select().single()
 
     if (error) throw error
-    return NextResponse.json({ ok: true, pago })
+    return NextResponse.json({
+      ok: true,
+      pago,
+      membresiaActualizada: estadoFinal === 'pagado',
+      nuevaFecha,
+      tipoMembresia: estadoFinal === 'pagado' ? tipo : null,
+    })
 
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : 'Error interno'
@@ -143,7 +150,12 @@ export async function PATCH(req: Request) {
       tipo_membresia: tipoPago,
     }).eq('id', pago.user_id)
 
-    return NextResponse.json({ ok: true, nuevaFecha })
+    return NextResponse.json({
+      ok: true,
+      nuevaFecha,
+      tipoMembresia: tipoPago,
+      membresiaActualizada: true,
+    })
 
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : 'Error interno'

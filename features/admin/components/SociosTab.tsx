@@ -21,7 +21,15 @@ async function getAuthHeaders(): Promise<HeadersInit> {
 // ─── Subcomponente: historial de pagos de un socio ───────────────────────────
 // Lee vía /api/pagos?userId=xxx (API protegida) en lugar de supabase.from directamente
 
-function SocioPagosAdmin({ userId, onRefresh }: { userId: string; onRefresh: () => void }) {
+function SocioPagosAdmin({
+  userId,
+  onRefresh,
+  onMembershipUpdated,
+}: {
+  userId: string
+  onRefresh: () => void
+  onMembershipUpdated?: (payload: { nuevaFecha: string; tipoMembresia?: string }) => void
+}) {
   const [pagos, setPagos] = useState<Pago[]>([])
   const [loading, setLoading] = useState(true)
   const [errorMsg, setErrorMsg] = useState('')
@@ -64,6 +72,12 @@ function SocioPagosAdmin({ userId, onRefresh }: { userId: string; onRefresh: () 
       if (!res.ok) {
         console.error('[SocioPagosAdmin] confirmar error:', data.error || res.status)
         return
+      }
+      if (data.membresiaActualizada && typeof data.nuevaFecha === 'string') {
+        onMembershipUpdated?.({
+          nuevaFecha: data.nuevaFecha,
+          tipoMembresia: typeof data.tipoMembresia === 'string' ? data.tipoMembresia : undefined,
+        })
       }
       await cargar()
       onRefresh()
@@ -212,6 +226,18 @@ export default function SociosTab({ socios, gymId: _gymId, onRefreshSocios }: Pr
         return
       }
       if (data.ok) {
+        if (data.membresiaActualizada && typeof data.nuevaFecha === 'string') {
+          setModalSocio((prev) => prev
+            ? {
+                ...prev,
+                membresia_activa: true,
+                membresia_vence: data.nuevaFecha,
+                tipo_membresia: typeof data.tipoMembresia === 'string'
+                  ? (data.tipoMembresia as Socio['tipo_membresia'])
+                  : prev.tipo_membresia,
+              }
+            : prev)
+        }
         const esCortesia = formPago.metodo === 'cortesia'
         setMsgPago(formPago.estado === 'pagado' || esCortesia
           ? `✅ ${esCortesia ? 'Cortesía registrada' : 'Pago registrado'}. Membresía renovada.`
@@ -307,7 +333,24 @@ export default function SociosTab({ socios, gymId: _gymId, onRefreshSocios }: Pr
               </div>
             )}
             {tabModal === 'historial' && <HistorialAsistencia userId={modalSocio.id} limit={100} compact={true} />}
-            {tabModal === 'pagos' && <SocioPagosAdmin userId={modalSocio.id} onRefresh={onRefreshSocios} />}
+            {tabModal === 'pagos' && (
+              <SocioPagosAdmin
+                userId={modalSocio.id}
+                onRefresh={onRefreshSocios}
+                onMembershipUpdated={({ nuevaFecha, tipoMembresia }) => {
+                  setModalSocio((prev) => prev
+                    ? {
+                        ...prev,
+                        membresia_activa: true,
+                        membresia_vence: nuevaFecha,
+                        tipo_membresia: tipoMembresia
+                          ? (tipoMembresia as Socio['tipo_membresia'])
+                          : prev.tipo_membresia,
+                      }
+                    : prev)
+                }}
+              />
+            )}
             <button onClick={() => setModalSocio(null)} style={{ width: '100%', border: '1px solid rgba(255,255,255,0.07)', borderRadius: '10px', padding: '12px', background: 'transparent', color: '#888', fontSize: '14px', cursor: 'pointer', fontFamily: 'system-ui', marginTop: '10px' }}>
               Cerrar
             </button>
