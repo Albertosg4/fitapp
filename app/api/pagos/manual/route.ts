@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase/admin'
+import { requireAdmin } from '@/lib/auth/requireAdmin'
 
 const MESES_POR_TIPO: Record<string, number> = {
   mensual: 1, trimestral: 3, semestral: 6, anual: 12,
@@ -9,16 +10,37 @@ const IMPORTE_POR_TIPO: Record<string, number> = {
 }
 
 export async function POST(req: Request) {
+  // Validar admin — gymId viene del token, no del cliente
+  const result = await requireAdmin(req)
+  if (result.error) return result.error
+  const { gymId } = result.context
+
   try {
-    const { userId, tipoMembresia, metodo, estado, notas, gymId } = await req.json()
+    const { userId, tipoMembresia, metodo, estado, notas } = await req.json()
     if (!userId || !tipoMembresia || !metodo) {
       return NextResponse.json({ error: 'Faltan parámetros' }, { status: 400 })
     }
 
+    // Verificar que el socio pertenece al mismo gymId del admin
+    const { data: socioPerfil, error: socioError } = await supabaseAdmin
+      .from('perfiles')
+      .select('id, gym_id')
+      .eq('id', userId)
+      .single()
+
+    if (socioError || !socioPerfil) {
+      return NextResponse.json({ error: 'Socio no encontrado' }, { status: 404 })
+    }
+
+    if (socioPerfil.gym_id !== gymId) {
+      return NextResponse.json({ error: 'Prohibido: el socio no pertenece a tu gimnasio' }, { status: 403 })
+    }
+
     const meses = MESES_POR_TIPO[tipoMembresia] || 1
     const importe = metodo === 'cortesia' ? 0 : (IMPORTE_POR_TIPO[tipoMembresia] || 0)
+    const estadoFinal = metodo === 'cortesia' ? 'pagado' : estado
 
-    if (estado === 'pagado' || metodo === 'cortesia') {
+    if (estadoFinal === 'pagado') {
       const { data: perfil } = await supabaseAdmin
         .from('perfiles').select('membresia_vence').eq('id', userId).single()
       const hoy = new Date()
@@ -32,8 +54,14 @@ export async function POST(req: Request) {
     }
 
     const { data: pago, error } = await supabaseAdmin.from('pagos').insert({
-      user_id: userId, gym_id: gymId || null, importe, tipo_membresia: tipoMembresia,
-      meses, metodo, estado: metodo === 'cortesia' ? 'pagado' : estado, notas: notas || null,
+      user_id: userId,
+      gym_id: gymId,       // siempre del token, nunca del cliente
+      importe,
+      tipo_membresia: tipoMembresia,
+      meses,
+      metodo,
+      estado: estadoFinal,
+      notas: notas || null,
     }).select().single()
 
     if (error) throw error
@@ -47,15 +75,32 @@ export async function POST(req: Request) {
 }
 
 export async function PATCH(req: Request) {
+  // Validar admin
+  const result = await requireAdmin(req)
+  if (result.error) return result.error
+  const { gymId } = result.context
+
   try {
     const { pagoId } = await req.json()
     if (!pagoId) return NextResponse.json({ error: 'Falta pagoId' }, { status: 400 })
 
-    const { data: pago } = await supabaseAdmin.from('pagos').select('*').eq('id', pagoId).single()
+    // Verificar que el pago pertenece al gymId del admin
+    const { data: pago } = await supabaseAdmin
+      .from('pagos')
+      .select('*')
+      .eq('id', pagoId)
+      .single()
+
     if (!pago) return NextResponse.json({ error: 'Pago no encontrado' }, { status: 404 })
 
-    await supabaseAdmin.from('pagos')
-      .update({ estado: 'pagado', fecha_pago: new Date().toISOString() }).eq('id', pagoId)
+    if (pago.gym_id !== gymId) {
+      return NextResponse.json({ error: 'Prohibido: el pago no pertenece a tu gimnasio' }, { status: 403 })
+    }
+
+    await supabaseAdmin
+      .from('pagos')
+      .update({ estado: 'pagado', fecha_pago: new Date().toISOString() })
+      .eq('id', pagoId)
 
     const { data: perfil } = await supabaseAdmin
       .from('perfiles').select('membresia_vence').eq('id', pago.user_id).single()
@@ -74,6 +119,7 @@ export async function PATCH(req: Request) {
 
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : 'Error interno'
+    console.error('[pagos/manual PATCH]', msg)
     return NextResponse.json({ error: msg }, { status: 500 })
   }
 }

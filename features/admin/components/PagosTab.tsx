@@ -1,5 +1,6 @@
 'use client'
 import { useState, useEffect, useCallback } from 'react'
+import { supabase } from '@/lib/supabase'
 import type { Pago } from '@/types/domain'
 
 const cardStyle = { background: '#1e1e1e', border: '1px solid rgba(255,255,255,0.07)', borderRadius: '12px', padding: '14px', marginBottom: '10px' }
@@ -7,6 +8,16 @@ const inputStyle = { width: '100%', background: '#181818', border: '1px solid rg
 
 interface Props {
   onSociosChange?: () => void
+}
+
+/** Obtiene el access_token de la sesión activa de Supabase */
+async function getAuthHeaders(): Promise<HeadersInit> {
+  const { data: { session } } = await supabase.auth.getSession()
+  const token = session?.access_token ?? ''
+  return {
+    'Content-Type': 'application/json',
+    'Authorization': `Bearer ${token}`,
+  }
 }
 
 export default function PagosTab({ onSociosChange }: Props) {
@@ -19,7 +30,8 @@ export default function PagosTab({ onSociosChange }: Props) {
   const cargar = useCallback(async () => {
     setLoading(true)
     try {
-      const res = await fetch('/api/pagos')
+      const headers = await getAuthHeaders()
+      const res = await fetch('/api/pagos', { headers })
       const data = await res.json()
       setPagos(data.pagos || [])
     } catch (err) {
@@ -36,9 +48,10 @@ export default function PagosTab({ onSociosChange }: Props) {
 
   const confirmarPago = async (pagoId: string) => {
     try {
+      const headers = await getAuthHeaders()
       await fetch('/api/pagos/manual', {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
         body: JSON.stringify({ pagoId }),
       })
       await cargar()

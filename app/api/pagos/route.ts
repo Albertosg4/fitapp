@@ -1,12 +1,18 @@
 import { NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase/admin'
+import { requireAdmin } from '@/lib/auth/requireAdmin'
 
-export async function GET() {
+export async function GET(req: Request) {
+  // Validar admin y obtener gymId desde el token — nunca desde el cliente
+  const result = await requireAdmin(req)
+  if (result.error) return result.error
+  const { gymId } = result.context
+
   try {
-    // Query sin JOIN — evita problemas de FK no declarada
     const { data: pagos, error } = await supabaseAdmin
       .from('pagos')
       .select('*')
+      .eq('gym_id', gymId)
       .order('fecha_pago', { ascending: false })
 
     if (error) throw error
@@ -15,7 +21,7 @@ export async function GET() {
       return NextResponse.json({ pagos: [] })
     }
 
-    // Traer nombres de perfiles por separado
+    // Traer nombres de perfiles por separado (evita problema de FK no declarada)
     const userIds = [...new Set(pagos.map(p => p.user_id))]
     const { data: perfiles } = await supabaseAdmin
       .from('perfiles')
@@ -33,7 +39,7 @@ export async function GET() {
 
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : 'Error interno'
-    console.error('[pagos] Error:', msg)
+    console.error('[pagos GET] Error:', msg)
     return NextResponse.json({ error: msg }, { status: 500 })
   }
 }

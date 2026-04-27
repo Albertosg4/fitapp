@@ -8,6 +8,16 @@ import type { Socio, Pago } from '@/types/domain'
 const cardStyle = { background: '#1e1e1e', border: '1px solid rgba(255,255,255,0.07)', borderRadius: '12px', padding: '14px', marginBottom: '10px' }
 const inputStyle = { width: '100%', background: '#181818', border: '1px solid rgba(255,255,255,0.07)', borderRadius: '10px', padding: '10px 14px', color: '#f0f0f0', fontSize: '14px', outline: 'none', boxSizing: 'border-box' as const, fontFamily: 'system-ui' }
 
+/** Obtiene el access_token de la sesión activa de Supabase */
+async function getAuthHeaders(): Promise<HeadersInit> {
+  const { data: { session } } = await supabase.auth.getSession()
+  const token = session?.access_token ?? ''
+  return {
+    'Content-Type': 'application/json',
+    'Authorization': `Bearer ${token}`,
+  }
+}
+
 function SocioPagosAdmin({ userId, onRefresh }: { userId: string; onRefresh: () => void }) {
   const [pagos, setPagos] = useState<Pago[]>([])
   const [loading, setLoading] = useState(true)
@@ -27,9 +37,10 @@ function SocioPagosAdmin({ userId, onRefresh }: { userId: string; onRefresh: () 
 
   const confirmar = async (pagoId: string) => {
     try {
+      const headers = await getAuthHeaders()
       await fetch('/api/pagos/manual', {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
         body: JSON.stringify({ pagoId }),
       })
       await cargar()
@@ -103,7 +114,8 @@ interface Props {
   onRefreshSocios: () => void
 }
 
-export default function SociosTab({ socios, gymId, onRefreshSocios }: Props) {
+// gymId se mantiene en Props por compatibilidad con el padre; el server lo deriva del token
+export default function SociosTab({ socios, gymId: _gymId, onRefreshSocios }: Props) { // eslint-disable-line @typescript-eslint/no-unused-vars
   const [modalSocio, setModalSocio] = useState<Socio | null>(null)
   const [tabModal, setTabModal] = useState<'info' | 'historial' | 'pagos'>('info')
   const [modalPago, setModalPago] = useState<Socio | null>(null)
@@ -132,11 +144,13 @@ export default function SociosTab({ socios, gymId, onRefreshSocios }: Props) {
     if (!modalPago) return
     setGuardandoPago(true); setMsgPago('')
     try {
+      const headers = await getAuthHeaders()
+      // gymId ya NO se envía desde el cliente — el servidor lo deriva del token
       const res = await fetch('/api/pagos/manual', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
         body: JSON.stringify({
-          userId: modalPago.id, gymId,
+          userId: modalPago.id,
           tipoMembresia: formPago.tipoMembresia,
           metodo: formPago.metodo,
           estado: formPago.metodo === 'cortesia' ? 'pagado' : formPago.estado,
