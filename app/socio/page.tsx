@@ -78,35 +78,7 @@ function SocioPageInner() {
     setReservaError('')
     const result = await reservar(horarioId, fecha, userId, horariosDelDia)
     if (!result.ok) return
-
-    const reservadoDesdeCarga =
-      result.reservasActualizadas?.some(r => r.horario_id === horarioId && String(r.fecha).slice(0, 10) === fecha) ?? false
-    const reservadoEnEstadoActual = estaReservadoEnFecha(horarioId, fecha)
-    console.log('[socio/page] estaReservadoEnFecha resultado:', {
-      horarioId,
-      fecha,
-      accion: result.accion,
-      reservadoDesdeCarga,
-      reservadoEnEstadoActual,
-      sesionId: result.sesionId,
-    })
-
-    if (result.accion === 'confirmada') {
-      if (reservadoDesdeCarga || reservadoEnEstadoActual) {
-        setModal(null)
-      } else {
-        setReservaError('La reserva se procesó pero no se reflejó en pantalla. Intenta reabrir la clase.')
-      }
-      return
-    }
-
-    if (result.accion === 'cancelada') {
-      if (!reservadoDesdeCarga) {
-        setModal(null)
-      } else {
-        setReservaError('La cancelación se procesó pero aún aparece como reservada. Reintenta en unos segundos.')
-      }
-    }
+    if (result.accion === 'confirmada' || result.accion === 'cancelada') setModal(null)
   }
 
   const pagarMembresia = async (tipoMembresia: string) => {

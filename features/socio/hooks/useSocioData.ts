@@ -123,7 +123,6 @@ export function useSocioData() {
     }
 
     setReservas(completas)
-    console.log('[useSocioData] reservas cargadas después de cargarReservas:', completas)
     return { ok: true, reservas: completas }
   }, [])
 
@@ -239,12 +238,48 @@ export function useSocioData() {
       })
 
       const data = await res.json()
-      console.log('[useSocioData] respuesta /api/reservas/toggle:', data)
       if (!res.ok) {
         const msg = normalizarErrorReserva(res.status, data.error)
         setReservaError(msg)
         console.error('[useSocioData] reservar:', msg)
         return { ok: false, error: msg }
+      }
+
+      const sesionId = data.sesionId ? String(data.sesionId) : undefined
+      const reservaCanonica = data.reserva
+        ? {
+          id: String(data.reserva.id),
+          sesion_id: String(data.reserva.sesion_id),
+          horario_id: data.reserva.horario_id ? String(data.reserva.horario_id) : null,
+          actividad_id: data.reserva.actividad_id ? String(data.reserva.actividad_id) : null,
+          fecha: String(data.reserva.fecha ?? '').slice(0, 10),
+        }
+        : null
+
+      if (data.accion === 'confirmada' && reservaCanonica) {
+        setReservas(prev => {
+          const filtradas = prev.filter(r =>
+            r.sesion_id !== reservaCanonica.sesion_id
+            && !(r.horario_id === reservaCanonica.horario_id && String(r.fecha).slice(0, 10) === reservaCanonica.fecha)
+          )
+          return [...filtradas, reservaCanonica]
+        })
+      } else if (data.accion === 'cancelada') {
+        setReservas(prev => prev.filter(r =>
+          !(sesionId && r.sesion_id === sesionId)
+          && !(r.horario_id === horarioId && String(r.fecha).slice(0, 10) === fecha)
+        ))
+      }
+
+      if (typeof data.ocupacion === 'number') {
+        const keyOcupacion = `${horarioId}_${fecha}`
+        setOcupacion(prev => ({
+          ...prev,
+          [keyOcupacion]: {
+            sesionId: sesionId ?? prev[keyOcupacion]?.sesionId ?? '',
+            count: data.ocupacion,
+          },
+        }))
       }
 
       const horariosRecarga = horariosDiaActuales.length > 0
@@ -259,7 +294,7 @@ export function useSocioData() {
       return {
         ok: true,
         accion: data.accion as ReservaAction | undefined,
-        sesionId: data.sesionId ? String(data.sesionId) : undefined,
+        sesionId,
         reservasActualizadas: cargaReservasResult.reservas,
       }
     } catch {

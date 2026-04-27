@@ -50,6 +50,86 @@ function rpcErrorStatus(msg: string | undefined): number {
   return 400
 }
 
+type ToggleAccion = 'confirmada' | 'cancelada'
+
+async function buildCanonicalToggleResponse(
+  userId: string,
+  accion: ToggleAccion,
+  sesionId?: string,
+  horarioId?: string,
+  fecha?: string
+) {
+  let sesion: { id: string; horario_id: string; actividad_id: string | null; fecha: string } | null = null
+  let sesionError: { message: string } | null = null
+
+  if (sesionId) {
+    const result = await supabaseAdmin
+      .from('sesiones')
+      .select('id, horario_id, actividad_id, fecha')
+      .eq('id', sesionId)
+      .maybeSingle()
+    sesion = result.data
+    sesionError = result.error
+  } else if (horarioId && fecha) {
+    const result = await supabaseAdmin
+      .from('sesiones')
+      .select('id, horario_id, actividad_id, fecha')
+      .eq('horario_id', horarioId)
+      .eq('fecha', fecha)
+      .maybeSingle()
+    sesion = result.data
+    sesionError = result.error
+  }
+
+  if (sesionError || !sesion) {
+    return { error: 'No se pudo cargar la sesión tras procesar la reserva' }
+  }
+
+  const { count: ocupacion, error: ocupacionError } = await supabaseAdmin
+    .from('reservas')
+    .select('id', { count: 'exact', head: true })
+    .eq('sesion_id', sesion.id)
+    .eq('estado', 'confirmada')
+
+  if (ocupacionError) {
+    return { error: 'No se pudo calcular la ocupación actual' }
+  }
+
+  const { data: reservaConfirmada, error: reservaError } = await supabaseAdmin
+    .from('reservas')
+    .select('id, sesion_id')
+    .eq('sesion_id', sesion.id)
+    .eq('user_id', userId)
+    .eq('estado', 'confirmada')
+    .maybeSingle()
+
+  if (reservaError) {
+    return { error: 'No se pudo cargar la reserva confirmada del usuario' }
+  }
+
+  const reserva = reservaConfirmada
+    ? {
+      id: reservaConfirmada.id,
+      sesion_id: String(reservaConfirmada.sesion_id),
+      horario_id: String(sesion.horario_id),
+      actividad_id: sesion.actividad_id ? String(sesion.actividad_id) : null,
+      fecha: String(sesion.fecha).slice(0, 10),
+    }
+    : null
+
+  if (accion === 'confirmada' && !reserva) {
+    return { error: 'La reserva se confirmó pero no se encontró en estado confirmada' }
+  }
+
+  return {
+    ok: true as const,
+    accion,
+    sesionId: String(sesion.id),
+    reserva,
+    ocupacion: ocupacion ?? 0,
+  }
+}
+
 /**
  * POST /api/reservas/toggle
  *
@@ -124,7 +204,18 @@ export async function POST(req: Request) {
         return NextResponse.json({ error: res.error }, { status: rpcErrorStatus(res.error) })
       }
       console.info('[reservas/toggle] RPC ejecutada correctamente')
-      return NextResponse.json({ ok: true, accion: res.accion, sesionId: res.sesion_id })
+      const canonico = await buildCanonicalToggleResponse(
+        userId,
+        res.accion as ToggleAccion,
+        res.sesion_id,
+        horarioId,
+        fecha
+      )
+      if ('error' in canonico) {
+        console.error('[reservas/toggle] canonical RPC:', canonico.error)
+        return NextResponse.json({ error: canonico.error }, { status: 500 })
+      }
+      return NextResponse.json(canonico)
     }
 
     if (rpcError && !rpcNoExiste) {
@@ -191,7 +282,12 @@ export async function POST(req: Request) {
         console.error('[reservas/toggle] cancelar:', cancelError.message)
         return NextResponse.json({ error: 'Error al cancelar la reserva' }, { status: 500 })
       }
-      return NextResponse.json({ ok: true, accion: 'cancelada' })
+      const canonico = await buildCanonicalToggleResponse(userId, 'cancelada', sesionExistente.id, horarioId, fecha)
+      if ('error' in canonico) {
+        console.error('[reservas/toggle] canonical fallback cancelada:', canonico.error)
+        return NextResponse.json({ error: canonico.error }, { status: 500 })
+      }
+      return NextResponse.json(canonico)
     }
   }
 
@@ -267,5 +363,10 @@ export async function POST(req: Request) {
     }
   }
 
-  return NextResponse.json({ ok: true, accion: 'confirmada', sesionId })
+  const canonico = await buildCanonicalToggleResponse(userId, 'confirmada', sesionId, horarioId, fecha)
+  if ('error' in canonico) {
+    console.error('[reservas/toggle] canonical fallback confirmada:', canonico.error)
+    return NextResponse.json({ error: canonico.error }, { status: 500 })
+  }
+  return NextResponse.json(canonico)
 }
