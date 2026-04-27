@@ -1,5 +1,5 @@
 'use client'
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useRef } from 'react'
 import { supabase } from '@/lib/supabase'
 import QRCode from 'qrcode'
 import type { Socio } from '@/types/domain'
@@ -35,6 +35,7 @@ export function useSocioData() {
   const [loading, setLoading] = useState(true)
   const [reservaError, setReservaError] = useState<string>('')
   const [reservasEnCurso, setReservasEnCurso] = useState<Record<string, boolean>>({})
+  const reservasEnCursoRef = useRef<Set<string>>(new Set())
 
   const getReservaKey = useCallback((horarioId: string, fecha: string) => `${horarioId}_${fecha}`, [])
 
@@ -166,8 +167,9 @@ export function useSocioData() {
     horariosDiaActuales: HorarioSocio[]
   ): Promise<{ ok: boolean; error?: string }> => {
     const key = getReservaKey(horarioId, fecha)
-    if (reservasEnCurso[key]) return { ok: false, error: 'Ya estamos procesando esta reserva.' }
+    if (reservasEnCursoRef.current.has(key)) return { ok: false, error: 'Ya estamos procesando esta reserva.' }
 
+    reservasEnCursoRef.current.add(key)
     setReservasEnCurso(prev => ({ ...prev, [key]: true }))
     setReservaError('')
 
@@ -208,13 +210,14 @@ export function useSocioData() {
       setReservaError(msg)
       return { ok: false, error: msg }
     } finally {
+      reservasEnCursoRef.current.delete(key)
       setReservasEnCurso(prev => {
         const next = { ...prev }
         delete next[key]
         return next
       })
     }
-  }, [actualizarOcupacion, cargarReservas, getReservaKey, horarios, normalizarErrorReserva, reservasEnCurso])
+  }, [actualizarOcupacion, cargarReservas, getReservaKey, horarios, normalizarErrorReserva])
 
   const getHorariosDelDia = useCallback((fecha: string, todosHorarios: HorarioSocio[]): HorarioSocio[] => {
     const diaSemana = getDiaSemanaLunesPrimero(parseLocalDate(fecha))

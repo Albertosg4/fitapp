@@ -101,7 +101,7 @@ export async function POST(req: Request) {
   // 4. Intentar RPC atómica con cliente autenticado como el usuario real
   //    token siempre existe aquí porque requireSocio ya lo validó
   if (token) {
-    console.info('[reservas/toggle] usando RPC')
+    console.info('[reservas/toggle] intentando RPC')
     const supabaseUser = createUserClient(token)
 
     const { data: rpcData, error: rpcError } = await supabaseUser.rpc('toggle_reserva', {
@@ -123,6 +123,7 @@ export async function POST(req: Request) {
       if (!res.ok) {
         return NextResponse.json({ error: res.error }, { status: rpcErrorStatus(res.error) })
       }
+      console.info('[reservas/toggle] RPC ejecutada correctamente')
       return NextResponse.json({ ok: true, accion: res.accion, sesionId: res.sesion_id })
     }
 
