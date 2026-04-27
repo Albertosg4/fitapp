@@ -28,29 +28,80 @@ export default function ActividadesTab({ gymId }: Props) {
 
   useEffect(() => { cargar() }, [cargar])
 
+  const getAuthHeaders = useCallback(async () => {
+    const { data, error } = await supabase.auth.getSession()
+    if (error) throw new Error(error.message)
+    const token = data.session?.access_token
+    if (!token) throw new Error('No se encontró sesión activa')
+
+    return {
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    }
+  }, [])
+
   const crear = async () => {
     if (!form.nombre.trim()) { setMsg('❌ El nombre es obligatorio'); return }
     setGuardando(true); setMsg('')
-    const { error } = await supabase.from('actividades').insert({
-      gym_id: gymId,
-      nombre: form.nombre.trim(),
-      descripcion: form.descripcion.trim() || null,
-      color: form.color,
-    })
-    if (error) { setMsg('❌ Error: ' + error.message) }
-    else {
+    try {
+      const headers = await getAuthHeaders()
+      const res = await fetch('/api/admin/actividades', {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({
+          nombre: form.nombre,
+          descripcion: form.descripcion,
+          color: form.color,
+        }),
+      })
+
+      const json = await res.json().catch(() => null) as { error?: string } | null
+      if (!res.ok) {
+        const errorMsg = json?.error || 'Error al crear actividad'
+        console.error('[ActividadesTab] crear:', errorMsg)
+        setMsg(`❌ ${errorMsg}`)
+        return
+      }
+
       setMsg('✅ Actividad creada')
       setForm({ nombre: '', descripcion: '', color: '#c8f542' })
       await cargar()
+    } catch (error: unknown) {
+      const errorMsg = error instanceof Error ? error.message : 'Error inesperado'
+      console.error('[ActividadesTab] crear:', errorMsg)
+      setMsg(`❌ ${errorMsg}`)
+    } finally {
+      setGuardando(false)
     }
-    setGuardando(false)
   }
 
   const toggleActiva = async (actividad: Actividad) => {
-    const { error } = await supabase
-      .from('actividades').update({ activa: !actividad.activa }).eq('id', actividad.id)
-    if (error) { console.error('[ActividadesTab] toggleActiva:', error.message); return }
-    await cargar()
+    try {
+      const headers = await getAuthHeaders()
+      const res = await fetch('/api/admin/actividades', {
+        method: 'PATCH',
+        headers,
+        body: JSON.stringify({
+          id: actividad.id,
+          activa: !actividad.activa,
+        }),
+      })
+
+      const json = await res.json().catch(() => null) as { error?: string } | null
+      if (!res.ok) {
+        const errorMsg = json?.error || 'Error al actualizar actividad'
+        console.error('[ActividadesTab] toggleActiva:', errorMsg)
+        setMsg(`❌ ${errorMsg}`)
+        return
+      }
+
+      setMsg('')
+      await cargar()
+    } catch (error: unknown) {
+      const errorMsg = error instanceof Error ? error.message : 'Error inesperado'
+      console.error('[ActividadesTab] toggleActiva:', errorMsg)
+      setMsg(`❌ ${errorMsg}`)
+    }
   }
 
   if (loading) return <p style={{ color: '#888', textAlign: 'center', padding: '40px 0', fontSize: '13px' }}>Cargando...</p>
