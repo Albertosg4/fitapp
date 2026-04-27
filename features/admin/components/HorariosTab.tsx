@@ -51,35 +51,85 @@ export default function HorariosTab({ gymId }: Props) {
 
   useEffect(() => { cargar() }, [cargar])
 
+  const getAuthHeaders = useCallback(async () => {
+    const { data, error } = await supabase.auth.getSession()
+    if (error) throw new Error(error.message)
+    const token = data.session?.access_token
+    if (!token) throw new Error('No se encontró sesión activa')
+
+    return {
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    }
+  }, [])
+
   const crear = async () => {
     if (!form.actividad_id) { setMsg('❌ Selecciona una actividad'); return }
     setGuardando(true); setMsg('')
-    const { error } = await supabase.from('horarios_clase').insert({
-      gym_id: gymId,
-      actividad_id: form.actividad_id,
-      dia_semana: form.dia_semana,
-      hora_inicio: form.hora_inicio,
-      duracion_min: form.duracion_min,
-      aforo_max: form.aforo_max,
-      profesor: form.profesor.trim() || null,
-      fecha_inicio: form.fecha_inicio,
-      fecha_fin: form.fecha_fin || null,
-    })
-    if (error) { setMsg('❌ Error: ' + error.message) }
-    else {
+    try {
+      const headers = await getAuthHeaders()
+      const res = await fetch('/api/admin/horarios', {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({
+          actividad_id: form.actividad_id,
+          dia_semana: form.dia_semana,
+          hora_inicio: form.hora_inicio,
+          duracion_min: form.duracion_min,
+          aforo_max: form.aforo_max,
+          profesor: form.profesor,
+          fecha_inicio: form.fecha_inicio,
+          fecha_fin: form.fecha_fin || null,
+        }),
+      })
+
+      const json = await res.json().catch(() => null) as { error?: string } | null
+      if (!res.ok) {
+        const errorMsg = json?.error || 'Error al crear horario'
+        console.error('[HorariosTab] crear:', errorMsg)
+        setMsg(`❌ ${errorMsg}`)
+        return
+      }
+
       setMsg('✅ Horario creado')
       setForm(f => ({ ...f, profesor: '', fecha_fin: '' }))
       await cargar()
+    } catch (error: unknown) {
+      const errorMsg = error instanceof Error ? error.message : 'Error inesperado'
+      console.error('[HorariosTab] crear:', errorMsg)
+      setMsg(`❌ ${errorMsg}`)
+    } finally {
+      setGuardando(false)
     }
-    setGuardando(false)
   }
 
   const toggleActivo = async (h: HorarioConActividad) => {
-    // Desactivar no borra reservas existentes
-    const { error } = await supabase
-      .from('horarios_clase').update({ activo: !h.activo }).eq('id', h.id)
-    if (error) { console.error('[HorariosTab] toggleActivo:', error.message); return }
-    await cargar()
+    try {
+      const headers = await getAuthHeaders()
+      const res = await fetch('/api/admin/horarios', {
+        method: 'PATCH',
+        headers,
+        body: JSON.stringify({
+          id: h.id,
+          activo: !h.activo,
+        }),
+      })
+
+      const json = await res.json().catch(() => null) as { error?: string } | null
+      if (!res.ok) {
+        const errorMsg = json?.error || 'Error al actualizar horario'
+        console.error('[HorariosTab] toggleActivo:', errorMsg)
+        setMsg(`❌ ${errorMsg}`)
+        return
+      }
+
+      setMsg('')
+      await cargar()
+    } catch (error: unknown) {
+      const errorMsg = error instanceof Error ? error.message : 'Error inesperado'
+      console.error('[HorariosTab] toggleActivo:', errorMsg)
+      setMsg(`❌ ${errorMsg}`)
+    }
   }
 
   if (loading) return <p style={{ color: '#888', textAlign: 'center', padding: '40px 0', fontSize: '13px' }}>Cargando...</p>
