@@ -1,27 +1,78 @@
 import { NextResponse } from 'next/server'
+import { createClient } from '@supabase/supabase-js'
 import { supabaseAdmin } from '@/lib/supabase/admin'
 import { requireSocio } from '@/lib/auth/requireSocio'
 import { isMembresiaValida } from '@/lib/domain/membresias'
 
 /**
+ * Crea un cliente Supabase autenticado como el usuario real.
+ *
+ * Por qué NO usar supabaseAdmin para la RPC:
+ *   supabaseAdmin usa la service_role key, que bypasea auth.
+ *   Cuando PostgreSQL ejecuta la RPC con service_role, auth.uid() = NULL.
+ *   La función toggle_reserva depende de auth.uid() para identificar al socio.
+ *
+ * Solución: crear un cliente con la anon key e inyectar el JWT del usuario
+ *   en el header Authorization. PostgREST lo reenvía a PostgreSQL, que
+ *   lo decodifica y popula auth.uid() con el sub del token.
+ *
+ * Este cliente tiene los permisos del usuario (RLS activo),
+ * NO los permisos de service_role.
+ */
+function createUserClient(token: string) {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      global: {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      },
+      auth: {
+        persistSession: false,   // servidor: no persistir sesión en memoria
+        autoRefreshToken: false, // servidor: no refrescar token automáticamente
+      },
+    }
+  )
+}
+
+/**
+ * Mapea el mensaje de error de la RPC al HTTP status correcto.
+ */
+function rpcErrorStatus(msg: string | undefined): number {
+  if (!msg) return 500
+  if (msg.includes('caducad') || msg.includes('activ') || msg.includes('otro gimnasio')) return 403
+  if (msg.includes('Aforo'))       return 409
+  if (msg.includes('no encontrad')) return 404
+  if (msg.includes('cancelada'))  return 400
+  if (msg.includes('Ya tienes'))  return 409
+  return 400
+}
+
+/**
  * POST /api/reservas/toggle
  *
- * Estrategia de ejecución:
- * 1. Intenta usar la RPC toggle_reserva (función PostgreSQL atómica con advisory lock).
- *    Si existe en BD, toda la lógica se ejecuta dentro de una transacción serializada.
- * 2. Si la RPC no existe o falla con 'PGRST202' (función no encontrada),
- *    cae al fallback: lógica JavaScript secuencial (comportamiento anterior).
- *
- * Esto permite desplegar el código antes de aplicar el SQL de Fase 3,
- * sin romper el comportamiento actual.
+ * Estrategia:
+ * 1. requireSocio valida el Bearer token y devuelve userId/gymId/membresía.
+ * 2. Se crea un cliente Supabase con la anon key + JWT del usuario.
+ *    Con este cliente, auth.uid() en PostgreSQL = userId real del socio.
+ * 3. Se llama a la RPC toggle_reserva con ese cliente autenticado.
+ *    Si la RPC no existe (PGRST202 / función no encontrada), se cae al
+ *    fallback JS que usa supabaseAdmin pero aplica las mismas validaciones.
+ * 4. El fallback NO usa auth.uid() — trabaja con userId extraído del token
+ *    via requireSocio, por lo que es seguro aunque use service_role.
  */
 export async function POST(req: Request) {
-  // 1. Validar socio autenticado
-  const result = await requireSocio(req)
-  if (result.error) return result.error
-  const { userId, gymId, membresiaActiva, membresiaVence } = result.context
+  // 1. Validar socio y extraer token + contexto
+  const authHeader = req.headers.get('Authorization') ?? ''
+  const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : null
 
-  // 2. Validar membresía activa (validación rápida antes de llamar a BD)
+  const socioResult = await requireSocio(req)
+  if (socioResult.error) return socioResult.error
+  const { userId, gymId, membresiaActiva, membresiaVence } = socioResult.context
+
+  // 2. Validar membresía antes de tocar BD
   if (!isMembresiaValida({ membresia_activa: membresiaActiva, membresia_vence: membresiaVence })) {
     return NextResponse.json(
       { error: 'Tu membresía ha caducado o no está activa. Renuévala para reservar.' },
@@ -29,7 +80,7 @@ export async function POST(req: Request) {
     )
   }
 
-  // 3. Leer y validar payload
+  // 3. Validar payload
   let horarioId: string
   let fecha: string
   try {
@@ -47,42 +98,48 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'fecha requerida (YYYY-MM-DD)' }, { status: 400 })
   }
 
-  // 4. Intentar RPC atómica (disponible tras aplicar fase3_seguridad.sql)
-  const { data: rpcData, error: rpcError } = await supabaseAdmin.rpc('toggle_reserva', {
-    p_horario_id: horarioId,
-    p_fecha: fecha,
-  })
+  // 4. Intentar RPC atómica con cliente autenticado como el usuario real
+  //    token siempre existe aquí porque requireSocio ya lo validó
+  if (token) {
+    const supabaseUser = createUserClient(token)
 
-  // Si la función RPC no existe aún, caer al fallback JS
-  const rpcNoExiste = rpcError && (
-    rpcError.code === 'PGRST202' ||         // función no encontrada via PostgREST
-    rpcError.message?.includes('toggle_reserva') ||
-    rpcError.message?.includes('does not exist')
-  )
+    const { data: rpcData, error: rpcError } = await supabaseUser.rpc('toggle_reserva', {
+      p_horario_id: horarioId,
+      p_fecha: fecha,
+    })
 
-  if (!rpcNoExiste && !rpcError) {
-    // RPC ejecutada correctamente — devolver su resultado
-    const result = rpcData as { ok: boolean; error?: string; accion?: string; sesion_id?: string }
-    if (!result.ok) {
-      const status = result.error?.includes('caducad') || result.error?.includes('activ') ? 403
-        : result.error?.includes('Aforo') ? 409
-        : result.error?.includes('otro gimnasio') ? 403
-        : 400
-      return NextResponse.json({ error: result.error }, { status })
+    const rpcNoExiste =
+      rpcError != null && (
+        rpcError.code === 'PGRST202' ||
+        rpcError.message?.includes('toggle_reserva') ||
+        rpcError.message?.includes('does not exist') ||
+        rpcError.message?.includes('Could not find')
+      )
+
+    if (!rpcError && rpcData !== null) {
+      // RPC ejecutada — interpretar resultado
+      const res = rpcData as { ok: boolean; error?: string; accion?: string; sesion_id?: string }
+      if (!res.ok) {
+        return NextResponse.json({ error: res.error }, { status: rpcErrorStatus(res.error) })
+      }
+      return NextResponse.json({ ok: true, accion: res.accion, sesionId: res.sesion_id })
     }
-    return NextResponse.json({ ok: true, accion: result.accion, sesionId: result.sesion_id })
+
+    if (rpcError && !rpcNoExiste) {
+      // Error real de BD (no "función no encontrada")
+      console.error('[reservas/toggle] RPC error:', rpcError.message)
+      return NextResponse.json({ error: 'Error al procesar la reserva' }, { status: 500 })
+    }
+
+    // rpcNoExiste → continuar al fallback JS
+    console.warn('[reservas/toggle] RPC toggle_reserva no disponible, usando fallback JS')
   }
 
-  if (rpcError && !rpcNoExiste) {
-    // Error real de la RPC (no "función no encontrada")
-    console.error('[reservas/toggle] RPC error:', rpcError.message)
-    return NextResponse.json({ error: 'Error al procesar la reserva' }, { status: 500 })
-  }
+  // ─── FALLBACK JS ─────────────────────────────────────────────────────────────
+  // Usa supabaseAdmin (service_role) pero NO depende de auth.uid():
+  // todas las validaciones usan userId/gymId extraídos por requireSocio del JWT.
 
-  // ─── FALLBACK: lógica JS secuencial (pre-fase3) ──────────────────────────────
-  console.warn('[reservas/toggle] RPC no disponible, usando fallback JS')
-
-  // 5. Validar que el horario pertenece al mismo gym_id del socio
+  // 5. Validar horario
   const { data: horario, error: horarioError } = await supabaseAdmin
     .from('horarios_clase')
     .select('id, gym_id, actividad_id, hora_inicio, duracion_min, aforo_max, profesor, activo')
@@ -99,7 +156,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'Este horario no está activo' }, { status: 400 })
   }
 
-  // 6. Buscar sesión materializada
+  // 6. Buscar sesión
   const { data: sesionExistente } = await supabaseAdmin
     .from('sesiones')
     .select('id, cancelada')
@@ -111,7 +168,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'Esta sesión está cancelada' }, { status: 400 })
   }
 
-  // 7. Cancelar si ya existe reserva confirmada
+  // 7. Cancelar si reserva confirmada existe
   if (sesionExistente) {
     const { data: reservaExistente } = await supabaseAdmin
       .from('reservas')
@@ -134,7 +191,7 @@ export async function POST(req: Request) {
     }
   }
 
-  // 8. Materializar sesión si no existe
+  // 8. Materializar sesión
   let sesionId: string
   if (sesionExistente) {
     sesionId = sesionExistente.id
@@ -172,7 +229,6 @@ export async function POST(req: Request) {
   if (aforoError) {
     return NextResponse.json({ error: 'Error al verificar aforo' }, { status: 500 })
   }
-
   if ((ocupadas ?? 0) >= horario.aforo_max) {
     return NextResponse.json({ error: 'Aforo completo. No hay plazas disponibles.' }, { status: 409 })
   }
