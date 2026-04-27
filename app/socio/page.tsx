@@ -77,10 +77,36 @@ function SocioPageInner() {
     if (!userId) return
     setReservaError('')
     const result = await reservar(horarioId, fecha, userId, horariosDelDia)
-    if (result.ok) {
-      setModal(null)
+    if (!result.ok) return
+
+    const reservadoDesdeCarga =
+      result.reservasActualizadas?.some(r => r.horario_id === horarioId && String(r.fecha).slice(0, 10) === fecha) ?? false
+    const reservadoEnEstadoActual = estaReservadoEnFecha(horarioId, fecha)
+    console.log('[socio/page] estaReservadoEnFecha resultado:', {
+      horarioId,
+      fecha,
+      accion: result.accion,
+      reservadoDesdeCarga,
+      reservadoEnEstadoActual,
+      sesionId: result.sesionId,
+    })
+
+    if (result.accion === 'confirmada') {
+      if (reservadoDesdeCarga || reservadoEnEstadoActual) {
+        setModal(null)
+      } else {
+        setReservaError('La reserva se procesó pero no se reflejó en pantalla. Intenta reabrir la clase.')
+      }
+      return
     }
-    // Si hay error, el modal permanece abierto y reservaError se muestra en la UI
+
+    if (result.accion === 'cancelada') {
+      if (!reservadoDesdeCarga) {
+        setModal(null)
+      } else {
+        setReservaError('La cancelación se procesó pero aún aparece como reservada. Reintenta en unos segundos.')
+      }
+    }
   }
 
   const pagarMembresia = async (tipoMembresia: string) => {
@@ -105,8 +131,10 @@ function SocioPageInner() {
   const estadoMembresia = perfil ? getEstadoMembresiaAdmin(perfil) : 'ok'
   const diasRestantes = perfil?.membresia_vence ? getDiasRestantes(perfil.membresia_vence) : 0
 
+  const normalizarFechaReserva = (value: string) => String(value).slice(0, 10)
+
   const estaReservadoEnFecha = (horarioId: string, fecha: string) =>
-    reservas.some(r => r.horario_id === horarioId && r.fecha === fecha)
+    reservas.some(r => r.horario_id === horarioId && normalizarFechaReserva(r.fecha) === fecha)
 
   if (loading) return (
     <div style={{ minHeight: '100vh', background: '#0f0f0f', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>

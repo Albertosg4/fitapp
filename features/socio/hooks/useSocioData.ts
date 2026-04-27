@@ -25,6 +25,8 @@ export interface ReservaLocal {
   fecha: string
 }
 
+type ReservaAction = 'confirmada' | 'cancelada'
+
 export function useSocioData() {
   const [perfil, setPerfil] = useState<Socio | null>(null)
   const [horarios, setHorarios] = useState<HorarioSocio[]>([])
@@ -54,15 +56,20 @@ export function useSocioData() {
     return rawError || `Error ${status}`
   }, [])
 
-  const cargarReservas = useCallback(async (uid: string) => {
-    const { data } = await supabase
+  const cargarReservas = useCallback(async (uid: string): Promise<{ ok: boolean; reservas: ReservaLocal[]; error?: string }> => {
+    const { data, error } = await supabase
       .from('reservas')
       .select('id, sesion_id, estado, sesiones(horario_id, actividad_id, fecha)')
       .eq('user_id', uid)
       .eq('estado', 'confirmada')
 
+    if (error) {
+      console.error('[useSocioData] cargarReservas error:', error.message)
+      return { ok: false, reservas: [], error: error.message }
+    }
+
     type RawR = { id: string; sesion_id: string; sesiones: unknown }
-    setReservas(((data || []) as RawR[]).map(r => {
+    const base = ((data || []) as RawR[]).map(r => {
       const s = (Array.isArray(r.sesiones) ? r.sesiones[0] : r.sesiones) as {
         horario_id: string | null
         actividad_id: string | null
@@ -71,12 +78,53 @@ export function useSocioData() {
 
       return {
         id: r.id,
-        sesion_id: r.sesion_id,
-        horario_id: s?.horario_id ?? null,
-        actividad_id: s?.actividad_id ?? null,
-        fecha: s?.fecha ?? '',
+        sesion_id: String(r.sesion_id),
+        horario_id: s?.horario_id ? String(s.horario_id) : null,
+        actividad_id: s?.actividad_id ? String(s.actividad_id) : null,
+        fecha: String(s?.fecha ?? '').slice(0, 10),
       }
-    }))
+    })
+
+    const faltanSesiones = base.filter(r => !r.horario_id || !r.fecha).map(r => r.sesion_id)
+    let completas = base
+
+    if (faltanSesiones.length > 0) {
+      const { data: sesionesData, error: sesionesError } = await supabase
+        .from('sesiones')
+        .select('id, horario_id, actividad_id, fecha')
+        .in('id', faltanSesiones)
+
+      if (sesionesError) {
+        console.error('[useSocioData] cargarReservas sesiones fallback error:', sesionesError.message)
+      } else if (sesionesData) {
+        const sesionesMap = new Map(
+          sesionesData.map(s => [
+            String(s.id),
+            {
+              horario_id: s.horario_id ? String(s.horario_id) : null,
+              actividad_id: s.actividad_id ? String(s.actividad_id) : null,
+              fecha: String(s.fecha ?? '').slice(0, 10),
+            },
+          ])
+        )
+
+        completas = base.map(r => {
+          if (r.horario_id && r.fecha) return r
+          const fallback = sesionesMap.get(r.sesion_id)
+          if (!fallback) return r
+          return {
+            ...r,
+            horario_id: fallback.horario_id,
+            actividad_id: fallback.actividad_id,
+            fecha: fallback.fecha,
+          }
+        })
+      }
+    }
+
+    setReservas(completas)
+    console.log('[useSocioData] reservas cargadas después de cargarReservas:', completas)
+    return { ok: true, reservas: completas }
   }, [])
 
   const cargarPerfil = useCallback(async (uid: string) => {
@@ -165,7 +213,7 @@ export function useSocioData() {
     fecha: string,
     uid: string,
     horariosDiaActuales: HorarioSocio[]
-  ): Promise<{ ok: boolean; error?: string }> => {
+  ): Promise<{ ok: boolean; error?: string; accion?: ReservaAction; sesionId?: string; reservasActualizadas?: ReservaLocal[] }> => {
     const key = getReservaKey(horarioId, fecha)
     if (reservasEnCursoRef.current.has(key)) return { ok: false, error: 'Ya estamos procesando esta reserva.' }
 
@@ -191,6 +239,7 @@ export function useSocioData() {
       })
 
       const data = await res.json()
+      console.log('[useSocioData] respuesta /api/reservas/toggle:', data)
       if (!res.ok) {
         const msg = normalizarErrorReserva(res.status, data.error)
         setReservaError(msg)
@@ -202,9 +251,17 @@ export function useSocioData() {
         ? horariosDiaActuales
         : horarios.filter(h => h.dia_semana === getDiaSemanaLunesPrimero(parseLocalDate(fecha)))
 
-      await cargarReservas(uid)
+      const cargaReservasResult = await cargarReservas(uid)
+      if (!cargaReservasResult.ok) {
+        console.error('[useSocioData] reservar: no se pudieron recargar reservas:', cargaReservasResult.error)
+      }
       await actualizarOcupacion(fecha, horariosRecarga)
-      return { ok: true }
+      return {
+        ok: true,
+        accion: data.accion as ReservaAction | undefined,
+        sesionId: data.sesionId ? String(data.sesionId) : undefined,
+        reservasActualizadas: cargaReservasResult.reservas,
+      }
     } catch {
       const msg = 'Error de conexión. Comprueba tu red.'
       setReservaError(msg)
