@@ -3,13 +3,25 @@ import { supabaseAdmin } from '@/lib/supabase/admin'
 import { requireSocio } from '@/lib/auth/requireSocio'
 import { isMembresiaValida } from '@/lib/domain/membresias'
 
+/**
+ * POST /api/reservas/toggle
+ *
+ * Estrategia de ejecución:
+ * 1. Intenta usar la RPC toggle_reserva (función PostgreSQL atómica con advisory lock).
+ *    Si existe en BD, toda la lógica se ejecuta dentro de una transacción serializada.
+ * 2. Si la RPC no existe o falla con 'PGRST202' (función no encontrada),
+ *    cae al fallback: lógica JavaScript secuencial (comportamiento anterior).
+ *
+ * Esto permite desplegar el código antes de aplicar el SQL de Fase 3,
+ * sin romper el comportamiento actual.
+ */
 export async function POST(req: Request) {
-  // 1. Validar socio autenticado y obtener contexto
+  // 1. Validar socio autenticado
   const result = await requireSocio(req)
   if (result.error) return result.error
   const { userId, gymId, membresiaActiva, membresiaVence } = result.context
 
-  // 2. Validar membresía activa
+  // 2. Validar membresía activa (validación rápida antes de llamar a BD)
   if (!isMembresiaValida({ membresia_activa: membresiaActiva, membresia_vence: membresiaVence })) {
     return NextResponse.json(
       { error: 'Tu membresía ha caducado o no está activa. Renuévala para reservar.' },
@@ -35,7 +47,42 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'fecha requerida (YYYY-MM-DD)' }, { status: 400 })
   }
 
-  // 4. Validar que el horario pertenece al mismo gym_id del socio
+  // 4. Intentar RPC atómica (disponible tras aplicar fase3_seguridad.sql)
+  const { data: rpcData, error: rpcError } = await supabaseAdmin.rpc('toggle_reserva', {
+    p_horario_id: horarioId,
+    p_fecha: fecha,
+  })
+
+  // Si la función RPC no existe aún, caer al fallback JS
+  const rpcNoExiste = rpcError && (
+    rpcError.code === 'PGRST202' ||         // función no encontrada via PostgREST
+    rpcError.message?.includes('toggle_reserva') ||
+    rpcError.message?.includes('does not exist')
+  )
+
+  if (!rpcNoExiste && !rpcError) {
+    // RPC ejecutada correctamente — devolver su resultado
+    const result = rpcData as { ok: boolean; error?: string; accion?: string; sesion_id?: string }
+    if (!result.ok) {
+      const status = result.error?.includes('caducad') || result.error?.includes('activ') ? 403
+        : result.error?.includes('Aforo') ? 409
+        : result.error?.includes('otro gimnasio') ? 403
+        : 400
+      return NextResponse.json({ error: result.error }, { status })
+    }
+    return NextResponse.json({ ok: true, accion: result.accion, sesionId: result.sesion_id })
+  }
+
+  if (rpcError && !rpcNoExiste) {
+    // Error real de la RPC (no "función no encontrada")
+    console.error('[reservas/toggle] RPC error:', rpcError.message)
+    return NextResponse.json({ error: 'Error al procesar la reserva' }, { status: 500 })
+  }
+
+  // ─── FALLBACK: lógica JS secuencial (pre-fase3) ──────────────────────────────
+  console.warn('[reservas/toggle] RPC no disponible, usando fallback JS')
+
+  // 5. Validar que el horario pertenece al mismo gym_id del socio
   const { data: horario, error: horarioError } = await supabaseAdmin
     .from('horarios_clase')
     .select('id, gym_id, actividad_id, hora_inicio, duracion_min, aforo_max, profesor, activo')
@@ -52,7 +99,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'Este horario no está activo' }, { status: 400 })
   }
 
-  // 5. Buscar sesión materializada para este horario+fecha
+  // 6. Buscar sesión materializada
   const { data: sesionExistente } = await supabaseAdmin
     .from('sesiones')
     .select('id, cancelada')
@@ -60,12 +107,11 @@ export async function POST(req: Request) {
     .eq('fecha', fecha)
     .maybeSingle()
 
-  // Si la sesión existe pero está cancelada, no permitir reserva
   if (sesionExistente?.cancelada) {
     return NextResponse.json({ error: 'Esta sesión está cancelada' }, { status: 400 })
   }
 
-  // 6. Buscar reserva existente del socio para esta sesión (si hay sesión)
+  // 7. Cancelar si ya existe reserva confirmada
   if (sesionExistente) {
     const { data: reservaExistente } = await supabaseAdmin
       .from('reservas')
@@ -75,7 +121,6 @@ export async function POST(req: Request) {
       .maybeSingle()
 
     if (reservaExistente?.estado === 'confirmada') {
-      // ─── CANCELAR ────────────────────────────────────────────────────────────
       const { error: cancelError } = await supabaseAdmin
         .from('reservas')
         .update({ estado: 'cancelada' })
@@ -85,15 +130,11 @@ export async function POST(req: Request) {
         console.error('[reservas/toggle] cancelar:', cancelError.message)
         return NextResponse.json({ error: 'Error al cancelar la reserva' }, { status: 500 })
       }
-
-      console.log(`[reservas/toggle] Cancelada: user=${userId} horario=${horarioId} fecha=${fecha}`)
       return NextResponse.json({ ok: true, accion: 'cancelada' })
     }
   }
 
-  // ─── CREAR RESERVA ──────────────────────────────────────────────────────────
-
-  // 7. Materializar sesión si no existe
+  // 8. Materializar sesión si no existe
   let sesionId: string
   if (sesionExistente) {
     sesionId = sesionExistente.id
@@ -121,7 +162,7 @@ export async function POST(req: Request) {
     sesionId = nuevaSesion.id
   }
 
-  // 8. Verificar aforo — contar reservas confirmadas en esta sesión
+  // 9. Verificar aforo
   const { count: ocupadas, error: aforoError } = await supabaseAdmin
     .from('reservas')
     .select('id', { count: 'exact', head: true })
@@ -129,7 +170,6 @@ export async function POST(req: Request) {
     .eq('estado', 'confirmada')
 
   if (aforoError) {
-    console.error('[reservas/toggle] contar aforo:', aforoError.message)
     return NextResponse.json({ error: 'Error al verificar aforo' }, { status: 500 })
   }
 
@@ -137,7 +177,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'Aforo completo. No hay plazas disponibles.' }, { status: 409 })
   }
 
-  // 9. Crear o reactivar reserva — evitar duplicados
+  // 10. Crear o reactivar reserva
   const { data: reservaAnterior } = await supabaseAdmin
     .from('reservas')
     .select('id, estado')
@@ -146,14 +186,12 @@ export async function POST(req: Request) {
     .maybeSingle()
 
   if (reservaAnterior) {
-    // Reactivar reserva cancelada anterior
     const { error: reactivarError } = await supabaseAdmin
       .from('reservas')
       .update({ estado: 'confirmada' })
       .eq('id', reservaAnterior.id)
 
     if (reactivarError) {
-      console.error('[reservas/toggle] reactivar:', reactivarError.message)
       return NextResponse.json({ error: 'Error al reactivar la reserva' }, { status: 500 })
     }
   } else {
@@ -162,15 +200,12 @@ export async function POST(req: Request) {
       .insert({ sesion_id: sesionId, user_id: userId, estado: 'confirmada' })
 
     if (insertError) {
-      // Manejar posible violación de unique constraint (race condition)
       if (insertError.code === '23505') {
         return NextResponse.json({ error: 'Ya tienes una reserva para esta clase' }, { status: 409 })
       }
-      console.error('[reservas/toggle] insertar:', insertError.message)
       return NextResponse.json({ error: 'Error al crear la reserva' }, { status: 500 })
     }
   }
 
-  console.log(`[reservas/toggle] Creada: user=${userId} horario=${horarioId} fecha=${fecha}`)
   return NextResponse.json({ ok: true, accion: 'confirmada', sesionId })
 }
