@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase/admin'
 import { requireAdmin } from '@/lib/auth/requireAdmin'
-import { TIPOS_MEMBRESIA_VALUES, calcularFechaVencimiento, type TipoMembresia } from '@/lib/domain/membresias'
+import { TIPOS_MEMBRESIA_VALUES, calcularNuevaFechaVencimiento, type TipoMembresia } from '@/lib/domain/membresias'
 
 function validarPayload(body: unknown): {
   ok: true
@@ -52,7 +52,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: createError?.message || 'Error al crear usuario' }, { status: 400 })
     }
 
-    const membresia_vence = calcularFechaVencimiento(tipo_membresia)
+    const membresia_vence = calcularNuevaFechaVencimiento(tipo_membresia, null)
     const { error: insertError } = await supabaseAdmin.from('perfiles').insert({
       id: data.user.id,
       gym_id: gymId,   // siempre del token

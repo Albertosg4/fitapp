@@ -115,15 +115,6 @@ export function useAdminData() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  const toggleActivarSocio = async (socio: Socio): Promise<Socio> => {
-    const nuevoEstado = !socio.membresia_activa
-    const { error: err } = await supabase
-      .from('perfiles').update({ membresia_activa: nuevoEstado }).eq('id', socio.id)
-    if (err) console.error('[useAdminData] toggleActivarSocio:', err.message)
-    await loadSocios()
-    return { ...socio, membresia_activa: nuevoEstado }
-  }
-
   const logout = async () => {
     await supabase.auth.signOut()
     router.push('/')
@@ -132,7 +123,6 @@ export function useAdminData() {
   return {
     socios, gymId, stats, loading, error,
     loadSocios, loadStats,
-    toggleActivarSocio,
     logout,
   }
 }

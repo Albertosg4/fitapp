@@ -147,16 +147,41 @@ export default function SociosTab({ socios, gymId: _gymId, onRefreshSocios }: Pr
   const [formPago, setFormPago] = useState({ tipoMembresia: 'mensual', metodo: 'efectivo', estado: 'pagado', notas: '' })
   const [guardandoPago, setGuardandoPago] = useState(false)
   const [msgPago, setMsgPago] = useState('')
+  const [msgSocio, setMsgSocio] = useState('')
 
-  const abrirModalSocio = (socio: Socio) => { setModalSocio(socio); setTabModal('info') }
+  const abrirModalSocio = (socio: Socio) => { setModalSocio(socio); setTabModal('info'); setMsgSocio('') }
 
   const toggleActivar = async () => {
     if (!modalSocio) return
     const nuevoEstado = !modalSocio.membresia_activa
-    const { error } = await supabase.from('perfiles').update({ membresia_activa: nuevoEstado }).eq('id', modalSocio.id)
-    if (error) { console.error('[SociosTab] toggleActivar:', error.message); return }
-    setModalSocio({ ...modalSocio, membresia_activa: nuevoEstado })
-    onRefreshSocios()
+    setMsgSocio('')
+
+    try {
+      const headers = await getAuthHeaders()
+      const res = await fetch('/api/admin/socios/toggle', {
+        method: 'PATCH',
+        headers,
+        body: JSON.stringify({
+          userId: modalSocio.id,
+          membresia_activa: nuevoEstado,
+        }),
+      })
+      const data = await res.json()
+
+      if (!res.ok) {
+        const msg = data.error || `Error ${res.status}`
+        console.error('[SociosTab] toggleActivar API:', msg)
+        setMsgSocio(`❌ ${msg}`)
+        return
+      }
+
+      setModalSocio((prev) => prev ? { ...prev, ...(data.socio ?? {}), membresia_activa: nuevoEstado } : prev)
+      setMsgSocio(`✅ ${nuevoEstado ? 'Socio reactivado' : 'Socio dado de baja'}`)
+      onRefreshSocios()
+    } catch (err) {
+      console.error('[SociosTab] toggleActivar fetch:', err)
+      setMsgSocio('❌ Error de conexión al actualizar el socio')
+    }
   }
 
   const abrirModalPago = (socio: Socio) => {
@@ -274,6 +299,11 @@ export default function SociosTab({ socios, gymId: _gymId, onRefreshSocios }: Pr
                   style={{ width: '100%', border: `1px solid ${modalSocio.membresia_activa ? 'rgba(255,92,92,0.3)' : 'rgba(200,245,66,0.3)'}`, borderRadius: '10px', padding: '12px', background: 'transparent', color: modalSocio.membresia_activa ? '#ff5c5c' : '#c8f542', fontSize: '14px', fontWeight: '600', cursor: 'pointer', fontFamily: 'system-ui' }}>
                   {modalSocio.membresia_activa ? 'Dar de baja' : 'Reactivar socio'}
                 </button>
+                {msgSocio && (
+                  <div style={{ marginTop: '10px', padding: '10px 14px', borderRadius: '8px', fontSize: '13px', background: msgSocio.includes('✅') ? 'rgba(200,245,66,0.1)' : 'rgba(255,92,92,0.1)', color: msgSocio.includes('✅') ? '#c8f542' : '#ff5c5c' }}>
+                    {msgSocio}
+                  </div>
+                )}
               </div>
             )}
             {tabModal === 'historial' && <HistorialAsistencia userId={modalSocio.id} limit={100} compact={true} />}
