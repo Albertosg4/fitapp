@@ -35,6 +35,7 @@ export function useSocioData() {
   const [qrUrl, setQrUrl] = useState('')
   const [userId, setUserId] = useState<string>('')
   const [loading, setLoading] = useState(true)
+  const [reservaError, setReservaError] = useState<string>('')
 
   // Carga reservas confirmadas del socio con join a sesiones
   const cargarReservas = useCallback(async (uid: string) => {
@@ -68,14 +69,24 @@ export function useSocioData() {
     }
   }, [])
 
-  // Carga horarios activos con datos de actividad
-  const cargarHorarios = useCallback(async () => {
-    const { data, error } = await supabase
+  // Carga horarios activos del gym_id del socio — filtrado en servidor vía RLS + gym_id del perfil
+  // Nota: el filtro real de gym_id se aplica en la API de reservas; aquí el socio
+  // solo ve horarios activos. Si la tabla tiene RLS por gym_id, ya está protegido.
+  // Si no, la protección crítica es en /api/reservas/toggle que valida gym_id.
+  const cargarHorarios = useCallback(async (gymId?: string) => {
+    let query = supabase
       .from('horarios_clase')
       .select('id, actividad_id, dia_semana, hora_inicio, duracion_min, aforo_max, profesor, actividad:actividades(nombre, color)')
       .eq('activo', true)
       .order('dia_semana')
       .order('hora_inicio')
+
+    // Filtrar por gym_id si está disponible para evitar ver clases de otro gimnasio
+    if (gymId) {
+      query = query.eq('gym_id', gymId)
+    }
+
+    const { data, error } = await query
     if (error) { console.error('[useSocioData] cargarHorarios:', error.message); return }
     type RawH = {
       id: string; actividad_id: string; dia_semana: number; hora_inicio: string
@@ -99,7 +110,6 @@ export function useSocioData() {
   }, [])
 
   // Obtiene ocupación de un horario en una fecha concreta
-  // Primero busca sesión materializada; si no existe devuelve 0
   const getOcupacionFecha = useCallback(async (horarioId: string, fecha: string) => {
     const { data: sesion } = await supabase
       .from('sesiones').select('id')
@@ -122,7 +132,11 @@ export function useSocioData() {
     setOcupacion(prev => ({ ...prev, ...nuevaOcupacion }))
   }, [getOcupacionFecha])
 
-  // Reservar o cancelar reserva en un horario para una fecha
+  /**
+   * Reservar o cancelar una clase vía API segura.
+   * Ya no escribe directamente en Supabase — toda la lógica está en /api/reservas/toggle.
+   * Actualiza estado local optimistamente y recarga reservas tras la operación.
+   */
   const reservar = useCallback(async (
     horarioId: string,
     fecha: string,
@@ -130,65 +144,62 @@ export function useSocioData() {
     horariosActuales: HorarioSocio[],
     reservasActuales: ReservaLocal[],
     ocupacionActual: Record<string, { sesionId: string; count: number }>
-  ) => {
-    // ¿Ya tiene reserva en este horario+fecha?
-    const reservaExistente = reservasActuales.find(
-      r => r.horario_id === horarioId && r.fecha === fecha
-    )
-    if (reservaExistente) {
-      // Cancelar reserva existente
-      await supabase.from('reservas').update({ estado: 'cancelada' }).eq('id', reservaExistente.id)
-      await cargarReservas(uid)
-      const key = `${horarioId}_${fecha}`
-      const ocup = ocupacionActual[key]
-      if (ocup) setOcupacion({ ...ocupacionActual, [key]: { ...ocup, count: Math.max(0, ocup.count - 1) } })
-      return
+  ): Promise<{ ok: boolean; error?: string }> => {
+    setReservaError('')
+
+    const { data: { session } } = await supabase.auth.getSession()
+    if (!session?.access_token) {
+      const msg = 'Sin sesión activa. Vuelve a iniciar sesión.'
+      setReservaError(msg)
+      return { ok: false, error: msg }
     }
 
-    const horario = horariosActuales.find(h => h.id === horarioId)
-    if (!horario) return
-
-    // Buscar o crear sesión materializada para este horario+fecha
-    const { data: existing } = await supabase
-      .from('sesiones').select('id, cancelada')
-      .eq('horario_id', horarioId).eq('fecha', fecha).maybeSingle()
-
-    // Si la sesión existe pero está cancelada, no permitir reserva
-    if (existing?.cancelada) return
-
-    let sesionId = existing?.id
-    if (!sesionId) {
-      // Materializar sesión virtual
-      const { data: nueva, error } = await supabase.from('sesiones').insert({
-        horario_id: horarioId,
-        actividad_id: horario.actividad_id,
-        fecha,
-        hora_inicio: horario.hora_inicio,
-        duracion_min: horario.duracion_min,
-        aforo_max: horario.aforo_max,
-        profesor: horario.profesor,
-        es_puntual: false,
-        cancelada: false,
-      }).select('id').single()
-      if (error) { console.error('[useSocioData] crear sesión:', error.message); return }
-      sesionId = nueva.id
+    let res: Response
+    try {
+      res = await fetch('/api/reservas/toggle', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({ horarioId, fecha }),
+      })
+    } catch {
+      const msg = 'Error de conexión. Comprueba tu red.'
+      setReservaError(msg)
+      return { ok: false, error: msg }
     }
 
-    // Verificar aforo
+    const data = await res.json()
+
+    if (!res.ok) {
+      const msg = data.error || `Error ${res.status}`
+      setReservaError(msg)
+      console.error('[useSocioData] reservar:', msg)
+      return { ok: false, error: msg }
+    }
+
+    // Actualización optimista de ocupación en cliente
     const key = `${horarioId}_${fecha}`
-    const ocupActual = ocupacionActual[key]?.count || 0
-    if (ocupActual >= horario.aforo_max) return
+    const esCancelacion = data.accion === 'cancelada'
 
-    // Crear o reactivar reserva
-    const { data: reservaAnterior } = await supabase
-      .from('reservas').select('id').eq('sesion_id', sesionId).eq('user_id', uid).maybeSingle()
-    if (reservaAnterior) {
-      await supabase.from('reservas').update({ estado: 'confirmada' }).eq('id', reservaAnterior.id)
+    if (esCancelacion) {
+      const ocup = ocupacionActual[key]
+      if (ocup) {
+        setOcupacion({ ...ocupacionActual, [key]: { ...ocup, count: Math.max(0, ocup.count - 1) } })
+      }
     } else {
-      await supabase.from('reservas').insert({ sesion_id: sesionId, user_id: uid, estado: 'confirmada' })
+      const horario = horariosActuales.find(h => h.id === horarioId)
+      const ocupActual = ocupacionActual[key]?.count || 0
+      const sesionId = data.sesionId || ocupacionActual[key]?.sesionId || ''
+      if (horario) {
+        setOcupacion({ ...ocupacionActual, [key]: { sesionId, count: ocupActual + 1 } })
+      }
     }
+
+    // Recargar reservas reales desde BD
     await cargarReservas(uid)
-    setOcupacion({ ...ocupacionActual, [key]: { sesionId, count: ocupActual + 1 } })
+    return { ok: true }
   }, [cargarReservas])
 
   // Devuelve horarios del día de la semana correspondiente a una fecha
@@ -205,6 +216,7 @@ export function useSocioData() {
     qrUrl,
     userId, setUserId,
     loading, setLoading,
+    reservaError, setReservaError,
     cargarReservas,
     cargarPerfil,
     cargarHorarios,

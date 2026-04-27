@@ -20,6 +20,7 @@ function SocioPageInner() {
     qrUrl,
     userId, setUserId,
     loading, setLoading,
+    reservaError, setReservaError,
     cargarReservas,
     cargarPerfil,
     cargarHorarios,
@@ -41,7 +42,10 @@ function SocioPageInner() {
     if (!user) { router.push('/'); return }
     setUserId(user.id)
     await cargarPerfil(user.id)
-    await cargarHorarios()
+    // Leer gym_id del perfil para filtrar horarios por gimnasio
+    const { data: perfilData } = await supabase
+      .from('perfiles').select('gym_id').eq('id', user.id).single()
+    await cargarHorarios(perfilData?.gym_id ?? undefined)
     await cargarReservas(user.id)
     setLoading(false)
   }, [router, setUserId, cargarPerfil, cargarHorarios, cargarReservas, setLoading])
@@ -70,8 +74,12 @@ function SocioPageInner() {
 
   const handleReservar = async (horarioId: string, fecha: string) => {
     if (!userId) return
-    await reservar(horarioId, fecha, userId, horarios, reservas, ocupacion)
-    setModal(null)
+    setReservaError('')
+    const result = await reservar(horarioId, fecha, userId, horarios, reservas, ocupacion)
+    if (result.ok) {
+      setModal(null)
+    }
+    // Si hay error, el modal permanece abierto y reservaError se muestra en la UI
   }
 
   const pagarMembresia = async (tipoMembresia: string) => {
@@ -153,7 +161,7 @@ function SocioPageInner() {
 
       {/* Modal reserva */}
       {modal && (
-        <div onClick={(e) => { if (e.target === e.currentTarget) setModal(null) }}
+        <div onClick={(e) => { if (e.target === e.currentTarget) { setModal(null); setReservaError('') } }}
           style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.8)', zIndex: 200, display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}>
           <div style={{ background: '#1e1e1e', border: '1px solid rgba(255,255,255,0.07)', borderRadius: '24px 24px 0 0', padding: '24px 20px 36px', width: '100%', maxWidth: '480px' }}>
             <div style={{ width: '36px', height: '4px', background: 'rgba(255,255,255,0.1)', borderRadius: '2px', margin: '0 auto 20px' }}></div>
@@ -174,6 +182,14 @@ function SocioPageInner() {
                 </span>
               </div>
             </div>
+
+            {/* Mensaje de error de reserva */}
+            {reservaError && (
+              <div style={{ marginBottom: '12px', padding: '10px 14px', borderRadius: '8px', fontSize: '13px', background: 'rgba(255,92,92,0.1)', border: '1px solid rgba(255,92,92,0.2)', color: '#ff5c5c' }}>
+                {reservaError}
+              </div>
+            )}
+
             {(() => {
               const key = `${modal.id}_${modal.fecha}`
               const llena = (ocupacion[key]?.count ?? 0) >= modal.aforo_max && !estaReservadoEnFecha(modal.id, modal.fecha)
