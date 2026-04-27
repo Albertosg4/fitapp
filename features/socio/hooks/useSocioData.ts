@@ -56,7 +56,11 @@ export function useSocioData() {
     return rawError || `Error ${status}`
   }, [])
 
-  const cargarReservas = useCallback(async (uid: string): Promise<{ ok: boolean; reservas: ReservaLocal[]; error?: string }> => {
+  const cargarReservas = useCallback(async (
+    uid: string,
+    options?: { updateState?: boolean }
+  ): Promise<{ ok: boolean; reservas: ReservaLocal[]; error?: string }> => {
+    const updateState = options?.updateState ?? true
     const { data, error } = await supabase
       .from('reservas')
       .select('id, sesion_id, estado, sesiones(horario_id, actividad_id, fecha)')
@@ -122,7 +126,9 @@ export function useSocioData() {
       }
     }
 
-    setReservas(completas)
+    if (updateState) {
+      setReservas(completas)
+    }
     return { ok: true, reservas: completas }
   }, [])
 
@@ -271,7 +277,8 @@ export function useSocioData() {
         ))
       }
 
-      if (typeof data.ocupacion === 'number') {
+      const tieneOcupacionCanonica = typeof data.ocupacion === 'number'
+      if (tieneOcupacionCanonica) {
         const keyOcupacion = `${horarioId}_${fecha}`
         setOcupacion(prev => ({
           ...prev,
@@ -282,15 +289,18 @@ export function useSocioData() {
         }))
       }
 
-      const horariosRecarga = horariosDiaActuales.length > 0
-        ? horariosDiaActuales
-        : horarios.filter(h => h.dia_semana === getDiaSemanaLunesPrimero(parseLocalDate(fecha)))
-
-      const cargaReservasResult = await cargarReservas(uid)
+      const cargaReservasResult = await cargarReservas(uid, { updateState: false })
       if (!cargaReservasResult.ok) {
         console.error('[useSocioData] reservar: no se pudieron recargar reservas:', cargaReservasResult.error)
       }
-      await actualizarOcupacion(fecha, horariosRecarga)
+
+      if (!tieneOcupacionCanonica) {
+        const horariosRecarga = horariosDiaActuales.length > 0
+          ? horariosDiaActuales
+          : horarios.filter(h => h.dia_semana === getDiaSemanaLunesPrimero(parseLocalDate(fecha)))
+        await actualizarOcupacion(fecha, horariosRecarga)
+      }
+
       return {
         ok: true,
         accion: data.accion as ReservaAction | undefined,
