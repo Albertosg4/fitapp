@@ -21,7 +21,15 @@ async function getAuthHeaders(): Promise<HeadersInit> {
 // ─── Subcomponente: historial de pagos de un socio ───────────────────────────
 // Lee vía /api/pagos?userId=xxx (API protegida) en lugar de supabase.from directamente
 
-function SocioPagosAdmin({ userId, onRefresh }: { userId: string; onRefresh: () => void }) {
+function SocioPagosAdmin({
+  userId,
+  onRefresh,
+  onMembershipUpdated,
+}: {
+  userId: string
+  onRefresh: () => void
+  onMembershipUpdated?: (payload: { nuevaFecha: string; tipoMembresia?: string }) => void
+}) {
   const [pagos, setPagos] = useState<Pago[]>([])
   const [loading, setLoading] = useState(true)
   const [errorMsg, setErrorMsg] = useState('')
@@ -64,6 +72,12 @@ function SocioPagosAdmin({ userId, onRefresh }: { userId: string; onRefresh: () 
       if (!res.ok) {
         console.error('[SocioPagosAdmin] confirmar error:', data.error || res.status)
         return
+      }
+      if (data.membresiaActualizada && typeof data.nuevaFecha === 'string') {
+        onMembershipUpdated?.({
+          nuevaFecha: data.nuevaFecha,
+          tipoMembresia: typeof data.tipoMembresia === 'string' ? data.tipoMembresia : undefined,
+        })
       }
       await cargar()
       onRefresh()
@@ -147,16 +161,41 @@ export default function SociosTab({ socios, gymId: _gymId, onRefreshSocios }: Pr
   const [formPago, setFormPago] = useState({ tipoMembresia: 'mensual', metodo: 'efectivo', estado: 'pagado', notas: '' })
   const [guardandoPago, setGuardandoPago] = useState(false)
   const [msgPago, setMsgPago] = useState('')
+  const [msgSocio, setMsgSocio] = useState('')
 
-  const abrirModalSocio = (socio: Socio) => { setModalSocio(socio); setTabModal('info') }
+  const abrirModalSocio = (socio: Socio) => { setModalSocio(socio); setTabModal('info'); setMsgSocio('') }
 
   const toggleActivar = async () => {
     if (!modalSocio) return
     const nuevoEstado = !modalSocio.membresia_activa
-    const { error } = await supabase.from('perfiles').update({ membresia_activa: nuevoEstado }).eq('id', modalSocio.id)
-    if (error) { console.error('[SociosTab] toggleActivar:', error.message); return }
-    setModalSocio({ ...modalSocio, membresia_activa: nuevoEstado })
-    onRefreshSocios()
+    setMsgSocio('')
+
+    try {
+      const headers = await getAuthHeaders()
+      const res = await fetch('/api/admin/socios/toggle', {
+        method: 'PATCH',
+        headers,
+        body: JSON.stringify({
+          userId: modalSocio.id,
+          membresia_activa: nuevoEstado,
+        }),
+      })
+      const data = await res.json()
+
+      if (!res.ok) {
+        const msg = data.error || `Error ${res.status}`
+        console.error('[SociosTab] toggleActivar API:', msg)
+        setMsgSocio(`❌ ${msg}`)
+        return
+      }
+
+      setModalSocio((prev) => prev ? { ...prev, ...(data.socio ?? {}), membresia_activa: nuevoEstado } : prev)
+      setMsgSocio(`✅ ${nuevoEstado ? 'Socio reactivado' : 'Socio dado de baja'}`)
+      onRefreshSocios()
+    } catch (err) {
+      console.error('[SociosTab] toggleActivar fetch:', err)
+      setMsgSocio('❌ Error de conexión al actualizar el socio')
+    }
   }
 
   const abrirModalPago = (socio: Socio) => {
@@ -187,6 +226,18 @@ export default function SociosTab({ socios, gymId: _gymId, onRefreshSocios }: Pr
         return
       }
       if (data.ok) {
+        if (data.membresiaActualizada && typeof data.nuevaFecha === 'string') {
+          setModalSocio((prev) => prev
+            ? {
+                ...prev,
+                membresia_activa: true,
+                membresia_vence: data.nuevaFecha,
+                tipo_membresia: typeof data.tipoMembresia === 'string'
+                  ? (data.tipoMembresia as Socio['tipo_membresia'])
+                  : prev.tipo_membresia,
+              }
+            : prev)
+        }
         const esCortesia = formPago.metodo === 'cortesia'
         setMsgPago(formPago.estado === 'pagado' || esCortesia
           ? `✅ ${esCortesia ? 'Cortesía registrada' : 'Pago registrado'}. Membresía renovada.`
@@ -274,10 +325,32 @@ export default function SociosTab({ socios, gymId: _gymId, onRefreshSocios }: Pr
                   style={{ width: '100%', border: `1px solid ${modalSocio.membresia_activa ? 'rgba(255,92,92,0.3)' : 'rgba(200,245,66,0.3)'}`, borderRadius: '10px', padding: '12px', background: 'transparent', color: modalSocio.membresia_activa ? '#ff5c5c' : '#c8f542', fontSize: '14px', fontWeight: '600', cursor: 'pointer', fontFamily: 'system-ui' }}>
                   {modalSocio.membresia_activa ? 'Dar de baja' : 'Reactivar socio'}
                 </button>
+                {msgSocio && (
+                  <div style={{ marginTop: '10px', padding: '10px 14px', borderRadius: '8px', fontSize: '13px', background: msgSocio.includes('✅') ? 'rgba(200,245,66,0.1)' : 'rgba(255,92,92,0.1)', color: msgSocio.includes('✅') ? '#c8f542' : '#ff5c5c' }}>
+                    {msgSocio}
+                  </div>
+                )}
               </div>
             )}
             {tabModal === 'historial' && <HistorialAsistencia userId={modalSocio.id} limit={100} compact={true} />}
-            {tabModal === 'pagos' && <SocioPagosAdmin userId={modalSocio.id} onRefresh={onRefreshSocios} />}
+            {tabModal === 'pagos' && (
+              <SocioPagosAdmin
+                userId={modalSocio.id}
+                onRefresh={onRefreshSocios}
+                onMembershipUpdated={({ nuevaFecha, tipoMembresia }) => {
+                  setModalSocio((prev) => prev
+                    ? {
+                        ...prev,
+                        membresia_activa: true,
+                        membresia_vence: nuevaFecha,
+                        tipo_membresia: tipoMembresia
+                          ? (tipoMembresia as Socio['tipo_membresia'])
+                          : prev.tipo_membresia,
+                      }
+                    : prev)
+                }}
+              />
+            )}
             <button onClick={() => setModalSocio(null)} style={{ width: '100%', border: '1px solid rgba(255,255,255,0.07)', borderRadius: '10px', padding: '12px', background: 'transparent', color: '#888', fontSize: '14px', cursor: 'pointer', fontFamily: 'system-ui', marginTop: '10px' }}>
               Cerrar
             </button>

@@ -7,6 +7,7 @@ import {
   ESTADOS_PAGO_VALUES,
   IMPORTES,
   MESES_POR_TIPO,
+  calcularNuevaFechaVencimiento,
   type TipoMembresia,
   type MetodoPago,
   type EstadoPago,
@@ -70,12 +71,9 @@ export async function POST(req: Request) {
     const meses = MESES_POR_TIPO[tipo]
     const importe = esCortesia ? 0 : IMPORTES[tipo]
 
+    let nuevaFecha: string | null = null
     if (estadoFinal === 'pagado') {
-      const hoy = new Date()
-      const venceActual = socioPerfil.membresia_vence ? new Date(socioPerfil.membresia_vence) : null
-      const base = venceActual && venceActual > hoy ? new Date(venceActual) : new Date()
-      base.setMonth(base.getMonth() + meses)
-      const nuevaFecha = base.toISOString().split('T')[0]
+      nuevaFecha = calcularNuevaFechaVencimiento(tipo, socioPerfil.membresia_vence)
       await supabaseAdmin.from('perfiles').update({
         membresia_activa: true,
         membresia_vence: nuevaFecha,
@@ -95,7 +93,13 @@ export async function POST(req: Request) {
     }).select().single()
 
     if (error) throw error
-    return NextResponse.json({ ok: true, pago })
+    return NextResponse.json({
+      ok: true,
+      pago,
+      membresiaActualizada: estadoFinal === 'pagado',
+      nuevaFecha,
+      tipoMembresia: estadoFinal === 'pagado' ? tipo : null,
+    })
 
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : 'Error interno'
@@ -137,20 +141,21 @@ export async function PATCH(req: Request) {
     const { data: perfil } = await supabaseAdmin
       .from('perfiles').select('membresia_vence').eq('id', pago.user_id).single()
 
-    const hoy = new Date()
-    const venceActual = perfil?.membresia_vence ? new Date(perfil.membresia_vence) : null
-    const base = venceActual && venceActual > hoy ? new Date(venceActual) : new Date()
-    const meses = MESES_POR_TIPO[pago.tipo_membresia as TipoMembresia] ?? pago.meses
-    base.setMonth(base.getMonth() + meses)
-    const nuevaFecha = base.toISOString().split('T')[0]
+    const tipoPago = pago.tipo_membresia as TipoMembresia
+    const nuevaFecha = calcularNuevaFechaVencimiento(tipoPago, perfil?.membresia_vence)
 
     await supabaseAdmin.from('perfiles').update({
       membresia_activa: true,
       membresia_vence: nuevaFecha,
-      tipo_membresia: pago.tipo_membresia,
+      tipo_membresia: tipoPago,
     }).eq('id', pago.user_id)
 
-    return NextResponse.json({ ok: true, nuevaFecha })
+    return NextResponse.json({
+      ok: true,
+      nuevaFecha,
+      tipoMembresia: tipoPago,
+      membresiaActualizada: true,
+    })
 
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : 'Error interno'

@@ -1,3 +1,5 @@
+import { formatLocalDate, parseLocalDate } from '@/lib/domain/fechas'
+
 // ─── Fuente única de verdad: tipos, constantes y lógica de membresías ────────
 
 export const TIPOS_MEMBRESIA_VALUES = ['mensual', 'trimestral', 'semestral', 'anual'] as const
@@ -46,12 +48,52 @@ export const DURACION_MEMBRESIA: Record<TipoMembresia, number> = {
   anual:      365,
 }
 
+function addMonthsClamped(date: Date, months: number): Date {
+  const year = date.getFullYear()
+  const month = date.getMonth()
+  const day = date.getDate()
+
+  const firstDayTargetMonth = new Date(year, month + months, 1, 12, 0, 0, 0)
+  const lastDayTargetMonth = new Date(
+    firstDayTargetMonth.getFullYear(),
+    firstDayTargetMonth.getMonth() + 1,
+    0,
+    12,
+    0,
+    0,
+    0
+  ).getDate()
+
+  const clampedDay = Math.min(day, lastDayTargetMonth)
+  return new Date(
+    firstDayTargetMonth.getFullYear(),
+    firstDayTargetMonth.getMonth(),
+    clampedDay,
+    12,
+    0,
+    0,
+    0
+  )
+}
+
+export function calcularNuevaFechaVencimiento(
+  tipo: TipoMembresia,
+  membresiaVenceActual?: string | null,
+  hoy?: string
+): string {
+  const hoyLocal = hoy ? parseLocalDate(hoy) : new Date()
+  const baseHoy = new Date(hoyLocal.getFullYear(), hoyLocal.getMonth(), hoyLocal.getDate(), 12, 0, 0, 0)
+
+  const venceActual = membresiaVenceActual ? parseLocalDate(membresiaVenceActual) : null
+  const base = venceActual && venceActual > baseHoy ? venceActual : baseHoy
+  const meses = MESES_POR_TIPO[tipo]
+  const nuevaFecha = addMonthsClamped(base, meses)
+
+  return formatLocalDate(nuevaFecha)
+}
+
 export function calcularFechaVencimiento(tipo: TipoMembresia, desde?: Date): string {
-  const base = desde ?? new Date()
-  const dias = DURACION_MEMBRESIA[tipo]
-  const vence = new Date(base)
-  vence.setDate(vence.getDate() + dias)
-  return vence.toISOString().split('T')[0]
+  return calcularNuevaFechaVencimiento(tipo, null, desde ? formatLocalDate(desde) : undefined)
 }
 
 // ─── Estado de membresía ──────────────────────────────────────────────────────
