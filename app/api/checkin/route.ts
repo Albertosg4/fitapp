@@ -7,6 +7,7 @@ const TOKEN_CONTROL_CHARS_REGEX = /[\u0000-\u001F\u007F]/
 
 const RATE_LIMIT_WINDOW_MS = 30_000
 const RATE_LIMIT_MAX_REQUESTS = 12
+const RATE_LIMIT_SWEEP_THRESHOLD = 500
 
 const rateLimitStore = new Map<string, { count: number; resetAt: number }>()
 
@@ -18,16 +19,39 @@ function redactToken(raw: string): string {
 }
 
 function getClientIp(req: Request): string {
-  const forwardedFor = req.headers.get('x-forwarded-for')
-  if (forwardedFor) {
-    return forwardedFor.split(',')[0]?.trim() || 'unknown'
-  }
+  const realIp = req.headers.get('x-real-ip')?.trim()
+  if (realIp) return realIp
 
-  return req.headers.get('x-real-ip') || 'unknown'
+  const vercelForwardedFor = req.headers.get('x-vercel-forwarded-for')?.trim()
+  if (vercelForwardedFor) return vercelForwardedFor.split(',')[0]?.trim() || 'unknown'
+
+  return 'unknown'
+}
+
+function fingerprintToken(token: string): string {
+  // Hash simple y estable para clave interna en memoria (no criptográfico).
+  let hash = 2166136261
+  for (let i = 0; i < token.length; i += 1) {
+    hash ^= token.charCodeAt(i)
+    hash = Math.imul(hash, 16777619)
+  }
+  return (hash >>> 0).toString(16)
+}
+
+function sweepExpiredRateLimitEntries(now: number): void {
+  for (const [key, value] of rateLimitStore.entries()) {
+    if (value.resetAt <= now) {
+      rateLimitStore.delete(key)
+    }
+  }
 }
 
 function checkRateLimit(key: string): boolean {
   const now = Date.now()
+  if (rateLimitStore.size >= RATE_LIMIT_SWEEP_THRESHOLD) {
+    sweepExpiredRateLimitEntries(now)
+  }
+
   const record = rateLimitStore.get(key)
 
   if (!record || record.resetAt <= now) {
@@ -83,8 +107,9 @@ export async function POST(req: Request) {
     }
 
     const tokenRedacted = redactToken(tokenNormalized)
+    const tokenFingerprint = fingerprintToken(tokenNormalized)
     const ip = getClientIp(req)
-    const rateLimitKey = `${ip}:${tokenRedacted}`
+    const rateLimitKey = `${ip}:${tokenFingerprint}`
 
     if (!checkRateLimit(rateLimitKey)) {
       console.warn(`[checkin] Rate limit excedido ip=${ip} token=${tokenRedacted}`)
