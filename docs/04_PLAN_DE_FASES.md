@@ -10,38 +10,20 @@
 - ✅ 3C-2 — Horarios admin vía API protegida
 - ✅ 3C-3 — Clases puntuales admin vía API protegida
 - ✅ 3C-4 — Socios/membresías vía API protegida + vencimientos unificados
+- ✅ 3C-5 — Auditoría de escrituras directas restantes (sin cambios)
+- ✅ 3C-6A — Hardening mínimo de check-in QR
+- ✅ 3C-6B — Auditoría de `/api/reservas/toggle` (sin cambios)
+- ✅ Stripe-1 — Auditoría Stripe actual (sin cambios)
+- ✅ Stripe-2 — Unificación Stripe con dominio de membresías
 
-## Siguiente fase recomendada
+## Siguiente bloque recomendado
 
-### 3C-5 — Auditoría de escrituras directas restantes
-
-**Objetivo:** mapear escrituras aún no migradas y priorizar cierre.
-
-**Búsquedas obligatorias en todo el repo:**
-
-- `.insert(`
-- `.update(`
-- `.delete(`
-- `.upsert(`
-
-**Foco principal:**
-
-- componentes cliente
-- hooks
-- utilidades invocadas desde cliente
-
-**Entregable de la fase:**
-
-- mapa de escrituras restantes (archivo, operación, tabla, criticidad, propuesta de migración)
-
-**Regla de alcance:**
-
-- no modificar todavía salvo hallazgos pequeños, seguros y muy acotados
-
-## Secuencia posterior
-
-- 3D — Auditoría y limpieza RLS/policies
+- 3D — Auditoría RLS/policies global
 - 3E — Pruebas multi-gimnasio
 - 3F — Limpieza legacy
-- 4 — Stripe completo
-- 5 — QA final
+- QA final
+
+## Notas de alcance para siguientes fases
+
+- No se recomienda tocar el fallback de reservas en esta etapa salvo fase específica futura.
+- Stripe queda parcialmente cerrado en checkout/webhook; pendiente solo de pruebas end-to-end reales si aplica.
