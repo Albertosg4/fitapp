@@ -3,7 +3,6 @@ import { supabaseAdmin } from '@/lib/supabase/admin'
 import { isMembresiaValida } from '@/lib/domain/membresias'
 
 const TOKEN_MAX_LENGTH = 256
-const TOKEN_CONTROL_CHARS_REGEX = /[\u0000-\u001F\u007F]/
 
 const RATE_LIMIT_WINDOW_MS = 30_000
 const RATE_LIMIT_MAX_REQUESTS = 12
@@ -82,7 +81,7 @@ function isDuplicateLikeError(err: unknown): boolean {
 
 function isTokenValid(token: string): boolean {
   if (token.length === 0 || token.length > TOKEN_MAX_LENGTH) return false
-  return !TOKEN_CONTROL_CHARS_REGEX.test(token)
+  return true
 }
 
 export async function POST(req: Request) {
