@@ -2,9 +2,8 @@ import { NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase/admin'
 import { isMembresiaValida } from '@/lib/domain/membresias'
 
-const TOKEN_MIN_LENGTH = 8
-const TOKEN_MAX_LENGTH = 128
-const TOKEN_ALLOWED_REGEX = /^[A-Za-z0-9_-]+$/
+const TOKEN_MAX_LENGTH = 256
+const TOKEN_CONTROL_CHARS_REGEX = /[\u0000-\u001F\u007F]/
 
 const RATE_LIMIT_WINDOW_MS = 30_000
 const RATE_LIMIT_MAX_REQUESTS = 12
@@ -58,8 +57,8 @@ function isDuplicateLikeError(err: unknown): boolean {
 }
 
 function isTokenValid(token: string): boolean {
-  if (token.length < TOKEN_MIN_LENGTH || token.length > TOKEN_MAX_LENGTH) return false
-  return TOKEN_ALLOWED_REGEX.test(token)
+  if (token.length === 0 || token.length > TOKEN_MAX_LENGTH) return false
+  return !TOKEN_CONTROL_CHARS_REGEX.test(token)
 }
 
 export async function POST(req: Request) {
