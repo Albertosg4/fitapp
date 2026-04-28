@@ -3,14 +3,16 @@
 -- Archivo: supabase/fase3D2A_rls_critical_cleanup_rollback.sql
 --
 -- ADVERTENCIA:
--- - Este rollback reintroduce riesgos de exposición/amplitud detectados en 3D-1.
--- - Usar SOLO para contingencia si el fix rompe operación.
--- - No es estado final recomendado.
+-- - Este rollback es SOLO de contingencia.
+-- - Reintroduce riesgos de exposición/amplitud detectados en 3D-1.
+-- - Solo debe usarse si el cleanup rompe operación.
+-- - No es el estado final recomendado.
 -- ============================================================
 
 -- ------------------------------------------------------------
 -- A) Re-crear policies legacy de public.perfiles
 -- ------------------------------------------------------------
+DROP POLICY IF EXISTS "leer perfiles" ON public.perfiles;
 CREATE POLICY "leer perfiles"
   ON public.perfiles
   FOR SELECT
@@ -18,6 +20,7 @@ CREATE POLICY "leer perfiles"
   USING (true);
 
 -- Policy legacy duplicada de "perfiles_select_propio"
+DROP POLICY IF EXISTS "usuarios pueden leer su perfil" ON public.perfiles;
 CREATE POLICY "usuarios pueden leer su perfil"
   ON public.perfiles
   FOR SELECT
@@ -27,6 +30,7 @@ CREATE POLICY "usuarios pueden leer su perfil"
 -- ------------------------------------------------------------
 -- B) Re-crear policies legacy de public.clases
 -- ------------------------------------------------------------
+DROP POLICY IF EXISTS "admin puede gestionar clases" ON public.clases;
 CREATE POLICY "admin puede gestionar clases"
   ON public.clases
   FOR ALL
@@ -34,6 +38,7 @@ CREATE POLICY "admin puede gestionar clases"
   USING (true)
   WITH CHECK (true);
 
+DROP POLICY IF EXISTS "socios pueden leer clases" ON public.clases;
 CREATE POLICY "socios pueden leer clases"
   ON public.clases
   FOR SELECT
