@@ -37,6 +37,24 @@ where schemaname = 'public'
 order by tablename, policyname;
 
 -- D) Verificar ACL de funciones sensibles
+-- D1) Verificación principal: permisos efectivos (no solo proacl)
+-- Esperado tras cleanup:
+-- - anon_can_execute = false
+-- - authenticated_can_execute = true
+-- - service_role_can_execute = true
+select
+  'public.get_user_rol()' as function_signature,
+  has_function_privilege('anon', 'public.get_user_rol()', 'EXECUTE') as anon_can_execute,
+  has_function_privilege('authenticated', 'public.get_user_rol()', 'EXECUTE') as authenticated_can_execute,
+  has_function_privilege('service_role', 'public.get_user_rol()', 'EXECUTE') as service_role_can_execute
+union all
+select
+  'public.toggle_reserva(uuid, date)' as function_signature,
+  has_function_privilege('anon', 'public.toggle_reserva(uuid, date)', 'EXECUTE') as anon_can_execute,
+  has_function_privilege('authenticated', 'public.toggle_reserva(uuid, date)', 'EXECUTE') as authenticated_can_execute,
+  has_function_privilege('service_role', 'public.toggle_reserva(uuid, date)', 'EXECUTE') as service_role_can_execute;
+
+-- D2) Información adicional: ACL cruda
 select
   n.nspname as schema,
   p.proname as function_name,

@@ -46,9 +46,17 @@ CREATE POLICY "socios pueden leer clases"
   USING (true);
 
 -- ------------------------------------------------------------
--- C) Re-otorgar EXECUTE a anon en funciones sensibles
+-- C) Re-otorgar EXECUTE de contingencia en funciones sensibles
+-- Este bloque:
+-- - reotorga EXECUTE a anon (contingencia),
+-- - reasegura authenticated y service_role,
+-- - no representa el estado final recomendado de seguridad.
 -- ------------------------------------------------------------
 GRANT EXECUTE ON FUNCTION public.get_user_rol() TO anon;
+GRANT EXECUTE ON FUNCTION public.get_user_rol() TO authenticated;
+GRANT EXECUTE ON FUNCTION public.get_user_rol() TO service_role;
 
 -- Firma confirmada en repo: toggle_reserva(uuid, date)
 GRANT EXECUTE ON FUNCTION public.toggle_reserva(uuid, date) TO anon;
+GRANT EXECUTE ON FUNCTION public.toggle_reserva(uuid, date) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.toggle_reserva(uuid, date) TO service_role;
