@@ -5,6 +5,15 @@ import { useSearchParams } from 'next/navigation'
 
 type EstadoCheckin = 'loading' | 'ok' | 'error'
 
+function getTokenFromLocation(): string {
+  try {
+    const raw = new URL(window.location.href).searchParams.get('token')
+    return raw?.trim() ?? ''
+  } catch {
+    return ''
+  }
+}
+
 function CheckinInner() {
   const params = useSearchParams()
   const token = params.get('token')
@@ -41,11 +50,13 @@ function CheckinInner() {
   }, [])
 
   useEffect(() => {
-    if (!token) {
-      procesarTokenInvalido()
+    const tokenFromQuery = token?.trim() ?? ''
+    const tokenFromLocation = tokenFromQuery || getTokenFromLocation()
+    if (tokenFromLocation) {
+      procesarCheckin(tokenFromLocation)
       return
     }
-    procesarCheckin(token)
+    procesarTokenInvalido()
   }, [token, procesarCheckin, procesarTokenInvalido])
 
   const bg = estado === 'loading' ? '#0f0f0f' : estado === 'ok' ? '#1a2a0a' : '#2a0a0a'
