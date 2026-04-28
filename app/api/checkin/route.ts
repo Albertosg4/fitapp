@@ -2,21 +2,101 @@ import { NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase/admin'
 import { isMembresiaValida } from '@/lib/domain/membresias'
 
+const TOKEN_MIN_LENGTH = 8
+const TOKEN_MAX_LENGTH = 128
+const TOKEN_ALLOWED_REGEX = /^[A-Za-z0-9_-]+$/
+
+const RATE_LIMIT_WINDOW_MS = 30_000
+const RATE_LIMIT_MAX_REQUESTS = 12
+
+const rateLimitStore = new Map<string, { count: number; resetAt: number }>()
+
+function redactToken(raw: string): string {
+  const token = raw.trim()
+  if (!token) return 'empty'
+  if (token.length <= 6) return `${token[0] ?? '*'}***${token[token.length - 1] ?? '*'}`
+  return `${token.slice(0, 3)}***${token.slice(-3)}`
+}
+
+function getClientIp(req: Request): string {
+  const forwardedFor = req.headers.get('x-forwarded-for')
+  if (forwardedFor) {
+    return forwardedFor.split(',')[0]?.trim() || 'unknown'
+  }
+
+  return req.headers.get('x-real-ip') || 'unknown'
+}
+
+function checkRateLimit(key: string): boolean {
+  const now = Date.now()
+  const record = rateLimitStore.get(key)
+
+  if (!record || record.resetAt <= now) {
+    rateLimitStore.set(key, { count: 1, resetAt: now + RATE_LIMIT_WINDOW_MS })
+    return true
+  }
+
+  if (record.count >= RATE_LIMIT_MAX_REQUESTS) {
+    return false
+  }
+
+  record.count += 1
+  rateLimitStore.set(key, record)
+  return true
+}
+
+function isDuplicateLikeError(err: unknown): boolean {
+  if (!err || typeof err !== 'object') return false
+
+  const candidate = err as { code?: string; message?: string; details?: string; hint?: string }
+  const combined = `${candidate.message ?? ''} ${candidate.details ?? ''} ${candidate.hint ?? ''}`.toLowerCase()
+
+  return candidate.code === '23505'
+    || combined.includes('duplicate key')
+    || combined.includes('unique constraint')
+    || combined.includes('already exists')
+}
+
+function isTokenValid(token: string): boolean {
+  if (token.length < TOKEN_MIN_LENGTH || token.length > TOKEN_MAX_LENGTH) return false
+  return TOKEN_ALLOWED_REGEX.test(token)
+}
+
 export async function POST(req: Request) {
   try {
     // ─── 1. Validar payload ─────────────────────────────────────────────────────
-    const body = await req.json()
-    const { token } = body
+    let body: unknown
+    try {
+      body = await req.json()
+    } catch {
+      return NextResponse.json({ error: 'Payload inválido' }, { status: 400 })
+    }
 
-    if (!token || typeof token !== 'string' || token.trim().length === 0) {
+    const token = (body as { token?: unknown } | null)?.token
+
+    if (typeof token !== 'string') {
       return NextResponse.json({ error: 'Token requerido' }, { status: 400 })
+    }
+
+    const tokenNormalized = token.trim()
+    if (!isTokenValid(tokenNormalized)) {
+      return NextResponse.json({ error: 'Token inválido' }, { status: 400 })
+    }
+
+    const tokenRedacted = redactToken(tokenNormalized)
+    const ip = getClientIp(req)
+    const rateLimitKey = `${ip}:${tokenRedacted}`
+
+    if (!checkRateLimit(rateLimitKey)) {
+      console.warn(`[checkin] Rate limit excedido ip=${ip} token=${tokenRedacted}`)
+      return NextResponse.json({ error: 'Demasiados intentos. Intenta de nuevo en unos segundos.' }, { status: 429 })
     }
 
     // ─── 2. Buscar perfil por qr_token ─────────────────────────────────────────
     const { data: perfil, error: perfilError } = await supabaseAdmin
       .from('perfiles')
       .select('id, nombre, membresia_activa, membresia_vence')
-      .eq('qr_token', token.trim())
+      .eq('qr_token', tokenNormalized)
       .maybeSingle()
 
     if (perfilError) {
@@ -87,6 +167,24 @@ export async function POST(req: Request) {
       })
 
       if (insertError) {
+        if (isDuplicateLikeError(insertError)) {
+          const { data: accesoPostConflict } = await supabaseAdmin
+            .from('asistencia')
+            .select('id')
+            .eq('user_id', perfil.id)
+            .gte('check_in_at', `${hoy}T00:00:00`)
+            .lte('check_in_at', `${hoy}T23:59:59`)
+            .maybeSingle()
+
+          if (accesoPostConflict) {
+            return NextResponse.json({
+              ok: true,
+              nombre: perfil.nombre,
+              msg: 'Acceso ya registrado hoy',
+            })
+          }
+        }
+
         console.error('[checkin] Error registrando acceso libre:', insertError.message)
         return NextResponse.json({ error: 'Error al registrar acceso' }, { status: 500 })
       }
@@ -122,6 +220,22 @@ export async function POST(req: Request) {
     })
 
     if (checkinError) {
+      if (isDuplicateLikeError(checkinError)) {
+        const { data: checkinPostConflict } = await supabaseAdmin
+          .from('asistencia')
+          .select('id')
+          .eq('reserva_id', reservaId)
+          .maybeSingle()
+
+        if (checkinPostConflict) {
+          return NextResponse.json({
+            ok: true,
+            nombre: perfil.nombre,
+            msg: 'Check-in ya registrado anteriormente',
+          })
+        }
+      }
+
       console.error('[checkin] Error registrando check-in:', checkinError.message)
       return NextResponse.json({ error: 'Error al registrar check-in' }, { status: 500 })
     }
