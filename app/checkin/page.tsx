@@ -4,6 +4,8 @@ import { useEffect, useState, useCallback, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 
 type EstadoCheckin = 'loading' | 'ok' | 'error'
+const LAST_QR_TOKEN_KEY = 'fitapp_checkin_last_qr_token'
+const LAST_QR_TOKEN_MAX_AGE_MS = 5 * 60_000
 
 function CheckinInner() {
   const params = useSearchParams()
@@ -41,11 +43,37 @@ function CheckinInner() {
   }, [])
 
   useEffect(() => {
-    if (!token) {
-      procesarTokenInvalido()
+    const tokenFromQuery = token?.trim() ?? ''
+    if (tokenFromQuery) {
+      try {
+        sessionStorage.setItem(LAST_QR_TOKEN_KEY, JSON.stringify({
+          token: tokenFromQuery,
+          ts: Date.now(),
+        }))
+      } catch {
+        // noop: fallback cache best-effort
+      }
+      procesarCheckin(tokenFromQuery)
       return
     }
-    procesarCheckin(token)
+
+    try {
+      const cachedRaw = sessionStorage.getItem(LAST_QR_TOKEN_KEY)
+      if (cachedRaw) {
+        const cached = JSON.parse(cachedRaw) as { token?: unknown; ts?: unknown }
+        const cachedToken = typeof cached.token === 'string' ? cached.token.trim() : ''
+        const cachedTs = typeof cached.ts === 'number' ? cached.ts : 0
+        const isFresh = Date.now() - cachedTs <= LAST_QR_TOKEN_MAX_AGE_MS
+        if (cachedToken && isFresh) {
+          procesarCheckin(cachedToken)
+          return
+        }
+      }
+    } catch {
+      // noop: si no se puede leer cache, seguimos con token inválido
+    }
+
+    procesarTokenInvalido()
   }, [token, procesarCheckin, procesarTokenInvalido])
 
   const bg = estado === 'loading' ? '#0f0f0f' : estado === 'ok' ? '#1a2a0a' : '#2a0a0a'
