@@ -6,12 +6,13 @@
 
 - Producción operativa.
 - Las escrituras admin principales ya migraron a API protegida (server-side).
-- RLS **sigue pendiente** de auditoría fina y limpieza.
+- Limpieza RLS crítica **3D-2B aplicada y validada** en Supabase live (project ref `bfhifmvndqyxhseqrivu`).
+- RLS **no está completamente saneado**: quedan riesgos secundarios y auditoría fina pendiente.
 
 ## Sobre RLS y policies (importante)
 
 - ❗ **No afirmar que RLS está perfecto**: el estado actual requiere revisión formal.
-- Existen policies antiguas/mixtas que deben auditarse antes de tocar.
+- 3D-2B cerró aperturas críticas, pero siguen policies legacy/mixtas por revisar.
 - Hay que validar compatibilidad real con escenarios multi-gimnasio.
 
 ## Hitos previos ya aplicados
@@ -19,46 +20,47 @@
 - **Fase 3A**: índices, constraints y RPC `toggle_reserva`.
 - **Fase 3A1**: corrección de `toggle_reserva` usando `v_reserva_existe`.
 - **Fase 3D-1**: auditoría live de RLS/policies (solo lectura) en Supabase project ref `bfhifmvndqyxhseqrivu`.
+- **Fase 3D-2A**: scripts SQL preparados (limpieza crítica, rollback y verificación).
+- **Fase 3D-2B**: limpieza RLS crítica aplicada manualmente en Supabase live y validada.
 
-## Hallazgos críticos confirmados en 3D-1
+## Resultado aplicado en 3D-2B (live)
 
-- `public.perfiles`:
-  - policy **"leer perfiles"** con `qual = true` (apertura global de lectura).
-- `public.clases`:
-  - policy **"admin puede gestionar clases"** con `qual = true` y `with_check = true`.
-- Hallazgos adicionales relevantes:
-  - duplicidad/legacy en `perfiles` (`"usuarios pueden leer su perfil"` duplicando `"perfiles_select_propio"`).
-  - policy legacy amplia en `clases` (`"socios pueden leer clases"` con `qual = true`).
-  - funciones sensibles `get_user_rol()` y `toggle_reserva(...)` con EXECUTE para `anon` (innecesario).
+Se aplicó en SQL Editor de Supabase live:
 
-## Fase 3D-2A (preparación, sin aplicar)
+- Eliminación de policies críticas/legacy:
+  - `DROP POLICY IF EXISTS "leer perfiles" ON public.perfiles;`
+  - `DROP POLICY IF EXISTS "usuarios pueden leer su perfil" ON public.perfiles;`
+  - `DROP POLICY IF EXISTS "admin puede gestionar clases" ON public.clases;`
+  - `DROP POLICY IF EXISTS "socios pueden leer clases" ON public.clases;`
+- Ajuste de permisos EXECUTE en funciones sensibles:
+  - `get_user_rol()`: revocado para `PUBLIC`/`anon`; grant para `authenticated` y `service_role`.
+  - `toggle_reserva(uuid, date)`: revocado para `PUBLIC`/`anon`; grant para `authenticated` y `service_role`.
 
-En esta fase se preparan archivos SQL de:
+## Verificaciones post-aplicación 3D-2B
 
-1. limpieza crítica,
-2. rollback,
-3. verificación post-aplicación.
+- Consulta de policies críticas: **0 filas**.
+- `anon_can_execute`:
+  - `get_user_rol()`: **false**
+  - `toggle_reserva(uuid, date)`: **false**
+- `authenticated_can_execute`:
+  - `get_user_rol()`: **true**
+  - `toggle_reserva(uuid, date)`: **true**
+- `service_role_can_execute`:
+  - `get_user_rol()`: **true**
+  - `toggle_reserva(uuid, date)`: **true**
 
-**Importante:** en 3D-2A **NO** se aplican cambios en Supabase live.
+## No ejecutar cambios RLS fuera de fase específica
 
-## No ejecutar cambios RLS sin fase específica
-
-Cualquier cambio de policies RLS debe hacerse en fase dedicada, con:
+Cualquier cambio adicional de RLS/policies debe hacerse en fase dedicada, con:
 
 1. Inventario de policies actuales.
 2. Plan de rollback listo.
 3. Pruebas funcionales y de aislamiento multi-gimnasio.
 4. Aplicación controlada por lotes.
 
-## Requisito operativo para aplicar 3D-2A
-
-- Ejecutar en ventana controlada.
-- Validar pruebas multi-gimnasio antes y después.
-- Revisar el SQL de verificación y confirmar que no queden policies críticas/abiertas.
-
 ## Escrituras admin ya protegidas antes de RLS fina
 
-Antes de completar la fase de RLS, ya se movieron a APIs protegidas las escrituras admin principales de:
+Antes de completar la fase de RLS secundaria, ya se movieron a APIs protegidas las escrituras admin principales de:
 
 - `actividades`
 - `horarios_clase`
@@ -67,7 +69,10 @@ Antes de completar la fase de RLS, ya se movieron a APIs protegidas las escritur
 
 ## Pendientes explícitos
 
-- Auditar policies actuales una por una.
-- Detectar policies abiertas tipo `USING true` o `TO public`.
-- Preparar y validar rollback antes de modificar.
-- Probar con datos multi-gimnasio reales.
+- Limpieza RLS secundaria (policies no críticas / legacy restantes).
+- Pruebas con datos multi-gimnasio reales.
+- Revisión de `sesiones_insert`.
+- Revisión de `asistencia_insert`.
+- Revisión de `perfiles_update_propio`.
+- Revisión de `gimnasios` con `SELECT` público.
+- Índices duplicados (limpieza opcional a futuro).

@@ -6,7 +6,7 @@
 |---|---|
 | URL producción | https://fitapp-neon.vercel.app |
 | Repo | https://github.com/Albertosg4/fitapp |
-| Último commit estable conocido | `354b3c8` |
+| Último commit estable conocido | `50c2ee4` |
 | Estado de producción | ✅ Validado OK |
 | `npm run lint` | ✅ OK (validado) |
 | `npm run build` | ✅ OK (validado) |
@@ -24,6 +24,7 @@
 - ✅ **Fase 3C-6B** — Auditoría de `/api/reservas/toggle`.
 - ✅ **Fase Stripe-1** — Auditoría Stripe actual.
 - ✅ **Fase Stripe-2** — Unificación Stripe con dominio de membresías.
+- ✅ **Fase 3D-2B** — Limpieza RLS crítica aplicada y validada en Supabase live.
 
 ## APIs protegidas activas
 
@@ -50,6 +51,7 @@
 ## Estado funcional resumido
 
 - Producción operativa en Vercel y validada OK tras Stripe-2.
+- Producción validada OK después de aplicar limpieza RLS crítica 3D-2B.
 - Flujo socio de reservas operando por API protegida.
 - Gestión admin crítica migrada a server-side.
 - Gestión de pagos manuales y confirmaciones operativa.
