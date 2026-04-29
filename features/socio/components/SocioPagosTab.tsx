@@ -13,10 +13,10 @@ interface Props {
 export default function SocioPagosTab({ userId, pagando, onPagar }: Props) {
   return (
     <div className="space-y-4 p-4 sm:p-5">
-      <Card className="border-lime-300/20 bg-[#181818] text-zinc-100 shadow-[0_12px_24px_rgba(0,0,0,0.3)]">
+      <Card className="!border-lime-300/20 !bg-[#181818] !text-zinc-100 shadow-[0_12px_24px_rgba(0,0,0,0.3)]">
         <CardHeader className="space-y-2">
           <CardTitle className="text-xl font-extrabold text-zinc-100">Mis pagos</CardTitle>
-          <CardDescription className="text-zinc-400">
+          <CardDescription className="!text-zinc-300">
             Revisa tu historial de pagos y renueva tu membresía cuando lo necesites.
           </CardDescription>
           <div className="flex flex-wrap gap-2 pt-1">
@@ -24,7 +24,7 @@ export default function SocioPagosTab({ userId, pagando, onPagar }: Props) {
             <Badge variant="warning" className="bg-amber-400/20 text-amber-300">Pendiente</Badge>
             <Badge variant="danger" className="bg-red-500/20 text-red-300">Vencido</Badge>
             <Badge variant="info" className="bg-cyan-400/20 text-cyan-300">Activo</Badge>
-            <Badge variant="neutral" className="bg-zinc-700 text-zinc-200">Caducado</Badge>
+            <Badge variant="neutral" className="!bg-zinc-700 !text-zinc-200">Caducado</Badge>
           </div>
         </CardHeader>
         <CardContent className="pt-0">
@@ -32,10 +32,10 @@ export default function SocioPagosTab({ userId, pagando, onPagar }: Props) {
         </CardContent>
       </Card>
 
-      <Card className="border-lime-300/20 bg-[#181818] text-zinc-100">
+      <Card className="!border-lime-300/20 !bg-[#181818] !text-zinc-100">
         <CardHeader>
           <CardTitle className="text-base font-bold uppercase tracking-wide text-zinc-200">Renovar membresía</CardTitle>
-          <CardDescription className="text-zinc-500">Selecciona el plan para continuar con el mismo flujo de pago.</CardDescription>
+          <CardDescription className="!text-zinc-400">Selecciona el plan para continuar con el mismo flujo de pago.</CardDescription>
         </CardHeader>
         <CardContent className="pt-1">
           <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
@@ -45,7 +45,7 @@ export default function SocioPagosTab({ userId, pagando, onPagar }: Props) {
                 onClick={() => onPagar(t.value)}
                 disabled={pagando}
                 variant="ghost"
-                className="h-auto justify-start rounded-xl border border-lime-300/20 bg-[#1e1e1e] px-4 py-3 text-left text-lime-300 hover:bg-zinc-800/80 hover:text-lime-200"
+                className="h-auto justify-start rounded-xl !border !border-lime-300/20 !bg-[#1e1e1e] px-4 py-3 text-left !text-lime-300 hover:!bg-zinc-800/80 hover:!text-lime-200"
               >
                 <span className="text-sm font-semibold">{t.label}</span>
               </Button>
