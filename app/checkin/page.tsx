@@ -2,6 +2,15 @@
 
 import { useEffect, useState, useCallback, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
+import {
+  Badge,
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+  Skeleton,
+} from '@/components/ui'
 
 type EstadoCheckin = 'loading' | 'ok' | 'error'
 
@@ -59,26 +68,90 @@ function CheckinInner() {
     procesarTokenInvalido()
   }, [token, procesarCheckin, procesarTokenInvalido])
 
-  const bg = estado === 'loading' ? '#0f0f0f' : estado === 'ok' ? '#1a2a0a' : '#2a0a0a'
-  const color = estado === 'ok' ? '#c8f542' : '#ff5c5c'
-  const emoji = estado === 'loading' ? '⏳' : estado === 'ok' ? '✅' : '❌'
+  const statusConfig = {
+    loading: {
+      badgeLabel: 'Procesando',
+      badgeVariant: 'info' as const,
+      icon: '⏳',
+      title: 'Validando check-in',
+      description: 'Estamos verificando tu acceso. Esto tarda unos segundos.',
+    },
+    ok: {
+      badgeLabel: 'Completado',
+      badgeVariant: 'success' as const,
+      icon: '✅',
+      title: 'Check-in confirmado',
+      description: 'Tu entrada ha sido registrada correctamente.',
+    },
+    error: {
+      badgeLabel: 'No completado',
+      badgeVariant: 'danger' as const,
+      icon: '❌',
+      title: 'No se pudo completar',
+      description: 'Revisa el estado del token o inténtalo de nuevo más tarde.',
+    },
+  }[estado]
 
   return (
-    <div style={{ minHeight: '100vh', background: bg, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', fontFamily: 'system-ui', padding: '24px', textAlign: 'center' }}>
-      <div style={{ fontSize: '80px', marginBottom: '24px' }}>{emoji}</div>
-      {nombre && <div style={{ fontSize: '28px', fontWeight: '800', color: '#f0f0f0', marginBottom: '8px' }}>{nombre}</div>}
-      <div style={{ fontSize: '16px', color, fontWeight: '600' }}>{msg}</div>
-    </div>
+    <main className="min-h-screen bg-slate-950 px-4 py-8 text-slate-100 sm:px-6">
+      <div className="mx-auto flex min-h-[calc(100vh-4rem)] w-full max-w-md items-center justify-center">
+        <Card className="w-full !border-slate-800 !bg-slate-900/90 shadow-2xl shadow-slate-950/60 backdrop-blur">
+          <CardHeader>
+            <div className="mb-3 flex items-center justify-between gap-3">
+              <span className="text-3xl" aria-hidden="true">{statusConfig.icon}</span>
+              <Badge variant={statusConfig.badgeVariant}>{statusConfig.badgeLabel}</Badge>
+            </div>
+            <CardTitle className="text-xl text-white">{statusConfig.title}</CardTitle>
+            <CardDescription className="text-slate-300">{statusConfig.description}</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {estado === 'loading' ? (
+              <div className="space-y-3">
+                <Skeleton className="h-5 w-3/4 bg-slate-700" rounded="md" />
+                <Skeleton className="h-16 w-full bg-slate-700" rounded="lg" />
+              </div>
+            ) : (
+              <>
+                {nombre ? (
+                  <div className="rounded-xl border border-slate-700 bg-slate-800/80 px-4 py-3">
+                    <p className="text-xs font-medium uppercase tracking-wide text-slate-400">Socio</p>
+                    <p className="mt-1 text-lg font-semibold text-white">{nombre}</p>
+                  </div>
+                ) : null}
+                <div className="rounded-xl border border-slate-700 bg-slate-800/70 px-4 py-3">
+                  <p className="text-xs font-medium uppercase tracking-wide text-slate-400">Resultado</p>
+                  <p className="mt-1 text-sm font-medium text-slate-100">{msg}</p>
+                </div>
+              </>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+    </main>
   )
 }
 
 export default function CheckinPage() {
   return (
-    <Suspense fallback={
-      <div style={{ minHeight: '100vh', background: '#0f0f0f', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <p style={{ color: '#888', fontFamily: 'system-ui' }}>Cargando...</p>
-      </div>
-    }>
+    <Suspense
+      fallback={
+        <main className="min-h-screen bg-slate-950 px-4 py-8 text-slate-100 sm:px-6">
+          <div className="mx-auto flex min-h-[calc(100vh-4rem)] w-full max-w-md items-center justify-center">
+            <Card className="w-full !border-slate-800 !bg-slate-900/90">
+              <CardHeader>
+                <Skeleton className="mb-3 h-6 w-24 bg-slate-700" rounded="full" />
+                <Skeleton className="h-7 w-2/3 bg-slate-700" rounded="md" />
+                <Skeleton className="mt-2 h-4 w-full bg-slate-700" rounded="md" />
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <Skeleton className="h-5 w-1/2 bg-slate-700" rounded="md" />
+                <Skeleton className="h-16 w-full bg-slate-700" rounded="lg" />
+              </CardContent>
+            </Card>
+          </div>
+        </main>
+      }
+    >
       <CheckinInner />
     </Suspense>
   )
