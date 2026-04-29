@@ -95,7 +95,7 @@ function CheckinInner() {
   return (
     <main className="min-h-screen bg-slate-950 px-4 py-8 text-slate-100 sm:px-6">
       <div className="mx-auto flex min-h-[calc(100vh-4rem)] w-full max-w-md items-center justify-center">
-        <Card className="w-full border-slate-800 bg-slate-900/90 shadow-2xl shadow-slate-950/60 backdrop-blur">
+        <Card className="w-full !border-slate-800 !bg-slate-900/90 shadow-2xl shadow-slate-950/60 backdrop-blur">
           <CardHeader>
             <div className="mb-3 flex items-center justify-between gap-3">
               <span className="text-3xl" aria-hidden="true">{statusConfig.icon}</span>
@@ -137,7 +137,7 @@ export default function CheckinPage() {
       fallback={
         <main className="min-h-screen bg-slate-950 px-4 py-8 text-slate-100 sm:px-6">
           <div className="mx-auto flex min-h-[calc(100vh-4rem)] w-full max-w-md items-center justify-center">
-            <Card className="w-full border-slate-800 bg-slate-900/90">
+            <Card className="w-full !border-slate-800 !bg-slate-900/90">
               <CardHeader>
                 <Skeleton className="mb-3 h-6 w-24 bg-slate-700" rounded="full" />
                 <Skeleton className="h-7 w-2/3 bg-slate-700" rounded="md" />
