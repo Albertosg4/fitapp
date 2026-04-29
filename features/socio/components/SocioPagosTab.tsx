@@ -1,7 +1,7 @@
 'use client'
 
 import HistorialPagos from '@/components/HistorialPagos'
-import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Badge } from '@/components/ui'
+import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui'
 import { TIPOS_MEMBRESIA } from '@/lib/domain/membresias'
 
 interface Props {
@@ -19,13 +19,6 @@ export default function SocioPagosTab({ userId, pagando, onPagar }: Props) {
           <CardDescription className="!text-zinc-300">
             Revisa tu historial de pagos y renueva tu membresía cuando lo necesites.
           </CardDescription>
-          <div className="flex flex-wrap gap-2 pt-1">
-            <Badge variant="success" className="bg-lime-300/20 text-lime-300">Pagado</Badge>
-            <Badge variant="warning" className="bg-amber-400/20 text-amber-300">Pendiente</Badge>
-            <Badge variant="danger" className="bg-red-500/20 text-red-300">Vencido</Badge>
-            <Badge variant="info" className="bg-cyan-400/20 text-cyan-300">Activo</Badge>
-            <Badge variant="neutral" className="!bg-zinc-700 !text-zinc-200">Caducado</Badge>
-          </div>
         </CardHeader>
         <CardContent className="pt-0">
           <HistorialPagos userId={userId} compact={false} />
