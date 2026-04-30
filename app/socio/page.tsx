@@ -119,8 +119,18 @@ function SocioPageInner() {
 
       {/* Banners de estado */}
       {estadoMembresia === 'caducada' && (
-        <div style={{ background: 'rgba(255,92,92,0.15)', borderBottom: '1px solid rgba(255,92,92,0.3)', padding: '10px 20px', fontSize: '13px', color: '#ff5c5c' }}>
-          ❌ Tu membresía ha caducado. Renuévala desde la pestaña Perfil.
+        <div style={{ background: 'rgba(255,92,92,0.15)', borderBottom: '1px solid rgba(255,92,92,0.3)', padding: '10px 20px', fontSize: '13px', color: '#ff5c5c', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px' }}>
+          <span>
+            ❌ Tu membresía ha caducado. {tab === 'pagos' ? 'Puedes renovarla más abajo.' : 'Renuévala desde la pestaña Pagos.'}
+          </span>
+          {tab !== 'pagos' && (
+            <button
+              onClick={() => setTab('pagos')}
+              style={{ border: '1px solid rgba(255,92,92,0.4)', background: 'rgba(255,92,92,0.12)', color: '#ff9a9a', borderRadius: '8px', padding: '4px 10px', fontSize: '12px', cursor: 'pointer' }}
+            >
+              Ir a Pagos
+            </button>
+          )}
         </div>
       )}
       {estadoMembresia === 'pronto' && (
@@ -148,7 +158,7 @@ function SocioPageInner() {
         />
       )}
       {tab === 'historial' && userId && <SocioHistorialTab userId={userId} />}
-      {tab === 'pagos' && userId && <SocioPagosTab userId={userId} pagando={pagando} onPagar={pagarMembresia} />}
+      {tab === 'pagos' && userId && <SocioPagosTab userId={userId} perfil={perfil} pagando={pagando} onPagar={pagarMembresia} />}
       {tab === 'qr' && <SocioQRTab perfil={perfil} qrUrl={qrUrl} />}
       {tab === 'perfil' && (
         <SocioPerfilTab
