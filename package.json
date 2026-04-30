@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "demo:reset": "node --experimental-strip-types scripts/reset-demo-data.ts"
   },
   "dependencies": {
     "@stripe/stripe-js": "^9.3.1",
