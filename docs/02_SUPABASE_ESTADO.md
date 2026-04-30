@@ -84,3 +84,18 @@ Antes de completar la fase de RLS secundaria, ya se movieron a APIs protegidas l
 - Archivo usado: supabase/precheck/00_estado_actual.sql
 - Resultado: pendiente de pegar tras ejecución manual en Supabase SQL Editor
 - Observaciones:
+
+## Fase 3D-3A - Cierre INSERT cliente sesiones/asistencia
+
+- Fecha:
+- SQL principal: supabase/fase3D3A_close_client_inserts.sql
+- Rollback: supabase/fase3D3A_close_client_inserts_rollback.sql
+- Verificación: supabase/fase3D3A_close_client_inserts_verificacion.sql
+- Estado: pendiente de aplicar manualmente
+- Resultado esperado: las policies sesiones_insert y asistencia_insert desaparecen de pg_policies
+- Validación funcional pendiente:
+  - crear sesión puntual desde admin
+  - reservar clase como socio
+  - cancelar reserva como socio
+  - hacer check-in QR con reserva
+  - hacer check-in QR libre si aplica

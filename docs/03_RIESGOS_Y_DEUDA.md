@@ -34,3 +34,5 @@ Este documento reclasifica riesgos tras completar 3B, 3C, check-in hardening, St
 - ⚠️ Fallback JS de reservas sigue como deuda técnica controlada (no bug crítico).
 
 - Auditoría de escrituras cliente/API para preparar RLS: docs/security/rls-client-write-audit.md
+
+- Preparado cierre RLS de INSERT cliente en sesiones/asistencia mediante supabase/fase3D3A_close_client_inserts.sql. Pendiente de aplicar manualmente en Supabase SQL Editor y validar con el runbook.
