@@ -148,7 +148,7 @@ function SocioPageInner() {
         />
       )}
       {tab === 'historial' && userId && <SocioHistorialTab userId={userId} />}
-      {tab === 'pagos' && userId && <SocioPagosTab userId={userId} pagando={pagando} onPagar={pagarMembresia} />}
+      {tab === 'pagos' && userId && <SocioPagosTab userId={userId} perfil={perfil} pagando={pagando} onPagar={pagarMembresia} />}
       {tab === 'qr' && <SocioQRTab perfil={perfil} qrUrl={qrUrl} />}
       {tab === 'perfil' && (
         <SocioPerfilTab
