@@ -35,6 +35,8 @@ export default function SocioPagosTab({ userId, perfil, pagando, onPagar }: Prop
   }[estadoMembresia]
 
   const tipoLabel = perfil?.tipo_membresia ? (membershipLabelMap[perfil.tipo_membresia] ?? perfil.tipo_membresia) : 'Sin plan activo'
+  const formatearFecha = (fecha: string) => new Date(fecha).toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' })
+  const formatearImporte = (importe: number) => new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(importe)
 
   return (
     <div className="space-y-4 p-4 sm:p-5">
@@ -45,13 +47,13 @@ export default function SocioPagosTab({ userId, perfil, pagando, onPagar }: Prop
         </CardHeader>
         <CardContent className="space-y-2 pt-0 text-sm text-zinc-200">
           <p><span className="text-zinc-400">Tipo:</span> {tipoLabel}</p>
-          <p><span className="text-zinc-400">Caduca:</span> {perfil?.membresia_vence ? new Date(perfil.membresia_vence).toLocaleDateString('es-ES') : 'Sin fecha de caducidad'}</p>
+          <p><span className="text-zinc-400">Caduca el:</span> {perfil?.membresia_vence ? formatearFecha(perfil.membresia_vence) : 'Sin fecha de caducidad'}</p>
           {perfil?.membresia_vence ? (
             <p>
-              <span className="text-zinc-400">Estado temporal:</span>{' '}
+              <span className="text-zinc-400">{diasRestantes !== null && diasRestantes >= 0 ? 'Vence en:' : 'Caducó hace:'}</span>{' '}
               {diasRestantes !== null && diasRestantes >= 0
-                ? `Quedan ${diasRestantes} día${diasRestantes === 1 ? '' : 's'}`
-                : `Caducó hace ${Math.abs(diasRestantes ?? 0)} día${Math.abs(diasRestantes ?? 0) === 1 ? '' : 's'}`}
+                ? `${diasRestantes} día${diasRestantes === 1 ? '' : 's'}`
+                : `${Math.abs(diasRestantes ?? 0)} día${Math.abs(diasRestantes ?? 0) === 1 ? '' : 's'}`}
             </p>
           ) : (
             <p className="text-zinc-400">Aún no tienes una membresía activa registrada.</p>
@@ -95,7 +97,7 @@ export default function SocioPagosTab({ userId, perfil, pagando, onPagar }: Prop
                   className="h-auto w-full justify-between rounded-xl !border !border-lime-300/20 !bg-[#1e1e1e] px-4 py-3 text-left !text-lime-300 hover:!bg-zinc-800/80 hover:!text-lime-200"
                 >
                   <span className="text-sm font-semibold">{t.label}</span>
-                  <span className="text-xs text-zinc-300">{IMPORTES[t.value].toFixed(2)}€</span>
+                  <span className="text-xs text-zinc-300">{formatearImporte(IMPORTES[t.value])}</span>
                 </Button>
               ))}
               <Button onClick={() => setRenewalStep('closed')} variant="ghost" className="w-full !text-zinc-300">Cancelar</Button>
@@ -105,7 +107,7 @@ export default function SocioPagosTab({ userId, perfil, pagando, onPagar }: Prop
           {renewalStep === 'confirm_plan' && selectedPlan && (
             <div className="space-y-3 rounded-xl border border-lime-300/20 bg-[#1e1e1e] p-4">
               <p className="text-sm text-zinc-200">Plan seleccionado: <strong>{membershipLabelMap[selectedPlan]}</strong></p>
-              <p className="text-sm text-zinc-200">Importe: <strong>{IMPORTES[selectedPlan].toFixed(2)}€</strong></p>
+              <p className="text-sm text-zinc-200">Importe: <strong>{formatearImporte(IMPORTES[selectedPlan])}</strong></p>
               <p className="text-xs text-zinc-400">Serás enviado al pago seguro con Stripe para completar la renovación.</p>
               <div className="flex gap-2">
                 <Button onClick={() => setRenewalStep('select_plan')} variant="ghost" className="flex-1 !text-zinc-300">Cambiar plan</Button>
