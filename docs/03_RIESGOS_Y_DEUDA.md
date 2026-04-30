@@ -27,7 +27,7 @@ Este documento reclasifica riesgos tras completar 3B, 3C, check-in hardening, St
 - ⚠️ `sesiones_insert` permite `authenticated` (revisión pendiente).
 - ⚠️ `asistencia_insert` permite `authenticated` (revisión pendiente).
 - ⚠️ `perfiles_update_propio` permite update directo del propio perfil (revisión pendiente).
-- ⚠️ `gimnasios` mantiene lectura pública (revisión pendiente).
+- ✅ `gimnasios` sin lectura pública abierta: cierre 3D-3B aplicado y validado (permanece policy `gimnasios_auth`).
 - ⚠️ Existen policies con rol `public` condicionadas internamente que requieren auditoría fina antes de cambiar.
 - ⚠️ Rate limit de check-in en memoria: protección **best-effort** (no distribuida).
 - ⚠️ Stripe webhook no es transaccional entre update de perfil + insert de pago: los errores ya no son silenciosos, pero persiste riesgo residual sin RPC/transacción DB.
@@ -37,3 +37,5 @@ Este documento reclasifica riesgos tras completar 3B, 3C, check-in hardening, St
 
 - Cierre RLS de INSERT cliente en sesiones/asistencia aplicado y validado: se eliminaron las policies `sesiones_insert` y `asistencia_insert`; validación funcional OK en sesión puntual admin, reserva/cancelación socio y check-in QR con/sin reserva.
 - Preparado cierre RLS de SELECT público en gimnasios mediante supabase/fase3D3B_close_public_gimnasios.sql. Pendiente de aplicar manualmente en Supabase SQL Editor y validar login/admin/socio.
+
+- Preparada Fase 4A para trazabilidad base de reservas mediante supabase/fase4A_reservas_trazabilidad.sql. Pendiente de aplicar manualmente y validar.
