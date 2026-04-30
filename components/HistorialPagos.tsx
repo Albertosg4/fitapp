@@ -51,6 +51,10 @@ export default function HistorialPagos({ userId }: Props) {
     return { bg: 'rgba(255,184,77,0.12)', color: '#ffb84d' }
   }
 
+  const formatearFecha = (fecha: string) => new Date(fecha).toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' })
+
+  const formatearImporte = (importe: number) => new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(importe)
+
   const labelMetodo = (metodo: string) => {
     if (metodo === 'stripe') return '💳 Tarjeta'
     if (metodo === 'efectivo') return '💵 Efectivo'
@@ -78,12 +82,12 @@ export default function HistorialPagos({ userId }: Props) {
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
               <div>
                 <div style={{ fontSize: '15px', fontWeight: '700', color: '#f0f0f0', textTransform: 'capitalize' }}>{p.tipo_membresia} · {p.meses} {p.meses === 1 ? 'mes' : 'meses'}</div>
-                <div style={{ fontSize: '12px', color: '#888', marginTop: '3px' }}>{new Date(p.fecha_pago).toLocaleDateString('es-ES', { day: '2-digit', month: 'long', year: 'numeric' })}</div>
+                <div style={{ fontSize: '12px', color: '#888', marginTop: '3px' }}>{formatearFecha(p.fecha_pago)}</div>
                 {p.notas && <div style={{ fontSize: '11px', color: '#666', marginTop: '4px' }}>{p.notas}</div>}
               </div>
               <div style={{ textAlign: 'right' }}>
-                <div style={{ fontSize: '18px', fontWeight: '800', color: '#c8f542' }}>{Number(p.importe).toFixed(2)}€</div>
-                <span style={{ fontSize: '11px', padding: '2px 8px', borderRadius: '20px', background: c.bg, color: c.color }}>{labelMetodo(p.metodo)}</span>
+                <div style={{ fontSize: '18px', fontWeight: '800', color: '#c8f542' }}>{formatearImporte(Number(p.importe))}</div>
+                <span style={{ fontSize: '12px', padding: '3px 10px', borderRadius: '20px', background: c.bg, color: c.color }}>{labelMetodo(p.metodo)}</span>
               </div>
             </div>
             <div style={{ marginTop: '8px' }}>
