@@ -76,3 +76,11 @@ Antes de completar la fase de RLS secundaria, ya se movieron a APIs protegidas l
 - Revisión de `perfiles_update_propio`.
 - Revisión de `gimnasios` con `SELECT` público.
 - Índices duplicados (limpieza opcional a futuro).
+
+## Precheck live Supabase
+
+- Fecha:
+- Ejecutado por:
+- Archivo usado: supabase/precheck/00_estado_actual.sql
+- Resultado: pendiente de pegar tras ejecución manual en Supabase SQL Editor
+- Observaciones:
