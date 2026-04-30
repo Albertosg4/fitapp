@@ -87,15 +87,30 @@ Antes de completar la fase de RLS secundaria, ya se movieron a APIs protegidas l
 
 ## Fase 3D-3A - Cierre INSERT cliente sesiones/asistencia
 
-- Fecha:
+- Fecha: pendiente
 - SQL principal: supabase/fase3D3A_close_client_inserts.sql
 - Rollback: supabase/fase3D3A_close_client_inserts_rollback.sql
 - Verificación: supabase/fase3D3A_close_client_inserts_verificacion.sql
+- Estado: aplicado
+- Resultado: aplicado correctamente
+- Validación funcional:
+  - crear sesión puntual desde admin: OK
+  - reservar clase como socio: OK
+  - cancelar reserva como socio: OK
+  - check-in QR con reserva: OK
+  - check-in QR libre: OK
+
+## Fase 3D-3B - Cierre SELECT público gimnasios
+
+- Fecha:
+- SQL principal: supabase/fase3D3B_close_public_gimnasios.sql
+- Rollback: supabase/fase3D3B_close_public_gimnasios_rollback.sql
+- Verificación: supabase/fase3D3B_close_public_gimnasios_verificacion.sql
 - Estado: pendiente de aplicar manualmente
-- Resultado esperado: las policies sesiones_insert y asistencia_insert desaparecen de pg_policies
+- Resultado esperado: la policy "leer gimnasios" desaparece de pg_policies y permanece "gimnasios_auth"
 - Validación funcional pendiente:
-  - crear sesión puntual desde admin
-  - reservar clase como socio
-  - cancelar reserva como socio
-  - hacer check-in QR con reserva
-  - hacer check-in QR libre si aplica
+  - cargar pantalla pública inicial
+  - login admin
+  - login socio
+  - entrar a panel admin
+  - entrar a panel socio
