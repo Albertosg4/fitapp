@@ -32,3 +32,5 @@ Este documento reclasifica riesgos tras completar 3B, 3C, check-in hardening, St
 - ⚠️ Rate limit de check-in en memoria: protección **best-effort** (no distribuida).
 - ⚠️ Stripe webhook no es transaccional entre update de perfil + insert de pago: los errores ya no son silenciosos, pero persiste riesgo residual sin RPC/transacción DB.
 - ⚠️ Fallback JS de reservas sigue como deuda técnica controlada (no bug crítico).
+
+- Auditoría de escrituras cliente/API para preparar RLS: docs/security/rls-client-write-audit.md
