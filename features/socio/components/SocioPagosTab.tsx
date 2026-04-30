@@ -21,7 +21,6 @@ const membershipLabelMap = TIPOS_MEMBRESIA.reduce<Record<string, string>>((acc, 
 }, {})
 
 export default function SocioPagosTab({ userId, perfil, pagando, onPagar }: Props) {
-  const [showAllPayments, setShowAllPayments] = useState(false)
   const [renewalStep, setRenewalStep] = useState<RenewalStep>('closed')
   const [selectedPlan, setSelectedPlan] = useState<TipoMembresia | null>(null)
 
@@ -66,14 +65,7 @@ export default function SocioPagosTab({ userId, perfil, pagando, onPagar }: Prop
           <CardDescription className="!text-zinc-300">Consulta tus pagos realizados.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-3 pt-0">
-          <HistorialPagos userId={userId} showAll={showAllPayments} />
-          <Button
-            onClick={() => setShowAllPayments(prev => !prev)}
-            variant="ghost"
-            className="w-full !border !border-lime-300/20 !bg-[#1e1e1e] !text-lime-300 hover:!bg-zinc-800/80 hover:!text-lime-200"
-          >
-            {showAllPayments ? 'Ver menos' : 'Ver historial completo'}
-          </Button>
+          <HistorialPagos userId={userId} />
         </CardContent>
       </Card>
 

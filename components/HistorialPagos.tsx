@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState, useCallback } from 'react'
+import { Button } from '@/components/ui'
 import { supabase } from '@/lib/supabase'
 
 interface Pago {
@@ -16,13 +17,12 @@ interface Pago {
 
 interface Props {
   userId: string
-  compact?: boolean
-  showAll?: boolean
 }
 
-export default function HistorialPagos({ userId, compact = false, showAll = true }: Props) {
+export default function HistorialPagos({ userId }: Props) {
   const [pagos, setPagos] = useState<Pago[]>([])
   const [loading, setLoading] = useState(true)
+  const [showAll, setShowAll] = useState(false)
 
   const cargarPagos = useCallback(async () => {
     setLoading(true)
@@ -66,7 +66,8 @@ export default function HistorialPagos({ userId, compact = false, showAll = true
     </div>
   )
 
-  const pagosParaMostrar = compact || showAll ? pagos : pagos.slice(0, 1)
+  const pagosParaMostrar = showAll ? pagos : pagos.slice(0, 1)
+  const shouldShowToggle = pagos.length > 1
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
@@ -93,6 +94,16 @@ export default function HistorialPagos({ userId, compact = false, showAll = true
           </div>
         )
       })}
+
+      {shouldShowToggle && (
+        <Button
+          onClick={() => setShowAll(prev => !prev)}
+          variant="ghost"
+          className="w-full !border !border-lime-300/20 !bg-[#1e1e1e] !text-lime-300 hover:!bg-zinc-800/80 hover:!text-lime-200"
+        >
+          {showAll ? 'Ver menos' : 'Ver historial completo'}
+        </Button>
+      )}
     </div>
   )
 }
