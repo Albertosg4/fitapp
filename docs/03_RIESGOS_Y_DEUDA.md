@@ -24,8 +24,8 @@ Este documento reclasifica riesgos tras completar 3B, 3C, check-in hardening, St
 - ⏳ Pruebas multi-gimnasio reales completas pendientes.
 - ⏳ Limpieza legacy pendiente.
 - ⏳ QR sin rotación periódica pendiente.
-- ⚠️ `sesiones_insert` permite `authenticated` (revisión pendiente).
-- ⚠️ `asistencia_insert` permite `authenticated` (revisión pendiente).
+- ✅ `sesiones_insert` eliminada: cierre 3D-3A aplicado y validado.
+- ✅ `asistencia_insert` eliminada: cierre 3D-3A aplicado y validado.
 - ⚠️ `perfiles_update_propio` permite update directo del propio perfil (revisión pendiente).
 - ✅ `gimnasios` sin lectura pública abierta: cierre 3D-3B aplicado y validado (permanece policy `gimnasios_auth`).
 - ⚠️ Existen policies con rol `public` condicionadas internamente que requieren auditoría fina antes de cambiar.
@@ -36,6 +36,6 @@ Este documento reclasifica riesgos tras completar 3B, 3C, check-in hardening, St
 - Auditoría de escrituras cliente/API para preparar RLS: docs/security/rls-client-write-audit.md
 
 - Cierre RLS de INSERT cliente en sesiones/asistencia aplicado y validado: se eliminaron las policies `sesiones_insert` y `asistencia_insert`; validación funcional OK en sesión puntual admin, reserva/cancelación socio y check-in QR con/sin reserva.
-- Preparado cierre RLS de SELECT público en gimnasios mediante supabase/fase3D3B_close_public_gimnasios.sql. Pendiente de aplicar manualmente en Supabase SQL Editor y validar login/admin/socio.
+- Cierre RLS de SELECT público en gimnasios aplicado y validado: se eliminó la policy `leer gimnasios`; permanece `gimnasios_auth`; validación funcional OK en pantalla pública, login admin/socio y paneles admin/socio.
 
 - Preparada Fase 4A para trazabilidad base de reservas mediante supabase/fase4A_reservas_trazabilidad.sql. Pendiente de aplicar manualmente y validar.
