@@ -106,11 +106,29 @@ Antes de completar la fase de RLS secundaria, ya se movieron a APIs protegidas l
 - SQL principal: supabase/fase3D3B_close_public_gimnasios.sql
 - Rollback: supabase/fase3D3B_close_public_gimnasios_rollback.sql
 - Verificación: supabase/fase3D3B_close_public_gimnasios_verificacion.sql
+- Estado: aplicado
+- Resultado: aplicado correctamente.
+- Validación funcional:
+  - cargar pantalla pública inicial: OK
+  - login admin: OK
+  - login socio: OK
+  - entrar a panel admin: OK
+  - entrar a panel socio: OK
+
+
+## Fase 4A - Trazabilidad base en reservas
+
+- Fecha:
+- SQL principal: supabase/fase4A_reservas_trazabilidad.sql
+- Rollback: supabase/fase4A_reservas_trazabilidad_rollback.sql
+- Verificación: supabase/fase4A_reservas_trazabilidad_verificacion.sql
 - Estado: pendiente de aplicar manualmente
-- Resultado esperado: la policy "leer gimnasios" desaparece de pg_policies y permanece "gimnasios_auth"
+- Resultado esperado:
+  - public.reservas tiene columnas created_at, created_by, created_source, updated_at, cancelled_at, cancelled_by, cancelled_source y cancellation_reason
+  - se crean índices de apoyo para created_at, cancelled_at, created_by y cancelled_by
 - Validación funcional pendiente:
-  - cargar pantalla pública inicial
-  - login admin
-  - login socio
-  - entrar a panel admin
-  - entrar a panel socio
+  - cargar panel socio
+  - reservar clase
+  - cancelar reserva
+  - cargar panel admin
+  - comprobar que no hay errores de Supabase en consola
