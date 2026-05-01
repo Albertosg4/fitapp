@@ -50,6 +50,16 @@ function rpcErrorStatus(msg: string | undefined): number {
   return 400
 }
 
+function isUndefinedColumnError(error: { code?: string; message?: string } | null | undefined) {
+  return (
+    error?.code === '42703' ||
+    Boolean(
+      error?.message?.toLowerCase().includes('column') &&
+      error?.message?.toLowerCase().includes('does not exist')
+    )
+  )
+}
+
 type ToggleAccion = 'confirmada' | 'cancelada'
 
 async function buildCanonicalToggleResponse(
@@ -273,7 +283,7 @@ export async function POST(req: Request) {
       .maybeSingle()
 
     if (reservaExistente?.estado === 'confirmada') {
-      const { error: cancelError } = await supabaseAdmin
+      const { error: cancelErrorTrace } = await supabaseAdmin
         .from('reservas')
         .update({
           estado: 'cancelada',
@@ -284,6 +294,16 @@ export async function POST(req: Request) {
           updated_at: new Date().toISOString(),
         })
         .eq('id', reservaExistente.id)
+
+      let cancelError = cancelErrorTrace
+      if (isUndefinedColumnError(cancelErrorTrace)) {
+        console.warn('[reservas/toggle] fallback legacy sin trazabilidad: columnas no disponibles aún')
+        const { error: cancelErrorLegacy } = await supabaseAdmin
+          .from('reservas')
+          .update({ estado: 'cancelada' })
+          .eq('id', reservaExistente.id)
+        cancelError = cancelErrorLegacy
+      }
 
       if (cancelError) {
         console.error('[reservas/toggle] cancelar:', cancelError.message)
@@ -349,7 +369,7 @@ export async function POST(req: Request) {
     .maybeSingle()
 
   if (reservaAnterior) {
-    const { error: reactivarError } = await supabaseAdmin
+    const { error: reactivarErrorTrace } = await supabaseAdmin
       .from('reservas')
       .update({
         estado: 'confirmada',
@@ -361,11 +381,21 @@ export async function POST(req: Request) {
       })
       .eq('id', reservaAnterior.id)
 
+    let reactivarError = reactivarErrorTrace
+    if (isUndefinedColumnError(reactivarErrorTrace)) {
+      console.warn('[reservas/toggle] fallback legacy sin trazabilidad: columnas no disponibles aún')
+      const { error: reactivarErrorLegacy } = await supabaseAdmin
+        .from('reservas')
+        .update({ estado: 'confirmada' })
+        .eq('id', reservaAnterior.id)
+      reactivarError = reactivarErrorLegacy
+    }
+
     if (reactivarError) {
       return NextResponse.json({ error: 'Error al reactivar la reserva' }, { status: 500 })
     }
   } else {
-    const { error: insertError } = await supabaseAdmin
+    const { error: insertErrorTrace } = await supabaseAdmin
       .from('reservas')
       .insert({
         sesion_id: sesionId,
@@ -378,6 +408,19 @@ export async function POST(req: Request) {
         cancelled_source: null,
         cancellation_reason: null,
       })
+
+    let insertError = insertErrorTrace
+    if (isUndefinedColumnError(insertErrorTrace)) {
+      console.warn('[reservas/toggle] fallback legacy sin trazabilidad: columnas no disponibles aún')
+      const { error: insertErrorLegacy } = await supabaseAdmin
+        .from('reservas')
+        .insert({
+          sesion_id: sesionId,
+          user_id: userId,
+          estado: 'confirmada',
+        })
+      insertError = insertErrorLegacy
+    }
 
     if (insertError) {
       if (insertError.code === '23505') {
