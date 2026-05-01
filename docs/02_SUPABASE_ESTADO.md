@@ -122,13 +122,26 @@ Antes de completar la fase de RLS secundaria, ya se movieron a APIs protegidas l
 - SQL principal: supabase/fase4A_reservas_trazabilidad.sql
 - Rollback: supabase/fase4A_reservas_trazabilidad_rollback.sql
 - Verificación: supabase/fase4A_reservas_trazabilidad_verificacion.sql
+- Estado: aplicado
+- Resultado: aplicado correctamente con observación de drift detectado en `created_at`.
+- Verificación:
+  - 8 columnas presentes: OK
+  - 4 índices presentes: OK
+  - total_reservas = 5
+  - reservas_con_created_at = 5
+  - reservas_con_cancelled_at = 0
+  - drift detectado: `created_at` está como `timestamp without time zone` nullable
+
+## Fase 4B - Normalización created_at en reservas
+
+- Fecha:
+- SQL principal: supabase/fase4B_fix_reservas_created_at.sql
+- Rollback: supabase/fase4B_fix_reservas_created_at_rollback.sql
+- Verificación: supabase/fase4B_fix_reservas_created_at_verificacion.sql
 - Estado: pendiente de aplicar manualmente
 - Resultado esperado:
-  - public.reservas tiene columnas created_at, created_by, created_source, updated_at, cancelled_at, cancelled_by, cancelled_source y cancellation_reason
-  - se crean índices de apoyo para created_at, cancelled_at, created_by y cancelled_by
-- Validación funcional pendiente:
-  - cargar panel socio
-  - reservar clase
-  - cancelar reserva
-  - cargar panel admin
-  - comprobar que no hay errores de Supabase en consola
+  - reservas.created_at queda como timestamp with time zone
+  - reservas.created_at queda NOT NULL
+  - reservas.created_at mantiene DEFAULT now()
+  - no hay reservas con created_at NULL
+  - la normalización interpreta valores legacy de created_at como UTC para preservar el instante real almacenado; la visualización en Europe/Madrid se resuelve en app/UI
