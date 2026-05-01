@@ -132,7 +132,7 @@ Hallazgos relevantes respecto al precheck:
 
 ## Seguimiento Fase 5C
 
-- Se prepara auditoría de reservas/pagos/perfiles/clases legacy.
-- Reservas tienen SQL preparado para gym-scope mediante sesiones.gym_id.
-- Pagos/perfiles no se tocan todavía.
-- Stripe queda fuera de alcance.
+- Fase 5C-A reservas aplicada y validada.
+- Reservas ya usan gym-scope por `sesiones.gym_id`.
+- Pagos/perfiles/clases legacy quedan pendientes.
+- Stripe sigue fuera de alcance.

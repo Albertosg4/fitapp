@@ -59,3 +59,10 @@ Este documento reclasifica riesgos tras completar 3B, 3C, check-in hardening, St
 - Pendiente futuro: valorar NOT NULL en sesiones.gym_id y asistencia.gym_id.
 
 - Preparada Fase 5C para auditar RLS de reservas/pagos/perfiles/legacy y preparar hardening de reservas. Pendiente de ejecutar precheck y decidir aplicación manual.
+
+- Fase 5C-A aplicada y validada: reservas quedan gym-scoped vía `sesiones.gym_id` + `auth_gym_id()`; admin ya no depende de `get_user_rol()` global en reservas.
+- Pendientes 5C:
+  - pagos siguen con policies admin duplicadas/globales.
+  - perfiles_update_propio sigue demasiado amplio.
+  - clases legacy no tiene filas, pero conserva policies antiguas.
+  - falta prueba multi-gym real.
