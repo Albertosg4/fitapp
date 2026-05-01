@@ -1,3 +1,6 @@
--- No hay rollback automático seguro para esta fase porque borra datos demo.
--- Para revertir, usar snapshot/backup Supabase previo.
--- Si se necesita volver a un estado limpio, reejecutar fase4D_demo_schedule_reset_seed.sql.
+-- Rollback documental (sin restauración automática).
+-- Antes del reset se creó backup manual en tablas backup_fase4d_*.
+-- No hay rollback automático seguro en este script.
+-- Para restaurar datos antiguos, usar backup_fase4d_* o snapshot externo,
+-- con revisión manual de foreign keys.
+-- Para volver a estado demo limpio, reejecutar fase4D_demo_schedule_reset_seed.sql.
