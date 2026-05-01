@@ -312,23 +312,47 @@ Antes de completar la fase de RLS secundaria, ya se movieron a APIs protegidas l
 
 ## Fase 5C - Auditoría RLS reservas/pagos/perfiles
 
-- Fecha:
-- Precheck: supabase/fase5C_rls_audit_precheck.sql
-- Auditoría: docs/security/rls-5c-reservas-pagos-perfiles-audit.md
-- SQL preparado reservas: supabase/fase5C_A_rls_reservas_gym_scoped.sql
-- Rollback reservas: supabase/fase5C_A_rls_reservas_gym_scoped_rollback.sql
-- Verificación reservas: supabase/fase5C_A_rls_reservas_gym_scoped_verificacion.sql
-- Estado: preparado, pendiente de precheck y aplicación manual futura
-- Alcance:
-  - auditar reservas/pagos/perfiles/clases/gimnasios.
-  - preparar SQL de hardening para reservas.
-- Fuera de alcance:
-  - aplicar SQL.
-  - hardening pagos/perfiles.
-  - tocar Stripe.
-  - tocar APIs/UI.
-  - test multi-gym real.
-- Siguiente paso:
-  - ejecutar precheck en Supabase.
-  - revisar resultados.
-  - decidir si aplicar Fase 5C-A reservas.
+- Estado: **Fase 5C-A reservas aplicada y validada** en Supabase live.
+- Precheck: ejecutado.
+- SQL reservas aplicado: `supabase/fase5C_A_rls_reservas_gym_scoped.sql`.
+- Verificación reservas: ejecutada.
+- Rollback: no ejecutado.
+
+### Resultados verificados
+
+- total_reservas = 4
+- reservas_confirmadas = 1
+- reservas_canceladas = 3
+- reservas_con_sesion_gym_id = 4
+- reservas_sin_sesion_gym_id = 0
+- total_pagos = 10
+- pagos_con_gym_id = 10
+- pagos_sin_gym_id = 0
+- perfiles admin = 1 con gym_id
+- perfiles socio = 3 con gym_id
+- clases_legacy = 0
+
+### Policies finales de reservas (post 5C-A)
+
+- `reservas_insert_gym_scoped`
+- `reservas_select_gym_scoped`
+- `reservas_update_gym_scoped`
+
+### Validación funcional post-aplicación
+
+- Panel socio: OK
+- Mis reservas visibles: OK
+- Reservar clase futura: OK
+- Cancelar reserva: OK
+- Reactivar reserva: OK
+- Panel admin: OK
+- Reservas/sesiones visibles: OK
+- Check-in QR: OK
+
+### Pendientes de Fase 5C
+
+- Fase 5C-B: pagos.
+- Fase 5C-C: perfiles_update_propio.
+- Fase 5C-D: clases legacy.
+- Fase 5C-E: prueba multi-gym real.
+- Evaluar NOT NULL más adelante.

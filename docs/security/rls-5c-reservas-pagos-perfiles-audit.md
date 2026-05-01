@@ -82,3 +82,27 @@ Tabla gimnasios:
 - pagos socio/admin OK.
 - Stripe checkout/webhook no afectado.
 - test multi-gym preparado o documentado.
+
+## Resultado Fase 5C-A reservas
+
+- Estado: aplicado y validado.
+- SQL aplicado: `supabase/fase5C_A_rls_reservas_gym_scoped.sql`.
+- Policies nuevas:
+  - `reservas_insert_gym_scoped`
+  - `reservas_select_gym_scoped`
+  - `reservas_update_gym_scoped`
+- Conteos:
+  - total_reservas = 4
+  - reservas_con_sesion_gym_id = 4
+  - reservas_sin_sesion_gym_id = 0
+- Validación funcional:
+  - socio reservas OK
+  - reservar/cancelar/reactivar OK
+  - admin OK
+  - check-in QR OK
+- Pendiente:
+  - pagos
+  - perfiles
+  - clases legacy
+  - multi-gym real
+
