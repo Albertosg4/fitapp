@@ -309,3 +309,26 @@ Antes de completar la fase de RLS secundaria, ya se movieron a APIs protegidas l
   - perfiles_update_propio.
   - NOT NULL.
   - prueba multi-gym real.
+
+## Fase 5C - Auditoría RLS reservas/pagos/perfiles
+
+- Fecha:
+- Precheck: supabase/fase5C_rls_audit_precheck.sql
+- Auditoría: docs/security/rls-5c-reservas-pagos-perfiles-audit.md
+- SQL preparado reservas: supabase/fase5C_A_rls_reservas_gym_scoped.sql
+- Rollback reservas: supabase/fase5C_A_rls_reservas_gym_scoped_rollback.sql
+- Verificación reservas: supabase/fase5C_A_rls_reservas_gym_scoped_verificacion.sql
+- Estado: preparado, pendiente de precheck y aplicación manual futura
+- Alcance:
+  - auditar reservas/pagos/perfiles/clases/gimnasios.
+  - preparar SQL de hardening para reservas.
+- Fuera de alcance:
+  - aplicar SQL.
+  - hardening pagos/perfiles.
+  - tocar Stripe.
+  - tocar APIs/UI.
+  - test multi-gym real.
+- Siguiente paso:
+  - ejecutar precheck en Supabase.
+  - revisar resultados.
+  - decidir si aplicar Fase 5C-A reservas.

@@ -129,3 +129,10 @@ Hallazgos relevantes respecto al precheck:
 - No se reabrieron INSERT cliente en sesiones/asistencia.
 - sesiones/asistencia ahora usan gym_id directo para SELECT/UPDATE (con `auth_gym_id()` en policies gym-scoped).
 - Reservas, pagos y perfiles siguen pendientes de hardening posterior.
+
+## Seguimiento Fase 5C
+
+- Se prepara auditoría de reservas/pagos/perfiles/clases legacy.
+- Reservas tienen SQL preparado para gym-scope mediante sesiones.gym_id.
+- Pagos/perfiles no se tocan todavía.
+- Stripe queda fuera de alcance.
