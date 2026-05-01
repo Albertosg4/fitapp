@@ -43,3 +43,5 @@ Este documento reclasifica riesgos tras completar 3B, 3C, check-in hardening, St
 - Preparada Fase 4C para rellenar trazabilidad runtime en reservas mediante RPC toggle_reserva y fallback JS. Pendiente de aplicar SQL manualmente y validar.
 
 - Preparada Fase 4D para reset demo de calendario/reservas del gym principal. Script destructivo pero acotado a datos demo de agenda; no toca perfiles, pagos, gimnasios ni auth.users. Pendiente de ejecutar manualmente con backup previo.
+
+- Detectado bug en RPC toggle_reserva: uso de FOUND podía quedar sobrescrito tras SELECT COUNT(*) y provocar ok=true sin INSERT real. Preparada Fase 4E para corregirlo con v_reserva_existe boolean.
