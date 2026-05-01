@@ -144,3 +144,4 @@ Antes de completar la fase de RLS secundaria, ya se movieron a APIs protegidas l
   - reservas.created_at queda NOT NULL
   - reservas.created_at mantiene DEFAULT now()
   - no hay reservas con created_at NULL
+  - la normalización interpreta valores legacy de created_at como UTC para preservar el instante real almacenado; la visualización en Europe/Madrid se resuelve en app/UI

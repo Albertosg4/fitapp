@@ -38,5 +38,5 @@ Este documento reclasifica riesgos tras completar 3B, 3C, check-in hardening, St
 - Cierre RLS de INSERT cliente en sesiones/asistencia aplicado y validado: se eliminaron las policies `sesiones_insert` y `asistencia_insert`; validación funcional OK en sesión puntual admin, reserva/cancelación socio y check-in QR con/sin reserva.
 - Cierre RLS de SELECT público en gimnasios aplicado y validado: se eliminó la policy `leer gimnasios`; permanece `gimnasios_auth`; validación funcional OK en pantalla pública, login admin/socio y paneles admin/socio.
 
-- Preparada Fase 4A para trazabilidad base de reservas mediante supabase/fase4A_reservas_trazabilidad.sql. Pendiente de aplicar manualmente y validar.
-- Detectado drift en reservas.created_at tras Fase 4A: existe como timestamp without time zone nullable. Preparada Fase 4B para normalizar a timestamptz NOT NULL DEFAULT now().
+- Fase 4A de trazabilidad base de reservas aplicada y verificada: columnas e índices presentes; total_reservas = 5; reservas_con_created_at = 5; reservas_con_cancelled_at = 0. Drift detectado en `created_at`, cubierto por Fase 4B.
+- Fase 4B preparada para normalizar `reservas.created_at` a `timestamptz NOT NULL DEFAULT now()` e interpretar valores legacy como UTC. Pendiente de aplicar manualmente.

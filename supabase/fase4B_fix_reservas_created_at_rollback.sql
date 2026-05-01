@@ -1,5 +1,7 @@
 -- Rollback Fase 4B: revierte created_at a timestamp without time zone y nullable.
--- Atención: este rollback puede perder semántica de zona horaria en los valores almacenados.
+-- Nota: se usa UTC para preservar el instante real almacenado por Supabase/Postgres.
+-- La presentación en Europe/Madrid debe resolverse en app/UI, no reinterpretando datos
+-- en el cambio de tipo.
 BEGIN;
 
 ALTER TABLE public.reservas
@@ -7,7 +9,7 @@ ALTER TABLE public.reservas
 
 ALTER TABLE public.reservas
   ALTER COLUMN created_at TYPE timestamp without time zone
-  USING created_at AT TIME ZONE 'Europe/Madrid';
+  USING created_at AT TIME ZONE 'UTC';
 
 ALTER TABLE public.reservas
   ALTER COLUMN created_at SET DEFAULT now();
