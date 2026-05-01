@@ -222,31 +222,42 @@ Antes de completar la fase de RLS secundaria, ya se movieron a APIs protegidas l
 
 ## Fase 5A - Sesiones y asistencia con gym_id directo
 
-- Fecha:
+- Fecha: 2026-05-01
 - SQL principal modelo: supabase/fase5A_sesiones_asistencia_gym_linking.sql
 - Rollback modelo: supabase/fase5A_sesiones_asistencia_gym_linking_rollback.sql
 - Verificación modelo: supabase/fase5A_sesiones_asistencia_gym_linking_verificacion.sql
 - SQL RPC: supabase/fase5A_toggle_reserva_set_sesion_gym_id.sql
 - Rollback RPC: supabase/fase5A_toggle_reserva_set_sesion_gym_id_rollback.sql
 - Verificación RPC: supabase/fase5A_toggle_reserva_set_sesion_gym_id_verificacion.sql
-- Estado: pendiente de aplicar manualmente
-- Cambios app:
-  - fallback de reservas crea sesiones con gym_id si columna existe
-  - check-in crea asistencia con gym_id y sesion_id si columnas existen
-  - admin sesiones crea sesiones con gym_id si aplica
-- Resultado esperado:
-  - sesiones nuevas tienen gym_id
-  - asistencia nueva tiene gym_id
-  - asistencia con reserva tiene sesion_id
-  - check-in libre tiene gym_id y sesion_id null
-- Validación funcional pendiente:
-  - aplicar SQL modelo
-  - aplicar SQL RPC
-  - reservar clase en fecha sin sesión
-  - comprobar sesiones.gym_id
-  - hacer check-in con reserva
-  - comprobar asistencia.gym_id y asistencia.sesion_id
-  - hacer check-in libre si aplica
-  - comprobar asistencia.gym_id y sesion_id null
-  - panel socio OK
-  - panel admin OK
+- Estado: aplicado y validado
+- Resumen de aplicación:
+  - SQL modelo aplicado: OK
+  - SQL RPC aplicado: OK
+- Resultados verificados:
+  - sesiones.gym_id: columna presente
+  - asistencia.gym_id: columna presente
+  - asistencia.sesion_id: columna presente
+  - idx_sesiones_gym_fecha: presente
+  - idx_asistencia_gym_fecha: presente
+  - idx_asistencia_sesion: presente
+  - total_sesiones = 2
+  - sesiones_con_gym_id = 2
+  - sesiones_sin_gym_id = 0
+  - total_asistencia inicial post-modelo = 0
+- Validación funcional:
+  - check-in libre: OK
+    - reserva_id = null
+    - sesion_id = null
+    - gym_id = b94be501-cdb4-4e48-a525-e0a669ad0967
+  - check-in con reserva: OK
+    - reserva_id = cd248e5e-6545-4bc0-90ad-1b05aec87e39
+    - sesion_id = d1ae4edc-61b2-4400-a841-84132f8f60ec
+    - gym_id = b94be501-cdb4-4e48-a525-e0a669ad0967
+  - join asistencia/sesión/actividad: OK
+    - asistencia_gym_id = sesion_gym_id
+    - actividad = Open Mat
+    - fecha = 2026-05-01
+    - hora_inicio = 18:00:00
+- Nota:
+  - No se ha aplicado NOT NULL todavía. Queda pendiente endurecer en una fase posterior tras más validación.
+  - RLS no se modificó en Fase 5A; el siguiente paso recomendado es Fase 5B para endurecer policies aprovechando gym_id directo.

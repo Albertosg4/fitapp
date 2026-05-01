@@ -49,4 +49,7 @@ Este documento reclasifica riesgos tras completar 3B, 3C, check-in hardening, St
 
 - Deuda menor: las tablas backup_fase4d_* quedan como backup manual temporal. Decidir más adelante si conservarlas, exportarlas o eliminarlas cuando el entorno esté estable.
 
-- Preparada Fase 5A para añadir gym_id directo a sesiones y gym_id/sesion_id a asistencia, con backfill, índices y escritura runtime desde reservas/check-in/admin sesiones. Pendiente de aplicar manualmente y validar.
+- Fase 5A aplicada y validada: sesiones.gym_id, asistencia.gym_id y asistencia.sesion_id operativos; check-in libre y check-in con reserva validados.
+
+- Pendiente Fase 5B: endurecer RLS de sesiones/asistencia usando gym_id directo.
+- Pendiente futuro: valorar NOT NULL en sesiones.gym_id y asistencia.gym_id cuando haya más histórico validado.
