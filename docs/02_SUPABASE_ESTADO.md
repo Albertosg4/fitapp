@@ -264,31 +264,48 @@ Antes de completar la fase de RLS secundaria, ya se movieron a APIs protegidas l
 
 ## Fase 5B - RLS gym-scoped en sesiones/asistencia
 
-- Fecha:
+- Fecha: 2026-05-01
 - Precheck: supabase/fase5B_rls_gym_scoped_precheck.sql
 - SQL principal: supabase/fase5B_rls_gym_scoped_sesiones_asistencia.sql
 - Rollback: supabase/fase5B_rls_gym_scoped_sesiones_asistencia_rollback.sql
 - Verificación: supabase/fase5B_rls_gym_scoped_sesiones_asistencia_verificacion.sql
-- Estado: pendiente de aplicar manualmente
+- Estado: aplicado y validado
 - Requisito previo:
   - Fase 5A aplicada y validada.
   - sesiones.gym_id y asistencia.gym_id presentes.
-- Cambios previstos:
-  - sesiones_select pasa de authenticated global a gym_id = auth_gym_id().
-  - sesiones_update_admin pasa a usar gym_id directo.
-  - admin_ver_toda_asistencia pasa a admin_ver_asistencia_gym_scoped.
-  - socio_ver_propia_asistencia queda limitada a authenticated y user_id propio.
-- Fuera de alcance:
+- Resumen de ejecución:
+  - Precheck ejecutado: OK.
+  - SQL principal aplicado: OK.
+  - Verificación ejecutada: OK.
+  - Rollback: no ejecutado.
+- Drift corregido en Supabase live:
+  - Error inicial: `function auth_gym_id() does not exist`.
+  - Acción: creada manualmente `public.auth_gym_id()`.
+  - Verificación: `routine_name = auth_gym_id`, `security_type = DEFINER`.
+  - Nota: función esperada por el diseño histórico; drift corregido en producción.
+- Results:
+  - total_sesiones = 3
+  - sesiones_con_gym_id = 3
+  - sesiones_sin_gym_id = 0
+  - total_asistencia = 1
+  - asistencia_con_gym_id = 1
+  - asistencia_sin_gym_id = 0
+  - asistencia_con_reserva_y_sesion = 1
+  - asistencia_con_reserva_sin_sesion = 0
+- Policies finales:
+  - sesiones_select_gym_scoped
+  - sesiones_update_admin_gym_scoped
+  - admin_ver_asistencia_gym_scoped
+  - socio_ver_propia_asistencia
+- Validación funcional:
+  - Panel socio: OK.
+  - Calendario/clases socio: OK.
+  - Panel admin: OK.
+  - Check-in QR: OK.
+  - Mensaje QR: “Acceso permitido / clase registrada ya hoy”.
+- Fuera de alcance / pendiente:
   - reservas.
   - pagos.
   - perfiles_update_propio.
   - NOT NULL.
-  - tenant_settings.
-- Validación pendiente:
-  - ejecutar precheck.
-  - aplicar SQL.
-  - ejecutar verificación.
-  - panel socio OK.
-  - panel admin OK.
-  - check-in QR OK.
-  - reserva/cancelación OK.
+  - prueba multi-gym real.
