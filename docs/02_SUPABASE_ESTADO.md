@@ -219,3 +219,34 @@ Antes de completar la fase de RLS secundaria, ya se movieron a APIs protegidas l
   - reactivar: OK
   - panel socio: OK
   - panel admin: OK
+
+## Fase 5A - Sesiones y asistencia con gym_id directo
+
+- Fecha:
+- SQL principal modelo: supabase/fase5A_sesiones_asistencia_gym_linking.sql
+- Rollback modelo: supabase/fase5A_sesiones_asistencia_gym_linking_rollback.sql
+- Verificación modelo: supabase/fase5A_sesiones_asistencia_gym_linking_verificacion.sql
+- SQL RPC: supabase/fase5A_toggle_reserva_set_sesion_gym_id.sql
+- Rollback RPC: supabase/fase5A_toggle_reserva_set_sesion_gym_id_rollback.sql
+- Verificación RPC: supabase/fase5A_toggle_reserva_set_sesion_gym_id_verificacion.sql
+- Estado: pendiente de aplicar manualmente
+- Cambios app:
+  - fallback de reservas crea sesiones con gym_id si columna existe
+  - check-in crea asistencia con gym_id y sesion_id si columnas existen
+  - admin sesiones crea sesiones con gym_id si aplica
+- Resultado esperado:
+  - sesiones nuevas tienen gym_id
+  - asistencia nueva tiene gym_id
+  - asistencia con reserva tiene sesion_id
+  - check-in libre tiene gym_id y sesion_id null
+- Validación funcional pendiente:
+  - aplicar SQL modelo
+  - aplicar SQL RPC
+  - reservar clase en fecha sin sesión
+  - comprobar sesiones.gym_id
+  - hacer check-in con reserva
+  - comprobar asistencia.gym_id y asistencia.sesion_id
+  - hacer check-in libre si aplica
+  - comprobar asistencia.gym_id y sesion_id null
+  - panel socio OK
+  - panel admin OK

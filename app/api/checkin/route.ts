@@ -67,6 +67,14 @@ function checkRateLimit(key: string): boolean {
   return true
 }
 
+function isUndefinedColumnError(err: unknown): boolean {
+  if (!err || typeof err !== 'object') return false
+
+  const candidate = err as { code?: string; message?: string }
+  const message = candidate.message?.toLowerCase() ?? ''
+  return candidate.code === '42703' || (message.includes('column') && message.includes('does not exist'))
+}
+
 function isDuplicateLikeError(err: unknown): boolean {
   if (!err || typeof err !== 'object') return false
 
@@ -118,7 +126,7 @@ export async function POST(req: Request) {
     // ─── 2. Buscar perfil por qr_token ─────────────────────────────────────────
     const { data: perfil, error: perfilError } = await supabaseAdmin
       .from('perfiles')
-      .select('id, nombre, membresia_activa, membresia_vence')
+      .select('id, nombre, membresia_activa, membresia_vence, gym_id')
       .eq('qr_token', tokenNormalized)
       .maybeSingle()
 
@@ -153,16 +161,18 @@ export async function POST(req: Request) {
     const sesionIds = (sesionesHoy ?? []).map((s: { id: string }) => s.id)
 
     let reservaId: string | null = null
+    let reservaSesionId: string | null = null
     if (sesionIds.length > 0) {
       const { data: reserva } = await supabaseAdmin
         .from('reservas')
-        .select('id')
+        .select('id, sesion_id')
         .eq('user_id', perfil.id)
         .eq('estado', 'confirmada')
         .in('sesion_id', sesionIds)
         .maybeSingle()
 
       reservaId = reserva?.id ?? null
+      reservaSesionId = reserva?.sesion_id ?? null
     }
 
     // ─── 5. Acceso libre (sin reserva hoy) ─────────────────────────────────────
@@ -184,10 +194,21 @@ export async function POST(req: Request) {
         })
       }
 
-      const { error: insertError } = await supabaseAdmin.from('asistencia').insert({
+      const { error: insertErrorTrace } = await supabaseAdmin.from('asistencia').insert({
         user_id: perfil.id,
         metodo: 'qr',
+        gym_id: perfil.gym_id ?? null,
+        sesion_id: null,
       })
+      let insertError = insertErrorTrace
+      if (isUndefinedColumnError(insertErrorTrace)) {
+        console.warn('[checkin] fallback legacy acceso libre: columnas gym_id/sesion_id no disponibles aún')
+        const { error: insertErrorLegacy } = await supabaseAdmin.from('asistencia').insert({
+          user_id: perfil.id,
+          metodo: 'qr',
+        })
+        insertError = insertErrorLegacy
+      }
 
       if (insertError) {
         if (isDuplicateLikeError(insertError)) {
@@ -236,11 +257,23 @@ export async function POST(req: Request) {
     }
 
     // ─── 7. Registrar asistencia ligada a reserva ───────────────────────────────
-    const { error: checkinError } = await supabaseAdmin.from('asistencia').insert({
+    const { error: checkinErrorTrace } = await supabaseAdmin.from('asistencia').insert({
       reserva_id: reservaId,
       user_id: perfil.id,
       metodo: 'qr',
+      gym_id: perfil.gym_id ?? null,
+      sesion_id: reservaSesionId,
     })
+    let checkinError = checkinErrorTrace
+    if (isUndefinedColumnError(checkinErrorTrace)) {
+      console.warn('[checkin] fallback legacy con reserva: columnas gym_id/sesion_id no disponibles aún')
+      const { error: checkinErrorLegacy } = await supabaseAdmin.from('asistencia').insert({
+        reserva_id: reservaId,
+        user_id: perfil.id,
+        metodo: 'qr',
+      })
+      checkinError = checkinErrorLegacy
+    }
 
     if (checkinError) {
       if (isDuplicateLikeError(checkinError)) {

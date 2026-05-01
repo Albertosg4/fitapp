@@ -48,3 +48,5 @@ Este documento reclasifica riesgos tras completar 3B, 3C, check-in hardening, St
 
 
 - Deuda menor: las tablas backup_fase4d_* quedan como backup manual temporal. Decidir más adelante si conservarlas, exportarlas o eliminarlas cuando el entorno esté estable.
+
+- Preparada Fase 5A para añadir gym_id directo a sesiones y gym_id/sesion_id a asistencia, con backfill, índices y escritura runtime desde reservas/check-in/admin sesiones. Pendiente de aplicar manualmente y validar.
