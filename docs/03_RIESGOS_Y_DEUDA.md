@@ -39,3 +39,4 @@ Este documento reclasifica riesgos tras completar 3B, 3C, check-in hardening, St
 - Cierre RLS de SELECT público en gimnasios aplicado y validado: se eliminó la policy `leer gimnasios`; permanece `gimnasios_auth`; validación funcional OK en pantalla pública, login admin/socio y paneles admin/socio.
 
 - Preparada Fase 4A para trazabilidad base de reservas mediante supabase/fase4A_reservas_trazabilidad.sql. Pendiente de aplicar manualmente y validar.
+- Detectado drift en reservas.created_at tras Fase 4A: existe como timestamp without time zone nullable. Preparada Fase 4B para normalizar a timestamptz NOT NULL DEFAULT now().
