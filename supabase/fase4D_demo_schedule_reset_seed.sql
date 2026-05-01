@@ -5,8 +5,14 @@
 
 BEGIN;
 
-CREATE TEMP TABLE _fase4d_target_gym AS
-SELECT 'b94be501-cdb4-4e48-a525-e0a669ad0967'::uuid AS gym_id;
+DROP TABLE IF EXISTS _fase4d_target_gym;
+
+CREATE TEMP TABLE _fase4d_target_gym (
+  gym_id uuid NOT NULL
+) ON COMMIT DROP;
+
+INSERT INTO _fase4d_target_gym (gym_id)
+VALUES ('b94be501-cdb4-4e48-a525-e0a669ad0967'::uuid);
 
 -- A) Borrar asistencia relacionada con reservas de sesiones del gym y/o socios del gym
 DELETE FROM asistencia ast
