@@ -275,7 +275,14 @@ export async function POST(req: Request) {
     if (reservaExistente?.estado === 'confirmada') {
       const { error: cancelError } = await supabaseAdmin
         .from('reservas')
-        .update({ estado: 'cancelada' })
+        .update({
+          estado: 'cancelada',
+          cancelled_at: new Date().toISOString(),
+          cancelled_by: userId,
+          cancelled_source: 'socio',
+          cancellation_reason: null,
+          updated_at: new Date().toISOString(),
+        })
         .eq('id', reservaExistente.id)
 
       if (cancelError) {
@@ -344,7 +351,14 @@ export async function POST(req: Request) {
   if (reservaAnterior) {
     const { error: reactivarError } = await supabaseAdmin
       .from('reservas')
-      .update({ estado: 'confirmada' })
+      .update({
+        estado: 'confirmada',
+        cancelled_at: null,
+        cancelled_by: null,
+        cancelled_source: null,
+        cancellation_reason: null,
+        updated_at: new Date().toISOString(),
+      })
       .eq('id', reservaAnterior.id)
 
     if (reactivarError) {
@@ -353,7 +367,17 @@ export async function POST(req: Request) {
   } else {
     const { error: insertError } = await supabaseAdmin
       .from('reservas')
-      .insert({ sesion_id: sesionId, user_id: userId, estado: 'confirmada' })
+      .insert({
+        sesion_id: sesionId,
+        user_id: userId,
+        estado: 'confirmada',
+        created_by: userId,
+        created_source: 'socio',
+        cancelled_at: null,
+        cancelled_by: null,
+        cancelled_source: null,
+        cancellation_reason: null,
+      })
 
     if (insertError) {
       if (insertError.code === '23505') {
