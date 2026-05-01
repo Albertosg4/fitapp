@@ -37,5 +37,6 @@ LEFT JOIN public.sesiones s ON s.id = r.sesion_id;
 -- 5) Validación funcional manual esperada
 -- - socio ve sus reservas.
 -- - socio reserva/cancela.
--- - admin ve reservas del gym.
+-- - admin ve/update solo reservas del gym.
 -- - admin no ve reservas de otro gym cuando exista fixture multi-gym.
+-- - socio no puede mover reserva a sesión de otro gym por UPDATE directo.

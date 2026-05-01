@@ -10,15 +10,21 @@ ON public.reservas
 FOR SELECT
 TO authenticated
 USING (
-  auth.uid() = user_id
-  OR EXISTS (
+  EXISTS (
     SELECT 1
-    FROM public.perfiles p
-    JOIN public.sesiones s ON s.gym_id = p.gym_id
-    WHERE p.id = auth.uid()
-      AND p.rol = 'admin'
-      AND s.id = reservas.sesion_id
+    FROM public.sesiones s
+    WHERE s.id = reservas.sesion_id
       AND s.gym_id = auth_gym_id()
+      AND (
+        auth.uid() = reservas.user_id
+        OR EXISTS (
+          SELECT 1
+          FROM public.perfiles p
+          WHERE p.id = auth.uid()
+            AND p.rol = 'admin'
+            AND p.gym_id = s.gym_id
+        )
+      )
   )
 );
 
@@ -30,27 +36,39 @@ ON public.reservas
 FOR UPDATE
 TO authenticated
 USING (
-  auth.uid() = user_id
-  OR EXISTS (
+  EXISTS (
     SELECT 1
-    FROM public.perfiles p
-    JOIN public.sesiones s ON s.gym_id = p.gym_id
-    WHERE p.id = auth.uid()
-      AND p.rol = 'admin'
-      AND s.id = reservas.sesion_id
+    FROM public.sesiones s
+    WHERE s.id = reservas.sesion_id
       AND s.gym_id = auth_gym_id()
+      AND (
+        auth.uid() = reservas.user_id
+        OR EXISTS (
+          SELECT 1
+          FROM public.perfiles p
+          WHERE p.id = auth.uid()
+            AND p.rol = 'admin'
+            AND p.gym_id = s.gym_id
+        )
+      )
   )
 )
 WITH CHECK (
-  auth.uid() = user_id
-  OR EXISTS (
+  EXISTS (
     SELECT 1
-    FROM public.perfiles p
-    JOIN public.sesiones s ON s.gym_id = p.gym_id
-    WHERE p.id = auth.uid()
-      AND p.rol = 'admin'
-      AND s.id = reservas.sesion_id
+    FROM public.sesiones s
+    WHERE s.id = reservas.sesion_id
       AND s.gym_id = auth_gym_id()
+      AND (
+        auth.uid() = reservas.user_id
+        OR EXISTS (
+          SELECT 1
+          FROM public.perfiles p
+          WHERE p.id = auth.uid()
+            AND p.rol = 'admin'
+            AND p.gym_id = s.gym_id
+        )
+      )
   )
 );
 
