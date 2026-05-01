@@ -194,3 +194,24 @@ Antes de completar la fase de RLS secundaria, ya se movieron a APIs protegidas l
   - cancelar una clase
   - comprobar trazabilidad created_by/cancelled_by tras Fase 4C
   - panel admin sin errores
+
+## Fase 4E - Fix RPC toggle_reserva FOUND
+
+- Fecha:
+- SQL principal: supabase/fase4E_fix_toggle_reserva_found.sql
+- Rollback: supabase/fase4E_fix_toggle_reserva_found_rollback.sql
+- Verificación: supabase/fase4E_fix_toggle_reserva_found_verificacion.sql
+- Estado: pendiente de aplicar manualmente
+- Problema detectado:
+  - La RPC podía devolver ok=true sin insertar reserva porque FOUND se sobrescribía tras SELECT COUNT(*)
+- Resultado esperado:
+  - reservar clase crea fila real en public.reservas
+  - created_by y created_source se rellenan
+  - cancelar clase actualiza cancelled_at, cancelled_by, cancelled_source y updated_at
+- Validación funcional pendiente:
+  - reservar Boxeo 2026-05-04 desde socio
+  - comprobar reserva en BD
+  - cancelar desde socio
+  - comprobar cancelación en BD
+  - panel socio sin error
+  - panel admin sin error
