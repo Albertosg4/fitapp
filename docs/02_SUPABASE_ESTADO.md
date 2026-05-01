@@ -138,10 +138,34 @@ Antes de completar la fase de RLS secundaria, ya se movieron a APIs protegidas l
 - SQL principal: supabase/fase4B_fix_reservas_created_at.sql
 - Rollback: supabase/fase4B_fix_reservas_created_at_rollback.sql
 - Verificación: supabase/fase4B_fix_reservas_created_at_verificacion.sql
+- Estado: aplicado
+- Resultado: aplicado y validado
+- Verificación:
+  - created_at = timestamp with time zone
+  - is_nullable = NO
+  - default = now()
+  - total_reservas = 5
+  - reservas_sin_created_at = 0
+  - idx_reservas_created_at presente
+
+## Fase 4C - Trazabilidad runtime en reservas
+
+- Fecha:
+- SQL principal: supabase/fase4C_reservas_traceability_runtime.sql
+- Rollback: supabase/fase4C_reservas_traceability_runtime_rollback.sql
+- Verificación: supabase/fase4C_reservas_traceability_runtime_verificacion.sql
 - Estado: pendiente de aplicar manualmente
+- Cambios de aplicación:
+  - app/api/reservas/toggle/route.ts rellena trazabilidad en fallback JS
+  - types/domain.ts incluye campos opcionales de trazabilidad
 - Resultado esperado:
-  - reservas.created_at queda como timestamp with time zone
-  - reservas.created_at queda NOT NULL
-  - reservas.created_at mantiene DEFAULT now()
-  - no hay reservas con created_at NULL
-  - la normalización interpreta valores legacy de created_at como UTC para preservar el instante real almacenado; la visualización en Europe/Madrid se resuelve en app/UI
+  - nuevas reservas guardan created_by y created_source
+  - cancelaciones guardan cancelled_at, cancelled_by, cancelled_source y updated_at
+  - reactivaciones limpian campos de cancelación y actualizan updated_at
+- Validación funcional pendiente:
+  - reservar clase como socio
+  - comprobar created_by y created_source
+  - cancelar reserva como socio
+  - comprobar cancelled_at, cancelled_by, cancelled_source y updated_at
+  - reactivar reserva si el flujo lo permite
+  - comprobar que no hay errores en panel socio ni panel admin

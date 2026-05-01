@@ -106,6 +106,14 @@ export interface Reserva {
   sesion_id: string
   user_id: string
   estado: 'confirmada' | 'cancelada'
+  created_at?: string
+  created_by?: string | null
+  created_source?: string | null
+  updated_at?: string | null
+  cancelled_at?: string | null
+  cancelled_by?: string | null
+  cancelled_source?: string | null
+  cancellation_reason?: string | null
   perfil?: {
     id: string
     nombre: string
