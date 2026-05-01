@@ -57,3 +57,5 @@ Este documento reclasifica riesgos tras completar 3B, 3C, check-in hardening, St
 - Drift corregido: `public.auth_gym_id()` no existía en Supabase live y se creó manualmente como SECURITY DEFINER.
 - Pendiente siguiente: revisar RLS de reservas/pagos/perfiles y ejecutar prueba multi-gym real.
 - Pendiente futuro: valorar NOT NULL en sesiones.gym_id y asistencia.gym_id.
+
+- Preparada Fase 5C para auditar RLS de reservas/pagos/perfiles/legacy y preparar hardening de reservas. Pendiente de ejecutar precheck y decidir aplicación manual.
