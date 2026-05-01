@@ -125,7 +125,7 @@ Hallazgos relevantes respecto al precheck:
 
 ## Seguimiento Fase 5B
 
-- Fase 5A dejó sesiones.gym_id/asistencia.gym_id disponibles.
-- Fase 5B prepara hardening de SELECT/UPDATE en sesiones y SELECT en asistencia.
-- No reabre INSERT cliente en sesiones/asistencia.
-- Reservas, pagos y perfiles quedan pendientes de fases posteriores.
+- Fase 5B aplicada y validada.
+- No se reabrieron INSERT cliente en sesiones/asistencia.
+- sesiones/asistencia ahora usan gym_id directo para SELECT/UPDATE (con `auth_gym_id()` en policies gym-scoped).
+- Reservas, pagos y perfiles siguen pendientes de hardening posterior.

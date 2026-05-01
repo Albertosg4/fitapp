@@ -51,7 +51,9 @@ Este documento reclasifica riesgos tras completar 3B, 3C, check-in hardening, St
 
 - Fase 5A aplicada y validada: sesiones.gym_id, asistencia.gym_id y asistencia.sesion_id operativos; check-in libre y check-in con reserva validados.
 
-- Pendiente Fase 5B: endurecer RLS de sesiones/asistencia usando gym_id directo.
+- Fase 5B aplicada y validada: RLS de sesiones/asistencia endurecida usando gym_id directo y auth_gym_id().
 - Pendiente futuro: valorar NOT NULL en sesiones.gym_id y asistencia.gym_id cuando haya más histórico validado.
 
-- Preparada Fase 5B para endurecer RLS de sesiones/asistencia usando gym_id directo. Pendiente de aplicar manualmente y validar. Reservas/pagos/perfiles quedan fuera de alcance y se revisarán en fases posteriores.
+- Drift corregido: `public.auth_gym_id()` no existía en Supabase live y se creó manualmente como SECURITY DEFINER.
+- Pendiente siguiente: revisar RLS de reservas/pagos/perfiles y ejecutar prueba multi-gym real.
+- Pendiente futuro: valorar NOT NULL en sesiones.gym_id y asistencia.gym_id.
