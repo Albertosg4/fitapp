@@ -55,6 +55,7 @@ export interface HorarioClase {
 // Los campos nuevos (horario_id, actividad_id, etc.) se añaden en Fase B.
 export interface Sesion {
   id: string
+  gym_id?: string | null
   // --- Campos legacy ---
   clase_id: string | null     // FK a clases (legacy)
   cancelada: boolean | null   // campo original en BD — true = no visible al socio
@@ -69,6 +70,16 @@ export interface Sesion {
   profesor: string | null
   notas: string | null
   es_puntual: boolean         // true si es clase puntual (no recurrente)
+}
+
+export interface Asistencia {
+  id: string
+  user_id: string
+  reserva_id: string | null
+  metodo: string
+  check_in_at: string
+  gym_id?: string | null
+  sesion_id?: string | null
 }
 
 // ─── Socio (perfil con rol=socio) ────────────────────────────────────────────

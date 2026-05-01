@@ -323,11 +323,12 @@ export async function POST(req: Request) {
   if (sesionExistente) {
     sesionId = sesionExistente.id
   } else {
-    const { data: nuevaSesion, error: sesionError } = await supabaseAdmin
+    const { data: nuevaSesionTrace, error: sesionErrorTrace } = await supabaseAdmin
       .from('sesiones')
       .insert({
         horario_id: horarioId,
         actividad_id: horario.actividad_id,
+        gym_id: gymId,
         fecha,
         hora_inicio: horario.hora_inicio,
         duracion_min: horario.duracion_min,
@@ -338,6 +339,30 @@ export async function POST(req: Request) {
       })
       .select('id')
       .single()
+
+    let nuevaSesion = nuevaSesionTrace
+    let sesionError = sesionErrorTrace
+
+    if (isUndefinedColumnError(sesionErrorTrace)) {
+      console.warn('[reservas/toggle] fallback legacy al crear sesión: gym_id no disponible aún')
+      const { data: nuevaSesionLegacy, error: sesionErrorLegacy } = await supabaseAdmin
+        .from('sesiones')
+        .insert({
+          horario_id: horarioId,
+          actividad_id: horario.actividad_id,
+          fecha,
+          hora_inicio: horario.hora_inicio,
+          duracion_min: horario.duracion_min,
+          aforo_max: horario.aforo_max,
+          profesor: horario.profesor,
+          es_puntual: false,
+          cancelada: false,
+        })
+        .select('id')
+        .single()
+      nuevaSesion = nuevaSesionLegacy
+      sesionError = sesionErrorLegacy
+    }
 
     if (sesionError || !nuevaSesion) {
       console.error('[reservas/toggle] crear sesión:', sesionError?.message)

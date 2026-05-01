@@ -5,6 +5,16 @@ import { supabaseAdmin } from '@/lib/supabase/admin'
 const FECHA_REGEX = /^\d{4}-\d{2}-\d{2}$/
 const HORA_REGEX = /^([01]\d|2[0-3]):([0-5]\d)(:[0-5]\d)?$/
 
+function isUndefinedColumnError(error: { code?: string; message?: string } | null | undefined) {
+  return (
+    error?.code === '42703' ||
+    Boolean(
+      error?.message?.toLowerCase().includes('column') &&
+      error?.message?.toLowerCase().includes('does not exist')
+    )
+  )
+}
+
 function validarPostPayload(body: unknown): {
   ok: true
   data: {
@@ -130,10 +140,11 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'La actividad está inactiva' }, { status: 400 })
     }
 
-    const { data: sesion, error } = await supabaseAdmin
+    const { data: sesionTrace, error: errorTrace } = await supabaseAdmin
       .from('sesiones')
       .insert({
         actividad_id,
+        gym_id: gymId,
         fecha,
         hora_inicio,
         duracion_min,
@@ -145,6 +156,30 @@ export async function POST(req: Request) {
       })
       .select('*')
       .single()
+
+    let sesion = sesionTrace
+    let error = errorTrace
+
+    if (isUndefinedColumnError(errorTrace)) {
+      console.warn('[admin/sesiones POST] fallback legacy al crear sesión: gym_id no disponible aún')
+      const { data: sesionLegacy, error: errorLegacy } = await supabaseAdmin
+        .from('sesiones')
+        .insert({
+          actividad_id,
+          fecha,
+          hora_inicio,
+          duracion_min,
+          aforo_max,
+          profesor,
+          notas,
+          es_puntual: true,
+          cancelada: false,
+        })
+        .select('*')
+        .single()
+      sesion = sesionLegacy
+      error = errorLegacy
+    }
 
     if (error || !sesion) {
       console.error('[admin/sesiones POST] Supabase error:', error?.message)
