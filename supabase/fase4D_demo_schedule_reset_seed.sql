@@ -86,6 +86,7 @@ JOIN (
 ) AS x(nombre, descripcion, color) ON true;
 
 -- Sembrar horarios limpios (sin crear sesiones/reservas/asistencia)
+-- dia_semana: 0=lunes, 1=martes, 2=miércoles, 3=jueves, 4=viernes, 5=sábado, 6=domingo
 INSERT INTO horarios_clase (
   gym_id,
   actividad_id,
@@ -112,12 +113,12 @@ SELECT
 FROM _fase4d_target_gym tg
 JOIN (
   VALUES
-    ('Boxeo', 1, '18:00'::time, 60::smallint, 12::smallint, 'JGS'),
-    ('MMA', 1, '19:15'::time, 75::smallint, 12::smallint, 'JGS'),
-    ('Brazilian Jiu-Jitsu', 2, '18:00'::time, 75::smallint, 14::smallint, 'JGS'),
-    ('Muay Thai', 3, '18:00'::time, 60::smallint, 12::smallint, 'JGS'),
-    ('Brazilian Jiu-Jitsu', 4, '18:00'::time, 75::smallint, 14::smallint, 'JGS'),
-    ('Open Mat', 5, '18:00'::time, 90::smallint, 20::smallint, 'JGS')
+    ('Boxeo', 0, '18:00'::time, 60::smallint, 12::smallint, 'JGS'),
+    ('MMA', 0, '19:15'::time, 75::smallint, 12::smallint, 'JGS'),
+    ('Brazilian Jiu-Jitsu', 1, '18:00'::time, 75::smallint, 14::smallint, 'JGS'),
+    ('Muay Thai', 2, '18:00'::time, 60::smallint, 12::smallint, 'JGS'),
+    ('Brazilian Jiu-Jitsu', 3, '18:00'::time, 75::smallint, 14::smallint, 'JGS'),
+    ('Open Mat', 4, '18:00'::time, 90::smallint, 20::smallint, 'JGS')
 ) AS h(actividad_nombre, dia_semana, hora_inicio, duracion_min, aforo_max, profesor)
   ON true
 JOIN actividades a
