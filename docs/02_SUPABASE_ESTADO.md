@@ -169,3 +169,28 @@ Antes de completar la fase de RLS secundaria, ya se movieron a APIs protegidas l
   - comprobar cancelled_at, cancelled_by, cancelled_source y updated_at
   - reactivar reserva si el flujo lo permite
   - comprobar que no hay errores en panel socio ni panel admin
+
+## Fase 4D - Reset demo calendario/reservas
+
+- Fecha:
+- Precheck: `supabase/fase4D_demo_schedule_reset_precheck.sql`
+- SQL principal: `supabase/fase4D_demo_schedule_reset_seed.sql`
+- Verificación: `supabase/fase4D_demo_schedule_reset_verificacion.sql`
+- Rollback: `supabase/fase4D_demo_schedule_reset_rollback.sql`
+- Estado: pendiente de aplicar manualmente
+- Alcance:
+  - borra actividades/horarios/sesiones/reservas/asistencia/clases legacy del gym objetivo
+  - no toca perfiles
+  - no toca pagos
+  - no toca gimnasios
+  - no toca auth.users
+- Validación funcional pendiente:
+  - cargar panel admin
+  - ver 5 actividades
+  - ver 6 horarios
+  - entrar como socio
+  - ver calendario limpio
+  - reservar una clase
+  - cancelar una clase
+  - comprobar trazabilidad created_by/cancelled_by tras Fase 4C
+  - panel admin sin errores
