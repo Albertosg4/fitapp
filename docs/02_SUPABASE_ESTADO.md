@@ -261,3 +261,34 @@ Antes de completar la fase de RLS secundaria, ya se movieron a APIs protegidas l
 - Nota:
   - No se ha aplicado NOT NULL todavía. Queda pendiente endurecer en una fase posterior tras más validación.
   - RLS no se modificó en Fase 5A; el siguiente paso recomendado es Fase 5B para endurecer policies aprovechando gym_id directo.
+
+## Fase 5B - RLS gym-scoped en sesiones/asistencia
+
+- Fecha:
+- Precheck: supabase/fase5B_rls_gym_scoped_precheck.sql
+- SQL principal: supabase/fase5B_rls_gym_scoped_sesiones_asistencia.sql
+- Rollback: supabase/fase5B_rls_gym_scoped_sesiones_asistencia_rollback.sql
+- Verificación: supabase/fase5B_rls_gym_scoped_sesiones_asistencia_verificacion.sql
+- Estado: pendiente de aplicar manualmente
+- Requisito previo:
+  - Fase 5A aplicada y validada.
+  - sesiones.gym_id y asistencia.gym_id presentes.
+- Cambios previstos:
+  - sesiones_select pasa de authenticated global a gym_id = auth_gym_id().
+  - sesiones_update_admin pasa a usar gym_id directo.
+  - admin_ver_toda_asistencia pasa a admin_ver_asistencia_gym_scoped.
+  - socio_ver_propia_asistencia queda limitada a authenticated y user_id propio.
+- Fuera de alcance:
+  - reservas.
+  - pagos.
+  - perfiles_update_propio.
+  - NOT NULL.
+  - tenant_settings.
+- Validación pendiente:
+  - ejecutar precheck.
+  - aplicar SQL.
+  - ejecutar verificación.
+  - panel socio OK.
+  - panel admin OK.
+  - check-in QR OK.
+  - reserva/cancelación OK.
