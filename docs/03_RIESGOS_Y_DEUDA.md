@@ -41,3 +41,5 @@ Este documento reclasifica riesgos tras completar 3B, 3C, check-in hardening, St
 - Fase 4A de trazabilidad base de reservas aplicada y verificada: columnas e índices presentes; total_reservas = 5; reservas_con_created_at = 5; reservas_con_cancelled_at = 0. Drift detectado en `created_at`, cubierto por Fase 4B.
 - Fase 4B aplicada y validada: reservas.created_at normalizado a timestamptz NOT NULL DEFAULT now().
 - Preparada Fase 4C para rellenar trazabilidad runtime en reservas mediante RPC toggle_reserva y fallback JS. Pendiente de aplicar SQL manualmente y validar.
+
+- Preparada Fase 4D para reset demo de calendario/reservas del gym principal. Script destructivo pero acotado a datos demo de agenda; no toca perfiles, pagos, gimnasios ni auth.users. Pendiente de ejecutar manualmente con backup previo.
