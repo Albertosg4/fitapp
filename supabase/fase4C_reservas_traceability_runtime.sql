@@ -3,6 +3,12 @@
 -- Actualiza la RPC public.toggle_reserva(uuid, date) para rellenar
 -- campos de trazabilidad al crear/cancelar/reactivar reservas.
 -- ============================================================
+-- SECURITY DEFINER hardening:
+-- se fija search_path = public, pg_temp para evitar resolución
+-- insegura de objetos durante la ejecución de la función.
+-- ============================================================
+
+BEGIN;
 
 CREATE OR REPLACE FUNCTION public.toggle_reserva(
   p_horario_id  uuid,
@@ -11,6 +17,7 @@ CREATE OR REPLACE FUNCTION public.toggle_reserva(
 RETURNS jsonb
 LANGUAGE plpgsql
 SECURITY DEFINER
+SET search_path = public, pg_temp
 AS $$
 DECLARE
   v_user_id       uuid := auth.uid();
@@ -172,3 +179,5 @@ $$;
 REVOKE EXECUTE ON FUNCTION toggle_reserva(uuid, date) FROM PUBLIC;
 GRANT  EXECUTE ON FUNCTION toggle_reserva(uuid, date) TO authenticated;
 GRANT  EXECUTE ON FUNCTION toggle_reserva(uuid, date) TO service_role;
+
+COMMIT;
