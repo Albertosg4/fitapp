@@ -4,12 +4,15 @@ BEGIN;
 
 DROP POLICY IF EXISTS "sesiones_select_gym_scoped" ON public.sesiones;
 DROP POLICY IF EXISTS "sesiones_update_admin_gym_scoped" ON public.sesiones;
+DROP POLICY IF EXISTS "sesiones_select" ON public.sesiones;
 
 CREATE POLICY "sesiones_select"
 ON public.sesiones
 FOR SELECT
 TO public
 USING (auth.role() = 'authenticated'::text);
+
+DROP POLICY IF EXISTS "sesiones_update_admin" ON public.sesiones;
 
 CREATE POLICY "sesiones_update_admin"
 ON public.sesiones
@@ -56,6 +59,7 @@ USING (
 
 DROP POLICY IF EXISTS "admin_ver_asistencia_gym_scoped" ON public.asistencia;
 DROP POLICY IF EXISTS "socio_ver_propia_asistencia" ON public.asistencia;
+DROP POLICY IF EXISTS "admin_ver_toda_asistencia" ON public.asistencia;
 
 CREATE POLICY "admin_ver_toda_asistencia"
 ON public.asistencia
