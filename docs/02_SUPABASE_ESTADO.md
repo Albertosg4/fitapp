@@ -154,21 +154,13 @@ Antes de completar la fase de RLS secundaria, ya se movieron a APIs protegidas l
 - SQL principal: supabase/fase4C_reservas_traceability_runtime.sql
 - Rollback: supabase/fase4C_reservas_traceability_runtime_rollback.sql
 - Verificación: supabase/fase4C_reservas_traceability_runtime_verificacion.sql
-- Estado: pendiente de aplicar manualmente
-- Cambios de aplicación:
-  - app/api/reservas/toggle/route.ts rellena trazabilidad en fallback JS
-  - types/domain.ts incluye campos opcionales de trazabilidad
-- Resultado esperado:
-  - nuevas reservas guardan created_by y created_source
-  - cancelaciones guardan cancelled_at, cancelled_by, cancelled_source y updated_at
-  - reactivaciones limpian campos de cancelación y actualizan updated_at
-- Validación funcional pendiente:
-  - reservar clase como socio
-  - comprobar created_by y created_source
-  - cancelar reserva como socio
-  - comprobar cancelled_at, cancelled_by, cancelled_source y updated_at
-  - reactivar reserva si el flujo lo permite
-  - comprobar que no hay errores en panel socio ni panel admin
+- Estado: aplicado y validado
+- Resultado:
+  - RPC toggle_reserva rellena trazabilidad runtime
+  - fallback JS rellena trazabilidad runtime
+  - created_by / created_source / cancelled_at / cancelled_by / cancelled_source / updated_at disponibles en flujo real
+- Nota:
+  - El bug de FOUND detectado posteriormente queda resuelto por Fase 4E.
 
 ## Fase 4D - Reset demo calendario/reservas
 
@@ -177,23 +169,36 @@ Antes de completar la fase de RLS secundaria, ya se movieron a APIs protegidas l
 - SQL principal: `supabase/fase4D_demo_schedule_reset_seed.sql`
 - Verificación: `supabase/fase4D_demo_schedule_reset_verificacion.sql`
 - Rollback: `supabase/fase4D_demo_schedule_reset_rollback.sql`
-- Estado: pendiente de aplicar manualmente
-- Alcance:
-  - borra actividades/horarios/sesiones/reservas/asistencia/clases legacy del gym objetivo
-  - no toca perfiles
-  - no toca pagos
-  - no toca gimnasios
-  - no toca auth.users
-- Validación funcional pendiente:
-  - cargar panel admin
-  - ver 5 actividades
-  - ver 6 horarios
-  - entrar como socio
-  - ver calendario limpio
-  - reservar una clase
-  - cancelar una clase
-  - comprobar trazabilidad created_by/cancelled_by tras Fase 4C
-  - panel admin sin errores
+- Estado: aplicado y validado
+- Precheck:
+  - actividades_gym = 5
+  - horarios_clase_gym = 6
+  - clases_legacy_gym = 0
+  - sesiones_relacionadas_gym = 14
+  - reservas_relacionadas_sesiones_gym = 5
+  - asistencia_relacionada_reservas_o_socios_gym = 2
+- Backup manual:
+  - backup_fase4d_actividades = 5
+  - backup_fase4d_horarios_clase = 6
+  - backup_fase4d_clases = 0
+  - backup_fase4d_sesiones = 14
+  - backup_fase4d_reservas = 5
+  - backup_fase4d_asistencia = 2
+- Post reset:
+  - actividades_gym = 5
+  - horarios_clase_gym = 6
+  - sesiones_relacionadas_gym = 0
+  - reservas_relacionadas_sesiones_gym = 0
+  - asistencia_relacionada_reservas_o_socios_gym = 0
+  - clases_legacy_gym = 0
+- Validación funcional:
+  - Panel admin: OK
+  - 5 actividades visibles: OK
+  - 6 horarios visibles: OK
+  - Panel socio: OK
+  - Calendario limpio con clases nuevas: OK
+- Nota:
+  - El script versionado se actualiza para usar la variante simple sin tabla temporal, porque fue la que funcionó en Supabase SQL Editor.
 
 ## Fase 4E - Fix RPC toggle_reserva FOUND
 
@@ -201,17 +206,16 @@ Antes de completar la fase de RLS secundaria, ya se movieron a APIs protegidas l
 - SQL principal: supabase/fase4E_fix_toggle_reserva_found.sql
 - Rollback: supabase/fase4E_fix_toggle_reserva_found_rollback.sql
 - Verificación: supabase/fase4E_fix_toggle_reserva_found_verificacion.sql
-- Estado: pendiente de aplicar manualmente
-- Problema detectado:
-  - La RPC podía devolver ok=true sin insertar reserva porque FOUND se sobrescribía tras SELECT COUNT(*)
-- Resultado esperado:
-  - reservar clase crea fila real en public.reservas
-  - created_by y created_source se rellenan
-  - cancelar clase actualiza cancelled_at, cancelled_by, cancelled_source y updated_at
-- Validación funcional pendiente:
-  - reservar Boxeo 2026-05-04 desde socio
-  - comprobar reserva en BD
-  - cancelar desde socio
-  - comprobar cancelación en BD
-  - panel socio sin error
-  - panel admin sin error
+- Estado: aplicado y validado
+- Problema corregido:
+  - FOUND se sobrescribía después de SELECT COUNT(*) y podía provocar ok=true sin INSERT real.
+- Resultado:
+  - reservar crea fila real en public.reservas.
+  - cancelar rellena cancelled_at, cancelled_by, cancelled_source y updated_at.
+  - reactivar limpia campos de cancelación y mantiene created_by/created_source.
+- Validación:
+  - reservar: OK
+  - cancelar: OK
+  - reactivar: OK
+  - panel socio: OK
+  - panel admin: OK
