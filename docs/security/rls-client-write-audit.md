@@ -122,3 +122,10 @@ Hallazgos relevantes respecto al precheck:
   1. Inventario exacto de policies actuales en Supabase live y su SQL real (especialmente las admin sin filtro claro de `gym_id`).
   2. Prueba end-to-end multi-gym (admin y socio) tras endurecer `SELECT` en `sesiones`, `reservas`, `pagos`.
   3. Confirmar si existe consumo externo/público de datos de `gimnasios` antes de cerrar lectura pública.
+
+## Seguimiento Fase 5B
+
+- Fase 5A dejó sesiones.gym_id/asistencia.gym_id disponibles.
+- Fase 5B prepara hardening de SELECT/UPDATE en sesiones y SELECT en asistencia.
+- No reabre INSERT cliente en sesiones/asistencia.
+- Reservas, pagos y perfiles quedan pendientes de fases posteriores.

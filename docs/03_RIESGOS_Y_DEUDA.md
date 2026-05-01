@@ -53,3 +53,5 @@ Este documento reclasifica riesgos tras completar 3B, 3C, check-in hardening, St
 
 - Pendiente Fase 5B: endurecer RLS de sesiones/asistencia usando gym_id directo.
 - Pendiente futuro: valorar NOT NULL en sesiones.gym_id y asistencia.gym_id cuando haya más histórico validado.
+
+- Preparada Fase 5B para endurecer RLS de sesiones/asistencia usando gym_id directo. Pendiente de aplicar manualmente y validar. Reservas/pagos/perfiles quedan fuera de alcance y se revisarán en fases posteriores.
