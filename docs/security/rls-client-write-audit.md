@@ -170,3 +170,14 @@ Hallazgos relevantes respecto al precheck:
 - This PR only documents the already-applied Fase 5C-C perfiles update hardening.
 - Rollback was not executed.
 - Alcance fuera de esta fase: Stripe/checkout/webhooks, Auth users, reservas/pagos/sesiones/asistencia, clases legacy.
+
+## Actualización 2026-05-04 — Preparación Fase 5C-D (clases legacy)
+
+- Auditoría de código adicional enfocada en `public.clases`:
+  - Sin escrituras runtime detectadas vía `.from('clases')` / `.from("clases")`.
+  - Referencias actuales concentradas en documentación, migraciones SQL y tipado legacy (`Clase`).
+  - Existen joins de lectura histórica (`sesiones(...clases(nombre))`) que no implican escritura en `public.clases`.
+- Conclusión: viable preparar hardening de policies legacy de `public.clases` con ejecución manual controlada.
+- Estado 5C-D: **preparada, NO aplicada**.
+- Stripe/webhooks/checkout/Auth: fuera de alcance y sin cambios.
+- No SQL was applied in Supabase by this PR.
