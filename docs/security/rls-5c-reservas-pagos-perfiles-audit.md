@@ -176,3 +176,22 @@ Tabla gimnasios:
 - Validación funcional app: **OK** (admin/socio JGS y demo, incluyendo socios, pagos manuales, QR, reservas/calendario e historial de pagos).
 - Stripe/Auth/checkout/webhooks fuera de alcance y sin cambios.
 - Sin cambios sobre reservas/pagos/sesiones/asistencia en esta fase; no se ejecutó rollback.
+
+## Resultado Fase 5C-D clases legacy (preparada, NO aplicada)
+
+- Estado: **preparada, NO aplicada**.
+- Auditoría de código (repo):
+  - No se detectaron usos runtime de `.from('clases')` / `.from("clases")` en frontend ni APIs activas.
+  - Las referencias vigentes de `clases` son mayoritariamente:
+    - tipado legacy (`types/domain.ts`, interfaz `Clase`)
+    - SQL histórico/migraciones
+    - documentación
+    - joins de lectura histórica en asistencia/sesiones
+- SQL manual preparado:
+  - `supabase/fase5C_D_rls_clases_legacy_precheck.sql`
+  - `supabase/fase5C_D_rls_clases_legacy_hardening.sql`
+  - `supabase/fase5C_D_rls_clases_legacy_verificacion.sql`
+  - `supabase/fase5C_D_rls_clases_legacy_rollback.sql`
+- Ejecución manual prevista: precheck → hardening → verificación (rollback solo si falla).
+- Alcance fuera de fase: Stripe/checkout/webhooks/Auth.
+- Nota: **No SQL was applied in Supabase by this PR.**

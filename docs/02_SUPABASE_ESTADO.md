@@ -448,3 +448,25 @@ Antes de completar la fase de RLS secundaria, ya se movieron a APIs protegidas l
 - Policies UPDATE a cerrar en 5C-C: `perfiles_update_propio` y `admin_update_perfiles_su_gym`.
 - Hallazgo de auditoría: updates de perfiles actuales pasan por APIs server-side con `supabaseAdmin`.
 - Nota: No SQL was applied by this PR (ejecución manual pendiente en Supabase SQL Editor).
+
+## Fase 5C-D - Clases legacy (preparada, NO aplicada)
+
+- Fecha de preparación: 2026-05-04
+- Estado: **preparada, NO aplicada**
+- Alcance: auditoría + SQL manual de hardening/verificación/rollback para `public.clases`.
+- SQL preparado:
+  - `supabase/fase5C_D_rls_clases_legacy_precheck.sql`
+  - `supabase/fase5C_D_rls_clases_legacy_hardening.sql`
+  - `supabase/fase5C_D_rls_clases_legacy_verificacion.sql`
+  - `supabase/fase5C_D_rls_clases_legacy_rollback.sql`
+- Orden manual propuesto:
+  1. precheck
+  2. hardening
+  3. verificación
+  4. rollback (solo si falla 5C-D)
+- Decisión de seguridad:
+  - no borrar datos
+  - no dropear tabla
+  - cerrar policies legacy directas sobre `public.clases`
+- Alcance fuera de fase (sin cambios): Stripe, checkout, webhooks, Auth, reservas/pagos/perfiles/sesiones/asistencia.
+- Nota operativa: **No SQL was applied in Supabase by this PR.**

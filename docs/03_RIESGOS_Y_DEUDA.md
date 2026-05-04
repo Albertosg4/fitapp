@@ -94,3 +94,13 @@ Este documento reclasifica riesgos tras completar 3B, 3C, check-in hardening, St
 - Rollback disponible: `supabase/fase5C_C_rls_perfiles_update_hardening_rollback.sql` (no ejecutado).
 - Pendientes se mantienen: clases legacy (Fase 5C-D), posible `NOT NULL` futuro en `gym_id` donde proceda y limpieza posterior de datos demo multi-gym si se decide.
 - Fuera de alcance (sin cambios): Stripe/checkout/webhooks, Auth users, reservas/pagos/sesiones/asistencia.
+
+## Actualización 2026-05-04 — Fase 5C-D preparada
+
+- `public.clases` permanece como tabla legacy y objetivo de deprecación segura.
+- Se preparó hardening manual para eliminar policies legacy de acceso directo (sin borrar datos ni tabla).
+- Estado: **preparada, NO aplicada**.
+- Pendientes tras 5C-D:
+  - posibles `NOT NULL` futuros en columnas `gym_id` donde aplique.
+  - limpieza opcional de datos demo multi-gym.
+  - hardening QR (rotación/rate-limit distribuido) en fase posterior.
