@@ -22,7 +22,7 @@ Este documento reclasifica riesgos tras completar 3B, 3C, check-in hardening, St
 
 - ⏳ Limpieza RLS secundaria pendiente.
 - ✅ Prueba multi-gym real controlada validada en 5C-E (aislamiento OK con mismatch=0).
-- ⏳ Limpieza legacy pendiente.
+- ✅ Fase 5C-D clases legacy aplicada y validada: `public.clases` queda deprecada y cerrada a acceso directo (RLS activo, 0 policies activas, 0 filas).
 - ⏳ QR sin rotación periódica pendiente.
 - ✅ `sesiones_insert` eliminada: cierre 3D-3A aplicado y validado.
 - ✅ `asistencia_insert` eliminada: cierre 3D-3A aplicado y validado.
@@ -72,14 +72,14 @@ Este documento reclasifica riesgos tras completar 3B, 3C, check-in hardening, St
   - Conteos de verificación: total_pagos = 10, pagos_con_gym_id = 10, pagos_sin_gym_id = 0.
   - Rollback de 5C-B: no ejecutado.
 - Stripe/checkout/webhooks siguen fuera de alcance en 5C-B y no se tocaron.
-- `perfiles_update_propio` y `clases` legacy continúan como pendientes para fases posteriores.
+- `perfiles_update_propio` quedó cerrado en 5C-C; `clases` legacy quedó deprecada/cerrada en 5C-D.
 - Pendiente futuro: valorar NOT NULL en `pagos.gym_id` si procede tras más histórico validado.
 
 ## Actualización 2026-05-04 (Fase 5C-E aplicada y validada)
 
 - Fase 5C-E (multi-gym controlado) fue **aplicada y validada** en Supabase live con gimnasio demo y usuarios demo controlados.
 - Resultado clave: aislamiento multi-gym validado en SQL y en app (`pagos_user_gym_mismatch = 0`, `reservas_user_session_gym_mismatch = 0`).
-- Riesgo residual de aislamiento multi-gym reducido de forma significativa; queda seguimiento de `clases` legacy.
+- Riesgo residual de aislamiento multi-gym reducido de forma significativa.
 - Stripe/checkout/webhooks se mantienen fuera de alcance y no se tocaron.
 - Rollback de 5C-E: no ejecutado.
 - Pendiente futuro: valorar `NOT NULL` en `gym_id` donde proceda cuando el histórico validado lo permita.
@@ -92,15 +92,24 @@ Este documento reclasifica riesgos tras completar 3B, 3C, check-in hardening, St
 - SQL aplicado: `supabase/fase5C_C_rls_perfiles_update_hardening.sql`.
 - Verificación ejecutada: `supabase/fase5C_C_rls_perfiles_update_hardening_verificacion.sql`.
 - Rollback disponible: `supabase/fase5C_C_rls_perfiles_update_hardening_rollback.sql` (no ejecutado).
-- Pendientes se mantienen: clases legacy (Fase 5C-D), posible `NOT NULL` futuro en `gym_id` donde proceda y limpieza posterior de datos demo multi-gym si se decide.
+- Pendientes se mantienen: posible `NOT NULL` futuro en `gym_id` donde proceda y limpieza posterior de datos demo multi-gym si se decide.
 - Fuera de alcance (sin cambios): Stripe/checkout/webhooks, Auth users, reservas/pagos/sesiones/asistencia.
 
-## Actualización 2026-05-04 — Fase 5C-D preparada
+## Actualización 2026-05-04 — Fase 5C-D aplicada y validada
 
-- `public.clases` permanece como tabla legacy y objetivo de deprecación segura.
-- Se preparó hardening manual para eliminar policies legacy de acceso directo (sin borrar datos ni tabla).
-- Estado: **preparada, NO aplicada**.
-- Pendientes tras 5C-D:
+- Hardening manual aplicado en Supabase live sobre `public.clases` (tabla legacy).
+- SQL aplicado: `supabase/fase5C_D_rls_clases_legacy_hardening.sql`.
+- Verificación ejecutada: `supabase/fase5C_D_rls_clases_legacy_verificacion.sql`.
+- Rollback disponible: `supabase/fase5C_D_rls_clases_legacy_rollback.sql` (**no ejecutado**).
+- Resultado técnico:
+  - RLS activo en `public.clases`.
+  - 0 policies activas en `public.clases`.
+  - 0 filas en `public.clases`.
+  - Sin borrado de datos y sin drop de tabla.
+- `public.clases` queda deprecada/cerrada a acceso directo.
+- Pendientes posteriores se mantienen:
   - posibles `NOT NULL` futuros en columnas `gym_id` donde aplique.
   - limpieza opcional de datos demo multi-gym.
   - hardening QR (rotación/rate-limit distribuido) en fase posterior.
+  - limpieza de índices duplicados si sigue pendiente.
+- Fuera de alcance (sin cambios): Stripe/checkout/webhooks/Auth.
