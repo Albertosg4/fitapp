@@ -106,3 +106,39 @@ Tabla gimnasios:
   - clases legacy
   - multi-gym real
 
+
+## Fase 5C-B pagos (preparada, NO aplicada)
+
+- Estado: **preparada**, pendiente de ejecución manual en Supabase.
+- SQL principal preparado: `supabase/fase5C_B_rls_pagos_gym_scoped.sql`.
+- SQL verificación preparado: `supabase/fase5C_B_rls_pagos_gym_scoped_verificacion.sql`.
+- SQL rollback preparado: `supabase/fase5C_B_rls_pagos_gym_scoped_rollback.sql`.
+- Alcance:
+  - hardening RLS de `public.pagos` usando `gym_id` directo + `public.auth_gym_id()`.
+  - consolidación de policies admin duplicadas/globales hacia policy gym-scoped.
+  - mantenimiento de lectura de socio sobre sus propios pagos.
+- Fuera de alcance explícito:
+  - Stripe, checkout y webhooks.
+  - UI/lógica de pagos.
+  - perfiles.
+  - clases legacy.
+
+### Ejecución manual recomendada (en orden)
+
+1. Ejecutar precheck/auditoría si procede:
+   - `supabase/fase5C_rls_audit_precheck.sql`
+2. Ejecutar hardening pagos:
+   - `supabase/fase5C_B_rls_pagos_gym_scoped.sql`
+3. Ejecutar verificación de pagos:
+   - `supabase/fase5C_B_rls_pagos_gym_scoped_verificacion.sql`
+4. Probar flujos funcionales:
+   - admin ve pagos de su gym
+   - socio ve solo sus pagos
+   - Stripe checkout/webhook siguen operativos (sin cambios en esta fase)
+5. Solo si todo OK, hacer PR documental posterior marcando Fase 5C-B como aplicada/validada.
+
+### Rollback
+
+- Si falla Fase 5C-B, ejecutar:
+  - `supabase/fase5C_B_rls_pagos_gym_scoped_rollback.sql`
+- El rollback restaura las policies previas documentadas y no borra datos.
