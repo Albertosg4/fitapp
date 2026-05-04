@@ -6,6 +6,7 @@
 begin;
 
 drop policy if exists perfiles_update_propio on public.perfiles;
+drop policy if exists "admin_update_perfiles_su_gym" on public.perfiles;
 
 create policy perfiles_update_propio
 on public.perfiles
