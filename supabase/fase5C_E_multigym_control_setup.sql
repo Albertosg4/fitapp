@@ -60,29 +60,48 @@ BEGIN
     RAISE EXCEPTION 'El gym demo % ya tiene perfiles no esperados. Abortando para evitar mezclar datos reales/demo.', v_demo_gym_name;
   END IF;
 
+
+  -- Guard rail: si UUID admin ya existe, debe ser exactamente el perfil demo esperado.
+  IF EXISTS (
+    SELECT 1
+    FROM public.perfiles p
+    WHERE p.id = v_admin_uuid
+      AND (
+        p.nombre IS DISTINCT FROM 'Admin Demo Gym 2'
+        OR p.rol IS DISTINCT FROM 'admin'
+        OR p.gym_id IS DISTINCT FROM v_demo_gym_id
+      )
+  ) THEN
+    RAISE EXCEPTION 'El UUID admin (%) ya pertenece a un perfil real/no-demo. Abortando setup.', v_admin_uuid;
+  END IF;
+
+  -- Guard rail: si UUID socio ya existe, debe ser exactamente el perfil demo esperado.
+  IF EXISTS (
+    SELECT 1
+    FROM public.perfiles p
+    WHERE p.id = v_socio_uuid
+      AND (
+        p.nombre IS DISTINCT FROM 'Socio Demo Gym 2'
+        OR p.rol IS DISTINCT FROM 'socio'
+        OR p.gym_id IS DISTINCT FROM v_demo_gym_id
+      )
+  ) THEN
+    RAISE EXCEPTION 'El UUID socio (%) ya pertenece a un perfil real/no-demo. Abortando setup.', v_socio_uuid;
+  END IF;
+
   -- Perfil admin demo.
   INSERT INTO public.perfiles (id, gym_id, nombre, rol, tipo_membresia, membresia_activa)
   VALUES (v_admin_uuid, v_demo_gym_id, 'Admin Demo Gym 2', 'admin', 'mensual', true)
-  ON CONFLICT (id) DO UPDATE
-    SET gym_id = EXCLUDED.gym_id,
-        nombre = EXCLUDED.nombre,
-        rol = EXCLUDED.rol,
-        tipo_membresia = EXCLUDED.tipo_membresia,
-        membresia_activa = EXCLUDED.membresia_activa;
+  ON CONFLICT (id) DO NOTHING;
 
   -- Perfil socio demo.
   INSERT INTO public.perfiles (id, gym_id, nombre, rol, tipo_membresia, membresia_activa)
   VALUES (v_socio_uuid, v_demo_gym_id, 'Socio Demo Gym 2', 'socio', 'mensual', true)
-  ON CONFLICT (id) DO UPDATE
-    SET gym_id = EXCLUDED.gym_id,
-        nombre = EXCLUDED.nombre,
-        rol = EXCLUDED.rol,
-        tipo_membresia = EXCLUDED.tipo_membresia,
-        membresia_activa = EXCLUDED.membresia_activa;
+  ON CONFLICT (id) DO NOTHING;
 
   -- Pago demo mínimo (idempotente por user+tag en notas).
   INSERT INTO public.pagos (user_id, gym_id, importe, tipo_membresia, meses, metodo, estado, notas)
-  SELECT v_socio_uuid, v_demo_gym_id, 0, 'mensual', 1, 'manual', 'pagado',
+  SELECT v_socio_uuid, v_demo_gym_id, 0, 'mensual', 1, 'cortesia', 'pagado',
          'F5CE_DEMO_GYM2_2026_05 | pago demo controlado'
   WHERE NOT EXISTS (
     SELECT 1

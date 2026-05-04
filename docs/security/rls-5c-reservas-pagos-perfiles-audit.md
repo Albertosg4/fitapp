@@ -147,6 +147,7 @@ Tabla gimnasios:
 - Condiciones de ejecución:
   - Crear usuarios demo manualmente en Auth Dashboard.
   - Reemplazar placeholders `__DEMO_ADMIN_AUTH_USER_ID__` y `__DEMO_SOCIO_AUTH_USER_ID__` antes de setup.
+  - El setup aborta si esos UUIDs ya están ligados a perfiles reales/no-demo.
 - Alcance:
   - No cambios de policies RLS en 5C-E.
   - No cambios en `perfiles_update_propio`.

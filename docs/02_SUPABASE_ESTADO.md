@@ -396,6 +396,7 @@ Antes de completar la fase de RLS secundaria, ya se movieron a APIs protegidas l
 - Requisitos previos de ejecución manual:
   - Crear 2 usuarios demo manualmente en Supabase Dashboard > Authentication > Users.
   - Reemplazar placeholders `__DEMO_ADMIN_AUTH_USER_ID__` y `__DEMO_SOCIO_AUTH_USER_ID__` en setup.
+  - El setup aborta si esos UUIDs ya pertenecen a perfiles reales/no-demo.
 - Alcance explícito:
   - No inserta en `auth.users` por SQL.
   - No modifica policies RLS.
