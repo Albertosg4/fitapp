@@ -133,6 +133,8 @@ Hallazgos relevantes respecto al precheck:
 ## Seguimiento Fase 5C
 
 - Fase 5C-A reservas aplicada y validada.
-- Reservas ya usan gym-scope por `sesiones.gym_id`.
-- Pagos/perfiles/clases legacy quedan pendientes.
-- Stripe sigue fuera de alcance.
+- Fase 5C-B pagos aplicada y validada.
+- Reservas usan gym-scope por `sesiones.gym_id` y pagos por `pagos.gym_id` + `auth_gym_id()`.
+- Policies de pagos finales: `admin_ver_pagos_gym_scoped` y `socio_ver_propios_pagos_gym_scoped`.
+- Pendientes: `perfiles_update_propio`, clases legacy y prueba multi-gym real.
+- Stripe sigue fuera de alcance en 5C y no se tocó checkout/webhooks.

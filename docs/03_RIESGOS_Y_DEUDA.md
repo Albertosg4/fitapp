@@ -62,11 +62,15 @@ Este documento reclasifica riesgos tras completar 3B, 3C, check-in hardening, St
 
 - Fase 5C-A aplicada y validada: reservas quedan gym-scoped vía `sesiones.gym_id` + `auth_gym_id()`; admin ya no depende de `get_user_rol()` global en reservas.
 - Pendientes 5C:
-  - pagos siguen con policies admin duplicadas/globales.
   - perfiles_update_propio sigue demasiado amplio.
   - clases legacy no tiene filas, pero conserva policies antiguas.
   - falta prueba multi-gym real.
 
-- Fase 5C-B pagos: hardening gym-scoped **preparado (no aplicado)** con SQL manual + verificación + rollback.
-- Stripe/checkout/webhooks siguen fuera de alcance en 5C-B.
+- Fase 5C-B pagos aplicada y validada en Supabase live.
+  - Riesgo reducido: exposición admin global/duplicada en pagos mitigada al consolidar policies gym-scoped.
+  - Policies finales: `admin_ver_pagos_gym_scoped` y `socio_ver_propios_pagos_gym_scoped`.
+  - Conteos de verificación: total_pagos = 10, pagos_con_gym_id = 10, pagos_sin_gym_id = 0.
+  - Rollback de 5C-B: no ejecutado.
+- Stripe/checkout/webhooks siguen fuera de alcance en 5C-B y no se tocaron.
 - `perfiles_update_propio` y `clases` legacy continúan como pendientes para fases posteriores.
+- Pendiente futuro: valorar NOT NULL en `pagos.gym_id` si procede tras más histórico validado.

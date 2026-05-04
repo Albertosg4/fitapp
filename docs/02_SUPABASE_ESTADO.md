@@ -357,14 +357,28 @@ Antes de completar la fase de RLS secundaria, ya se movieron a APIs protegidas l
 - Fase 5C-E: prueba multi-gym real.
 - Evaluar NOT NULL más adelante.
 
-## Fase 5C-B - Pagos gym-scoped (preparación)
+## Fase 5C-B - Pagos gym-scoped
 
 - Fecha: 2026-05-04
-- SQL principal preparado: `supabase/fase5C_B_rls_pagos_gym_scoped.sql`
-- Verificación preparada: `supabase/fase5C_B_rls_pagos_gym_scoped_verificacion.sql`
-- Rollback preparado: `supabase/fase5C_B_rls_pagos_gym_scoped_rollback.sql`
-- Estado: **preparada, NO aplicada**
+- SQL aplicado: `supabase/fase5C_B_rls_pagos_gym_scoped.sql`
+- Verificación ejecutada: `supabase/fase5C_B_rls_pagos_gym_scoped_verificacion.sql`
+- Rollback: no ejecutado (`supabase/fase5C_B_rls_pagos_gym_scoped_rollback.sql` disponible)
+- Estado: **aplicada y validada**
+- Results:
+  - total_pagos = 10
+  - pagos_con_gym_id = 10
+  - pagos_sin_gym_id = 0
+- Policies finales:
+  - `admin_ver_pagos_gym_scoped`
+  - `socio_ver_propios_pagos_gym_scoped`
+- Validación funcional:
+  - admin login: OK
+  - admin pagos: OK
+  - ficha socio pagos: OK
+  - panel socio: OK
+  - historial pagos socio: OK
+  - reservas/calendario: OK
+  - check-in QR: OK
 - Notas:
-  - no se aplicó SQL en Supabase desde este PR.
-  - Stripe/checkout/webhooks quedan fuera de alcance.
+  - Stripe/checkout/webhooks fuera de alcance y no tocados.
   - perfiles y clases legacy siguen pendientes para fases 5C-C / 5C-D.
