@@ -136,20 +136,26 @@ Tabla gimnasios:
   - perfiles
   - clases legacy
 
-## Resultado Fase 5C-E (preparación multi-gym controlada)
+## Resultado Fase 5C-E multi-gym controlada
 
-- Estado: **preparada, no aplicada**.
-- Se prepararon scripts SQL manuales:
-  - `supabase/fase5C_E_multigym_control_precheck.sql`
-  - `supabase/fase5C_E_multigym_control_setup.sql`
-  - `supabase/fase5C_E_multigym_control_verificacion.sql`
-  - `supabase/fase5C_E_multigym_control_rollback.sql`
-- Condiciones de ejecución:
-  - Crear usuarios demo manualmente en Auth Dashboard.
-  - Reemplazar placeholders `__DEMO_ADMIN_AUTH_USER_ID__` y `__DEMO_SOCIO_AUTH_USER_ID__` antes de setup.
-  - El setup aborta si esos UUIDs ya están ligados a perfiles reales/no-demo.
+- Estado: **aplicada y validada**.
+- SQL ejecutados:
+  - Setup: `supabase/fase5C_E_multigym_control_setup.sql`
+  - Verificación: `supabase/fase5C_E_multigym_control_verificacion.sql`
+- Rollback: **no ejecutado**.
+- IDs demo principales:
+  - `gym_id` real JGS: `b94be501-cdb4-4e48-a525-e0a669ad0967`
+  - `gym_id` demo: `b89abc75-8eb2-4dbf-8b32-f4586c75cccf`
+  - admin demo auth user id: `28070f8a-b271-49e6-8343-649b2c1d0bfb`
+  - socio demo auth user id: `b87084ff-124c-4b90-a96b-6bf0f52c16bc`
+  - pago demo id: `7af31e24-78fc-48f6-bb17-7f5f23975004`
+  - sesión demo id: `2011c378-93ce-438c-b058-3a9eba67cfa6`
+  - reserva demo id: `77f3024b-af3b-4e3f-a942-e99a221092e3`
+- Checks de aislamiento:
+  - `pagos_user_gym_mismatch = 0`
+  - `reservas_user_session_gym_mismatch = 0`
+- Validación funcional app: **OK** (admin/socio JGS y demo con aislamiento correcto).
 - Alcance:
-  - No cambios de policies RLS en 5C-E.
-  - No cambios en `perfiles_update_propio`.
-  - Stripe/checkout/webhook fuera de alcance.
-- Rollback preparado con controles de seguridad para no tocar datos reales de JGS Fight Team.
+  - Sin cambios de policies RLS en 5C-E.
+  - `perfiles_update_propio` y `clases` legacy siguen pendientes.
+  - Stripe/checkout/webhooks fuera de alcance y sin cambios.

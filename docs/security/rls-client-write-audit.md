@@ -134,14 +134,16 @@ Hallazgos relevantes respecto al precheck:
 
 - Fase 5C-A reservas aplicada y validada.
 - Fase 5C-B pagos aplicada y validada.
+- Fase 5C-E multi-gym controlada aplicada y validada en Supabase live.
 - Reservas usan gym-scope por `sesiones.gym_id` y pagos por `pagos.gym_id` + `auth_gym_id()`.
 - Policies de pagos finales: `admin_ver_pagos_gym_scoped` y `socio_ver_propios_pagos_gym_scoped`.
-- Pendientes: `perfiles_update_propio`, clases legacy y prueba multi-gym real.
+- Verificación multi-gym 5C-E: mismatches en 0 (`pagos_user_gym_mismatch`, `reservas_user_session_gym_mismatch`).
+- Pendientes: `perfiles_update_propio` y clases legacy.
 - Stripe sigue fuera de alcance en 5C y no se tocó checkout/webhooks.
 
-## Nota 2026-05-04 — Fase 5C-E preparada (no aplicada)
+## Nota 2026-05-04 — Fase 5C-E aplicada (solo documentación)
 
-- Se preparó paquete SQL de prueba multi-gym controlada con setup/verificación/rollback manuales.
-- No se aplicó SQL en Supabase desde esta fase.
-- No se crearon usuarios Auth por SQL; quedan como paso manual en Dashboard.
+- Esta actualización documenta una aplicación ya ejecutada en Supabase live fuera de este PR.
+- No SQL was applied by this PR.
+- Rollback no ejecutado.
 - Sin cambios sobre Stripe, checkout o webhooks.
