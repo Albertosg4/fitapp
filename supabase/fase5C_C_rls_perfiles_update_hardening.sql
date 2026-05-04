@@ -20,6 +20,7 @@ drop policy if exists perfiles_update_propio on public.perfiles;
 --    Este bloque elimina variantes conocidas del repositorio/histórico.
 drop policy if exists "usuarios pueden actualizar su perfil" on public.perfiles;
 drop policy if exists "actualizar perfil propio" on public.perfiles;
+drop policy if exists "admin_update_perfiles_su_gym" on public.perfiles;
 
 comment on table public.perfiles is
   'Fase 5C-C: UPDATE directo de cliente cerrado; cambios de perfil por API protegida con service_role.';

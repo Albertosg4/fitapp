@@ -156,7 +156,7 @@ Hallazgos relevantes respecto al precheck:
   - `app/api/stripe/checkout/route.ts`: `stripe_customer_id`.
   - `app/api/stripe/webhook/route.ts`: `membresia_activa`, `membresia_vence`, `tipo_membresia`.
   - `app/api/admin/socios/toggle/route.ts`: `membresia_activa`.
-- Conclusión de hardening 5C-C: se preparó cierre de `perfiles_update_propio` para bloquear UPDATE directo cliente y mantener flujos vía API protegida.
+- Conclusión de hardening 5C-C: se preparó cierre de UPDATE directo cliente eliminando `perfiles_update_propio` y `admin_update_perfiles_su_gym`, manteniendo flujos vía API protegida.
 - Estado: **preparado, NO aplicado**.
 - SQL preparado (manual):
   - `supabase/fase5C_C_rls_perfiles_update_hardening_precheck.sql`

@@ -1,21 +1,29 @@
 -- Fase 5C-C (VERIFICACION)
 -- Ejecutar manualmente después del SQL principal.
 
--- 1) Confirmar que no existe la policy legacy
+-- 1) Confirmar ausencia explícita de policies UPDATE legacy/sensibles
+with expected_absent(policyname) as (
+  values
+    ('perfiles_update_propio'::text),
+    ('admin_update_perfiles_su_gym'::text),
+    ('usuarios pueden actualizar su perfil'::text),
+    ('actualizar perfil propio'::text)
+)
 select
+  e.policyname,
   case
-    when exists (
-      select 1
-      from pg_policies
-      where schemaname = 'public'
-        and tablename = 'perfiles'
-        and policyname = 'perfiles_update_propio'
-    )
-    then 'WARNING: perfiles_update_propio sigue presente'
-    else 'OK: perfiles_update_propio ausente'
-  end as check_perfiles_update_propio;
+    when p.policyname is null then 'OK: ausente'
+    else 'WARNING: sigue presente'
+  end as status
+from expected_absent e
+left join pg_policies p
+  on p.schemaname = 'public'
+ and p.tablename = 'perfiles'
+ and p.cmd = 'UPDATE'
+ and p.policyname = e.policyname
+order by e.policyname;
 
--- 2) Policies UPDATE activas en perfiles (debe ser 0 para authenticated)
+-- 2) Policies UPDATE activas en perfiles (esperado final: 0 filas)
 select
   policyname,
   roles,
@@ -26,6 +34,17 @@ where schemaname = 'public'
   and tablename = 'perfiles'
   and cmd = 'UPDATE'
 order by policyname;
+
+-- 2b) Resumen legible para pegar en ChatGPT
+select
+  case
+    when count(*) = 0 then 'OK: 0 policies UPDATE en public.perfiles'
+    else 'WARNING: quedan ' || count(*)::text || ' policies UPDATE en public.perfiles (revisar salida de bloque 2)'
+  end as check_update_policies
+from pg_policies
+where schemaname = 'public'
+  and tablename = 'perfiles'
+  and cmd = 'UPDATE';
 
 -- 3) Confirmar SELECT esperado (propio/admin) sigue activo si aplica
 select

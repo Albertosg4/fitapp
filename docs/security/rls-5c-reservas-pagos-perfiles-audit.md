@@ -163,7 +163,7 @@ Tabla gimnasios:
 ## Resultado Fase 5C-C perfiles_update_propio (preparación)
 
 - Estado: **preparada, NO aplicada**.
-- Decisión: cerrar `perfiles_update_propio` (UPDATE cliente directo) porque no hay uso legítimo desde frontend; los cambios reales de perfil pasan por API server-side (`supabaseAdmin`).
+- Decisión: cerrar UPDATE cliente directo eliminando `perfiles_update_propio` y `admin_update_perfiles_su_gym`, porque no hay uso legítimo desde frontend; los cambios reales de perfil pasan por API server-side (`supabaseAdmin`).
 - Archivos SQL manuales preparados:
   1. `supabase/fase5C_C_rls_perfiles_update_hardening_precheck.sql`
   2. `supabase/fase5C_C_rls_perfiles_update_hardening.sql`

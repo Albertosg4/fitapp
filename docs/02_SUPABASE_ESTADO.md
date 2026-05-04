@@ -421,5 +421,6 @@ Antes de completar la fase de RLS secundaria, ya se movieron a APIs protegidas l
 - SQL verificación: `supabase/fase5C_C_rls_perfiles_update_hardening_verificacion.sql`
 - SQL rollback: `supabase/fase5C_C_rls_perfiles_update_hardening_rollback.sql`
 - Objetivo: cerrar/reducir UPDATE directo en `public.perfiles` desde cliente authenticated.
+- Policies UPDATE a cerrar en 5C-C: `perfiles_update_propio` y `admin_update_perfiles_su_gym`.
 - Hallazgo de auditoría: updates de perfiles actuales pasan por APIs server-side con `supabaseAdmin`.
 - Nota: No SQL was applied by this PR (ejecución manual pendiente en Supabase SQL Editor).
