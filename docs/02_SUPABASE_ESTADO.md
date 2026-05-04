@@ -73,6 +73,32 @@ Se aplicó en SQL Editor de Supabase live:
   - Socio Demo login/panel/historial de pagos: OK
 - Alcance fuera de fase (sin cambios): Stripe, checkout, webhooks, Auth, reservas, pagos, sesiones y asistencia.
 
+## Fase 5C-D - Clases legacy hardening
+
+- Fecha: 2026-05-04
+- SQL aplicado: `supabase/fase5C_D_rls_clases_legacy_hardening.sql`
+- Verificación ejecutada: `supabase/fase5C_D_rls_clases_legacy_verificacion.sql`
+- Rollback disponible: `supabase/fase5C_D_rls_clases_legacy_rollback.sql`
+- Estado: aplicada y validada
+- Resultado técnico de verificación:
+  - `public.clases` con RLS activo (`rls_enabled = true`)
+  - RLS no forzado (`rls_forced = false`)
+  - Policies activas en `public.clases`: **0**
+  - Filas en `public.clases`: **0**
+  - Estado: OK (`public.clases` sin filas)
+- Rollback: no ejecutado
+- Validación funcional app:
+  - Admin JGS: OK
+  - Calendario admin: OK
+  - Socio JGS: OK
+  - Reservas socio: OK
+  - Admin Demo: OK
+  - Socio Demo: OK
+- Garantías:
+  - No se borraron datos.
+  - No se dropeó la tabla `public.clases`.
+- Alcance fuera de fase (sin cambios): Stripe, checkout, webhooks, Auth, reservas, pagos, perfiles, sesiones y asistencia.
+
 ## No ejecutar cambios RLS fuera de fase específica
 
 Cualquier cambio adicional de RLS/policies debe hacerse en fase dedicada, con:
@@ -97,7 +123,6 @@ Antes de completar la fase de RLS secundaria, ya se movieron a APIs protegidas l
 - Pruebas con datos multi-gimnasio reales.
 - Revisión de `sesiones_insert`.
 - Revisión de `asistencia_insert`.
-- Revisión de `clases` legacy (Fase 5C-D).
 - Revisión de `gimnasios` con `SELECT` público.
 - Índices duplicados (limpieza opcional a futuro).
 

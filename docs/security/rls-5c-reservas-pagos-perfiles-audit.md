@@ -177,21 +177,25 @@ Tabla gimnasios:
 - Stripe/Auth/checkout/webhooks fuera de alcance y sin cambios.
 - Sin cambios sobre reservas/pagos/sesiones/asistencia en esta fase; no se ejecutó rollback.
 
-## Resultado Fase 5C-D clases legacy (preparada, NO aplicada)
+## Resultado Fase 5C-D clases legacy
 
-- Estado: **preparada, NO aplicada**.
-- Auditoría de código (repo):
-  - No se detectaron usos runtime de `.from('clases')` / `.from("clases")` en frontend ni APIs activas.
-  - Las referencias vigentes de `clases` son mayoritariamente:
-    - tipado legacy (`types/domain.ts`, interfaz `Clase`)
-    - SQL histórico/migraciones
-    - documentación
-    - joins de lectura histórica en asistencia/sesiones
-- SQL manual preparado:
-  - `supabase/fase5C_D_rls_clases_legacy_precheck.sql`
+- Estado: **aplicada y validada**.
+- SQL aplicado:
   - `supabase/fase5C_D_rls_clases_legacy_hardening.sql`
+- Verificación ejecutada:
   - `supabase/fase5C_D_rls_clases_legacy_verificacion.sql`
-  - `supabase/fase5C_D_rls_clases_legacy_rollback.sql`
-- Ejecución manual prevista: precheck → hardening → verificación (rollback solo si falla).
-- Alcance fuera de fase: Stripe/checkout/webhooks/Auth.
-- Nota: **No SQL was applied in Supabase by this PR.**
+- Rollback disponible:
+  - `supabase/fase5C_D_rls_clases_legacy_rollback.sql` (**no ejecutado**)
+- Resultado técnico:
+  - `public.clases`: `rls_enabled = true`
+  - `public.clases`: `rls_forced = false`
+  - Policies activas en `public.clases`: **0**
+  - Filas en `public.clases`: **0**
+  - Estado de verificación: **OK (sin filas en tabla legacy)**
+- Validación funcional app: **OK**
+  - Admin JGS, calendario admin, socio JGS, reservas socio, admin demo y socio demo.
+- Garantías:
+  - No se borraron datos.
+  - No se dropeó `public.clases`.
+- Fuera de alcance y sin cambios:
+  - Stripe, checkout, webhooks y Auth.

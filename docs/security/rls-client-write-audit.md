@@ -135,12 +135,20 @@ Hallazgos relevantes respecto al precheck:
 - Fase 5C-A reservas aplicada y validada.
 - Fase 5C-B pagos aplicada y validada.
 - Fase 5C-E multi-gym controlada aplicada y validada en Supabase live.
+- Fase 5C-C perfiles update aplicada y validada.
+- Fase 5C-D clases legacy aplicada y validada.
 - Reservas usan gym-scope por `sesiones.gym_id` y pagos por `pagos.gym_id` + `auth_gym_id()`.
 - Policies de pagos finales: `admin_ver_pagos_gym_scoped` y `socio_ver_propios_pagos_gym_scoped`.
 - Verificación multi-gym 5C-E: mismatches en 0 (`pagos_user_gym_mismatch`, `reservas_user_session_gym_mismatch`).
-- Fase 5C-C perfiles update aplicada y validada (UPDATE cliente directo cerrado en `public.perfiles`).
-- Pendiente: clases legacy (Fase 5C-D).
+- `public.perfiles` quedó con UPDATE cliente directo cerrado en 5C-C.
 - Stripe sigue fuera de alcance en 5C y no se tocó checkout/webhooks.
+
+## Actualización Fase 5C-D (solo documentación)
+
+- No SQL was applied by this PR.
+- This PR only documents the already-applied Fase 5C-D clases legacy hardening.
+- Rollback was not executed.
+- No data was deleted and public.clases was not dropped.
 
 ## Nota 2026-05-04 — Fase 5C-E aplicada (solo documentación)
 
@@ -170,14 +178,3 @@ Hallazgos relevantes respecto al precheck:
 - This PR only documents the already-applied Fase 5C-C perfiles update hardening.
 - Rollback was not executed.
 - Alcance fuera de esta fase: Stripe/checkout/webhooks, Auth users, reservas/pagos/sesiones/asistencia, clases legacy.
-
-## Actualización 2026-05-04 — Preparación Fase 5C-D (clases legacy)
-
-- Auditoría de código adicional enfocada en `public.clases`:
-  - Sin escrituras runtime detectadas vía `.from('clases')` / `.from("clases")`.
-  - Referencias actuales concentradas en documentación, migraciones SQL y tipado legacy (`Clase`).
-  - Existen joins de lectura histórica (`sesiones(...clases(nombre))`) que no implican escritura en `public.clases`.
-- Conclusión: viable preparar hardening de policies legacy de `public.clases` con ejecución manual controlada.
-- Estado 5C-D: **preparada, NO aplicada**.
-- Stripe/webhooks/checkout/Auth: fuera de alcance y sin cambios.
-- No SQL was applied in Supabase by this PR.
