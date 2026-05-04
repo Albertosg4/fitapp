@@ -178,3 +178,11 @@ Hallazgos relevantes respecto al precheck:
 - This PR only documents the already-applied Fase 5C-C perfiles update hardening.
 - Rollback was not executed.
 - Alcance fuera de esta fase: Stripe/checkout/webhooks, Auth users, reservas/pagos/sesiones/asistencia, clases legacy.
+
+## Seguimiento post-5C y preparación 5F
+
+- Escrituras directas críticas desde cliente: **cerradas**.
+- `perfiles_update_propio`: **cerrado** en 5C-C.
+- `clases` legacy: **cerrado/deprecado** en 5C-D.
+- Estado actual: pendiente únicamente auditoría final post-5C (Fase 5F preparada).
+- Este PR no introduce cambios runtime ni cambios funcionales de APIs/UI.

@@ -113,3 +113,14 @@ Este documento reclasifica riesgos tras completar 3B, 3C, check-in hardening, St
   - hardening QR (rotación/rate-limit distribuido) en fase posterior.
   - limpieza de índices duplicados si sigue pendiente.
 - Fuera de alcance (sin cambios): Stripe/checkout/webhooks/Auth.
+
+## Actualización 2026-05-04 — Preparación Fase 5F (solo auditoría)
+
+- RLS base 5C: **cerrada** (5C-A/B/C/D/E aplicadas y validadas).
+- 5F prepara decisiones, **no aplica cambios** en Supabase.
+- Deuda/riesgo que se mantiene para fases posteriores:
+  - Posibles `NOT NULL` futuros en columnas `gym_id` (fase 5G, PR separado).
+  - Datos demo multi-gym pendientes de decisión de conservación vs limpieza.
+  - QR/rate-limit distribuido pendiente (actual en memoria best-effort).
+  - Revisión de índices potencialmente duplicados.
+  - `tenant_settings`/multi-sector diferido intencionalmente.

@@ -199,3 +199,23 @@ Tabla gimnasios:
   - No se dropeó `public.clases`.
 - Fuera de alcance y sin cambios:
   - Stripe, checkout, webhooks y Auth.
+
+## Post-5C — Cierre técnico y auditoría final (Fase 5F preparada)
+
+- Estado consolidado 5C:
+  - 5C-A reservas: cerrada.
+  - 5C-B pagos: cerrada.
+  - 5C-C perfiles_update_propio: cerrada.
+  - 5C-D clases legacy: cerrada.
+  - 5C-E multi-gym controlada: cerrada.
+- Se prepara Fase 5F como auditoría final **solo lectura** previa a nuevos endurecimientos.
+- SQL preparados para ejecución manual:
+  - `supabase/fase5F_post_5c_final_audit.sql`
+  - `supabase/fase5F_post_5c_not_null_candidates.sql`
+  - `supabase/fase5F_post_5c_demo_data_inventory.sql`
+  - `supabase/fase5F_post_5c_indexes_inventory.sql`
+- Runbook:
+  - `docs/security/fase5F_post_5c_final_audit_runbook.md`
+- Matriz de decisión:
+  - `docs/security/fase5F_post_5c_decision_matrix.md`
+- Alcance de 5F: no tocar runtime, no tocar RLS, no tocar Stripe/checkout/webhooks/Auth, no borrar datos.
