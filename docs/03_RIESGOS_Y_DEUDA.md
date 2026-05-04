@@ -26,7 +26,7 @@ Este documento reclasifica riesgos tras completar 3B, 3C, check-in hardening, St
 - ⏳ QR sin rotación periódica pendiente.
 - ✅ `sesiones_insert` eliminada: cierre 3D-3A aplicado y validado.
 - ✅ `asistencia_insert` eliminada: cierre 3D-3A aplicado y validado.
-- ⚠️ `perfiles_update_propio` permite update directo del propio perfil (revisión pendiente).
+- ✅ `perfiles_update_propio` cerrado en 5C-C: UPDATE directo de cliente en `public.perfiles` eliminado y validado.
 - ✅ `gimnasios` sin lectura pública abierta: cierre 3D-3B aplicado y validado (permanece policy `gimnasios_auth`).
 - ⚠️ Existen policies con rol `public` condicionadas internamente que requieren auditoría fina antes de cambiar.
 - ⚠️ Rate limit de check-in en memoria: protección **best-effort** (no distribuida).
@@ -79,15 +79,18 @@ Este documento reclasifica riesgos tras completar 3B, 3C, check-in hardening, St
 
 - Fase 5C-E (multi-gym controlado) fue **aplicada y validada** en Supabase live con gimnasio demo y usuarios demo controlados.
 - Resultado clave: aislamiento multi-gym validado en SQL y en app (`pagos_user_gym_mismatch = 0`, `reservas_user_session_gym_mismatch = 0`).
-- Riesgo residual de aislamiento multi-gym reducido de forma significativa; queda seguimiento de hardening de `perfiles_update_propio` y `clases` legacy.
+- Riesgo residual de aislamiento multi-gym reducido de forma significativa; queda seguimiento de `clases` legacy.
 - Stripe/checkout/webhooks se mantienen fuera de alcance y no se tocaron.
 - Rollback de 5C-E: no ejecutado.
 - Pendiente futuro: valorar `NOT NULL` en `gym_id` donde proceda cuando el histórico validado lo permita.
 
-## Actualización 2026-05-04 (Fase 5C-C preparada)
+## Actualización 2026-05-04 (Fase 5C-C aplicada y validada)
 
-- `perfiles_update_propio` continúa como riesgo hasta ejecución manual en Supabase live.
-- Se preparó hardening 5C-C para cerrar UPDATE cliente directo en `public.perfiles` (incluye `perfiles_update_propio` y `admin_update_perfiles_su_gym`) y mantener cambios por API protegida.
-- Estado de fase 5C-C: **preparada, NO aplicada**.
-- SQL manual + verificación + rollback ya documentados en `supabase/fase5C_C_rls_perfiles_update_hardening*.sql`.
-- Fuera de alcance (sin cambios): Stripe/checkout/webhooks, Auth users, reservas/pagos/sesiones/asistencia, clases legacy.
+- Hardening de `perfiles_update_propio` aplicado manualmente y validado en Supabase live.
+- UPDATE directo de cliente sobre `public.perfiles` queda cerrado (0 policies UPDATE).
+- `perfiles_select_propio` se mantiene activa para lecturas propias autenticadas.
+- SQL aplicado: `supabase/fase5C_C_rls_perfiles_update_hardening.sql`.
+- Verificación ejecutada: `supabase/fase5C_C_rls_perfiles_update_hardening_verificacion.sql`.
+- Rollback disponible: `supabase/fase5C_C_rls_perfiles_update_hardening_rollback.sql` (no ejecutado).
+- Pendientes se mantienen: clases legacy (Fase 5C-D), posible `NOT NULL` futuro en `gym_id` donde proceda y limpieza posterior de datos demo multi-gym si se decide.
+- Fuera de alcance (sin cambios): Stripe/checkout/webhooks, Auth users, reservas/pagos/sesiones/asistencia.
