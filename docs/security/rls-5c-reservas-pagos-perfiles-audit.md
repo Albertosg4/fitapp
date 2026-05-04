@@ -160,19 +160,19 @@ Tabla gimnasios:
   - `perfiles_update_propio` y `clases` legacy siguen pendientes.
   - Stripe/checkout/webhooks fuera de alcance y sin cambios.
 
-## Resultado Fase 5C-C perfiles_update_propio (preparación)
+## Resultado Fase 5C-C perfiles_update_propio
 
-- Estado: **preparada, NO aplicada**.
-- Decisión: cerrar UPDATE cliente directo eliminando `perfiles_update_propio` y `admin_update_perfiles_su_gym`, porque no hay uso legítimo desde frontend; los cambios reales de perfil pasan por API server-side (`supabaseAdmin`).
-- Archivos SQL manuales preparados:
-  1. `supabase/fase5C_C_rls_perfiles_update_hardening_precheck.sql`
-  2. `supabase/fase5C_C_rls_perfiles_update_hardening.sql`
-  3. `supabase/fase5C_C_rls_perfiles_update_hardening_verificacion.sql`
-  4. `supabase/fase5C_C_rls_perfiles_update_hardening_rollback.sql`
-- Orden manual de ejecución recomendado:
-  1) precheck
-  2) principal
-  3) verificación
-  4) rollback solo si hay incidencia
-- Stripe sigue fuera de alcance en 5C-C; no tocar checkout/webhooks.
-- Clases legacy se mantienen como pendiente posterior (5C-D).
+- Estado: **aplicada y validada**.
+- SQL aplicado: `supabase/fase5C_C_rls_perfiles_update_hardening.sql`.
+- Verificación ejecutada: `supabase/fase5C_C_rls_perfiles_update_hardening_verificacion.sql`.
+- Rollback disponible: `supabase/fase5C_C_rls_perfiles_update_hardening_rollback.sql` (**no ejecutado**).
+- Policies UPDATE cerradas en `public.perfiles`:
+  - `actualizar perfil propio`: ausente
+  - `admin_update_perfiles_su_gym`: ausente
+  - `perfiles_update_propio`: ausente
+  - `usuarios pueden actualizar su perfil`: ausente
+- Resultado consolidado: **0 policies UPDATE** en `public.perfiles`.
+- `perfiles_select_propio` sigue activa.
+- Validación funcional app: **OK** (admin/socio JGS y demo, incluyendo socios, pagos manuales, QR, reservas/calendario e historial de pagos).
+- Stripe/Auth/checkout/webhooks fuera de alcance y sin cambios.
+- Sin cambios sobre reservas/pagos/sesiones/asistencia en esta fase; no se ejecutó rollback.

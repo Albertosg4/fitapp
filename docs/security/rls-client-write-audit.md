@@ -138,7 +138,8 @@ Hallazgos relevantes respecto al precheck:
 - Reservas usan gym-scope por `sesiones.gym_id` y pagos por `pagos.gym_id` + `auth_gym_id()`.
 - Policies de pagos finales: `admin_ver_pagos_gym_scoped` y `socio_ver_propios_pagos_gym_scoped`.
 - Verificación multi-gym 5C-E: mismatches en 0 (`pagos_user_gym_mismatch`, `reservas_user_session_gym_mismatch`).
-- Pendientes: `perfiles_update_propio` y clases legacy.
+- Fase 5C-C perfiles update aplicada y validada (UPDATE cliente directo cerrado en `public.perfiles`).
+- Pendiente: clases legacy (Fase 5C-D).
 - Stripe sigue fuera de alcance en 5C y no se tocó checkout/webhooks.
 
 ## Nota 2026-05-04 — Fase 5C-E aplicada (solo documentación)
@@ -148,7 +149,7 @@ Hallazgos relevantes respecto al precheck:
 - Rollback no ejecutado.
 - Sin cambios sobre Stripe, checkout o webhooks.
 
-## Actualización Fase 5C-C (preparación, no aplicada)
+## Actualización Fase 5C-C (aplicada y validada)
 
 - Resultado de auditoría de código (repo actual): no hay escrituras de `perfiles` desde cliente/browser autenticado.
 - Las actualizaciones detectadas de `public.perfiles` ocurren en APIs server-side con `supabaseAdmin` (service role):
@@ -156,11 +157,16 @@ Hallazgos relevantes respecto al precheck:
   - `app/api/stripe/checkout/route.ts`: `stripe_customer_id`.
   - `app/api/stripe/webhook/route.ts`: `membresia_activa`, `membresia_vence`, `tipo_membresia`.
   - `app/api/admin/socios/toggle/route.ts`: `membresia_activa`.
-- Conclusión de hardening 5C-C: se preparó cierre de UPDATE directo cliente eliminando `perfiles_update_propio` y `admin_update_perfiles_su_gym`, manteniendo flujos vía API protegida.
-- Estado: **preparado, NO aplicado**.
-- SQL preparado (manual):
-  - `supabase/fase5C_C_rls_perfiles_update_hardening_precheck.sql`
+- Conclusión de hardening 5C-C: se aplicó el cierre de UPDATE directo cliente eliminando `perfiles_update_propio` y `admin_update_perfiles_su_gym`, manteniendo flujos vía API protegida.
+- Estado: **aplicado y validado**.
+- SQL aplicado (manual):
   - `supabase/fase5C_C_rls_perfiles_update_hardening.sql`
+- Verificación ejecutada:
   - `supabase/fase5C_C_rls_perfiles_update_hardening_verificacion.sql`
+- Rollback disponible (no ejecutado):
   - `supabase/fase5C_C_rls_perfiles_update_hardening_rollback.sql`
+- Resultado: `public.perfiles` con **0 policies UPDATE** y `perfiles_select_propio` aún activa.
+- No SQL was applied by this PR.
+- This PR only documents the already-applied Fase 5C-C perfiles update hardening.
+- Rollback was not executed.
 - Alcance fuera de esta fase: Stripe/checkout/webhooks, Auth users, reservas/pagos/sesiones/asistencia, clases legacy.

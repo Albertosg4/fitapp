@@ -49,6 +49,30 @@ Se aplicó en SQL Editor de Supabase live:
   - `get_user_rol()`: **true**
   - `toggle_reserva(uuid, date)`: **true**
 
+
+## Fase 5C-C - Hardening perfiles_update_propio
+
+- Fecha: 2026-05-04
+- SQL principal: supabase/fase5C_C_rls_perfiles_update_hardening.sql
+- Verificación: supabase/fase5C_C_rls_perfiles_update_hardening_verificacion.sql
+- Rollback disponible: supabase/fase5C_C_rls_perfiles_update_hardening_rollback.sql
+- Estado: aplicada y validada
+- Resultado:
+  - Policies UPDATE legacy/sensibles ausentes en `public.perfiles`:
+    - `actualizar perfil propio`: ausente
+    - `admin_update_perfiles_su_gym`: ausente
+    - `perfiles_update_propio`: ausente
+    - `usuarios pueden actualizar su perfil`: ausente
+  - `public.perfiles` queda con **0 policies UPDATE**.
+  - `perfiles_select_propio` sigue activa.
+- Rollback: no ejecutado
+- Validación funcional app:
+  - Admin JGS login/panel/socios/activar-desactivar/pagos manual: OK
+  - Socio JGS login/panel/QR/reservas-calendario: OK
+  - Admin Demo login/panel/aislamiento Demo: OK
+  - Socio Demo login/panel/historial de pagos: OK
+- Alcance fuera de fase (sin cambios): Stripe, checkout, webhooks, Auth, reservas, pagos, sesiones y asistencia.
+
 ## No ejecutar cambios RLS fuera de fase específica
 
 Cualquier cambio adicional de RLS/policies debe hacerse en fase dedicada, con:
@@ -73,7 +97,7 @@ Antes de completar la fase de RLS secundaria, ya se movieron a APIs protegidas l
 - Pruebas con datos multi-gimnasio reales.
 - Revisión de `sesiones_insert`.
 - Revisión de `asistencia_insert`.
-- Revisión de `perfiles_update_propio`.
+- Revisión de `clases` legacy (Fase 5C-D).
 - Revisión de `gimnasios` con `SELECT` público.
 - Índices duplicados (limpieza opcional a futuro).
 
