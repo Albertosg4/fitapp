@@ -159,3 +159,20 @@ Tabla gimnasios:
   - Sin cambios de policies RLS en 5C-E.
   - `perfiles_update_propio` y `clases` legacy siguen pendientes.
   - Stripe/checkout/webhooks fuera de alcance y sin cambios.
+
+## Resultado Fase 5C-C perfiles_update_propio (preparación)
+
+- Estado: **preparada, NO aplicada**.
+- Decisión: cerrar `perfiles_update_propio` (UPDATE cliente directo) porque no hay uso legítimo desde frontend; los cambios reales de perfil pasan por API server-side (`supabaseAdmin`).
+- Archivos SQL manuales preparados:
+  1. `supabase/fase5C_C_rls_perfiles_update_hardening_precheck.sql`
+  2. `supabase/fase5C_C_rls_perfiles_update_hardening.sql`
+  3. `supabase/fase5C_C_rls_perfiles_update_hardening_verificacion.sql`
+  4. `supabase/fase5C_C_rls_perfiles_update_hardening_rollback.sql`
+- Orden manual de ejecución recomendado:
+  1) precheck
+  2) principal
+  3) verificación
+  4) rollback solo si hay incidencia
+- Stripe sigue fuera de alcance en 5C-C; no tocar checkout/webhooks.
+- Clases legacy se mantienen como pendiente posterior (5C-D).

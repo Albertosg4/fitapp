@@ -147,3 +147,20 @@ Hallazgos relevantes respecto al precheck:
 - No SQL was applied by this PR.
 - Rollback no ejecutado.
 - Sin cambios sobre Stripe, checkout o webhooks.
+
+## Actualización Fase 5C-C (preparación, no aplicada)
+
+- Resultado de auditoría de código (repo actual): no hay escrituras de `perfiles` desde cliente/browser autenticado.
+- Las actualizaciones detectadas de `public.perfiles` ocurren en APIs server-side con `supabaseAdmin` (service role):
+  - `app/api/pagos/manual/route.ts`: `membresia_activa`, `membresia_vence`, `tipo_membresia`.
+  - `app/api/stripe/checkout/route.ts`: `stripe_customer_id`.
+  - `app/api/stripe/webhook/route.ts`: `membresia_activa`, `membresia_vence`, `tipo_membresia`.
+  - `app/api/admin/socios/toggle/route.ts`: `membresia_activa`.
+- Conclusión de hardening 5C-C: se preparó cierre de `perfiles_update_propio` para bloquear UPDATE directo cliente y mantener flujos vía API protegida.
+- Estado: **preparado, NO aplicado**.
+- SQL preparado (manual):
+  - `supabase/fase5C_C_rls_perfiles_update_hardening_precheck.sql`
+  - `supabase/fase5C_C_rls_perfiles_update_hardening.sql`
+  - `supabase/fase5C_C_rls_perfiles_update_hardening_verificacion.sql`
+  - `supabase/fase5C_C_rls_perfiles_update_hardening_rollback.sql`
+- Alcance fuera de esta fase: Stripe/checkout/webhooks, Auth users, reservas/pagos/sesiones/asistencia, clases legacy.

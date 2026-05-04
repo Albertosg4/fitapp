@@ -83,3 +83,11 @@ Este documento reclasifica riesgos tras completar 3B, 3C, check-in hardening, St
 - Stripe/checkout/webhooks se mantienen fuera de alcance y no se tocaron.
 - Rollback de 5C-E: no ejecutado.
 - Pendiente futuro: valorar `NOT NULL` en `gym_id` donde proceda cuando el histórico validado lo permita.
+
+## Actualización 2026-05-04 (Fase 5C-C preparada)
+
+- `perfiles_update_propio` continúa como riesgo hasta ejecución manual en Supabase live.
+- Se preparó hardening 5C-C para cerrar UPDATE cliente directo en `public.perfiles` y mantener cambios por API protegida.
+- Estado de fase 5C-C: **preparada, NO aplicada**.
+- SQL manual + verificación + rollback ya documentados en `supabase/fase5C_C_rls_perfiles_update_hardening*.sql`.
+- Fuera de alcance (sin cambios): Stripe/checkout/webhooks, Auth users, reservas/pagos/sesiones/asistencia, clases legacy.

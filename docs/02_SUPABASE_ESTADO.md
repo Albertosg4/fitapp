@@ -411,3 +411,15 @@ Antes de completar la fase de RLS secundaria, ya se movieron a APIs protegidas l
 - Alcance:
   - Stripe/checkout/webhooks no se tocaron
   - No hubo cambios de policies RLS en esta fase
+
+## Fase 5C-C - Hardening perfiles_update_propio (preparada)
+
+- Fecha: 2026-05-04
+- Estado: **preparada, NO aplicada**
+- SQL precheck: `supabase/fase5C_C_rls_perfiles_update_hardening_precheck.sql`
+- SQL principal: `supabase/fase5C_C_rls_perfiles_update_hardening.sql`
+- SQL verificación: `supabase/fase5C_C_rls_perfiles_update_hardening_verificacion.sql`
+- SQL rollback: `supabase/fase5C_C_rls_perfiles_update_hardening_rollback.sql`
+- Objetivo: cerrar/reducir UPDATE directo en `public.perfiles` desde cliente authenticated.
+- Hallazgo de auditoría: updates de perfiles actuales pasan por APIs server-side con `supabaseAdmin`.
+- Nota: No SQL was applied by this PR (ejecución manual pendiente en Supabase SQL Editor).
