@@ -32,37 +32,19 @@ ORDER BY cmd, policyname;
 SELECT COUNT(*) AS total_clases_legacy
 FROM public.clases;
 
--- 4) Conteo por gym_id (si la columna existe)
-DO $$
-BEGIN
-  IF EXISTS (
-    SELECT 1
-    FROM information_schema.columns
-    WHERE table_schema = 'public'
-      AND table_name = 'clases'
-      AND column_name = 'gym_id'
-  ) THEN
-    EXECUTE 'SELECT gym_id, COUNT(*) AS total FROM public.clases GROUP BY gym_id ORDER BY total DESC';
-  ELSE
-    RAISE NOTICE 'gym_id NO existe en public.clases';
-  END IF;
-END $$;
+-- 4) Conteo por gym_id
+SELECT
+  gym_id,
+  COUNT(*) AS total
+FROM public.clases
+GROUP BY gym_id
+ORDER BY total DESC;
 
--- 5) Filas sin gym_id (si la columna existe)
-DO $$
-BEGIN
-  IF EXISTS (
-    SELECT 1
-    FROM information_schema.columns
-    WHERE table_schema = 'public'
-      AND table_name = 'clases'
-      AND column_name = 'gym_id'
-  ) THEN
-    EXECUTE 'SELECT COUNT(*) AS clases_sin_gym_id FROM public.clases WHERE gym_id IS NULL';
-  ELSE
-    RAISE NOTICE 'No aplica clases_sin_gym_id porque gym_id no existe';
-  END IF;
-END $$;
+-- 5) Filas sin gym_id
+SELECT
+  COUNT(*) AS clases_sin_gym_id
+FROM public.clases
+WHERE gym_id IS NULL;
 
 -- 6) Columnas de public.clases
 SELECT
