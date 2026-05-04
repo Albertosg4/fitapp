@@ -135,3 +135,21 @@ Tabla gimnasios:
   - UI/lógica de pagos
   - perfiles
   - clases legacy
+
+## Resultado Fase 5C-E (preparación multi-gym controlada)
+
+- Estado: **preparada, no aplicada**.
+- Se prepararon scripts SQL manuales:
+  - `supabase/fase5C_E_multigym_control_precheck.sql`
+  - `supabase/fase5C_E_multigym_control_setup.sql`
+  - `supabase/fase5C_E_multigym_control_verificacion.sql`
+  - `supabase/fase5C_E_multigym_control_rollback.sql`
+- Condiciones de ejecución:
+  - Crear usuarios demo manualmente en Auth Dashboard.
+  - Reemplazar placeholders `__DEMO_ADMIN_AUTH_USER_ID__` y `__DEMO_SOCIO_AUTH_USER_ID__` antes de setup.
+  - El setup aborta si esos UUIDs ya están ligados a perfiles reales/no-demo.
+- Alcance:
+  - No cambios de policies RLS en 5C-E.
+  - No cambios en `perfiles_update_propio`.
+  - Stripe/checkout/webhook fuera de alcance.
+- Rollback preparado con controles de seguridad para no tocar datos reales de JGS Fight Team.

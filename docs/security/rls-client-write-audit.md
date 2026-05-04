@@ -138,3 +138,10 @@ Hallazgos relevantes respecto al precheck:
 - Policies de pagos finales: `admin_ver_pagos_gym_scoped` y `socio_ver_propios_pagos_gym_scoped`.
 - Pendientes: `perfiles_update_propio`, clases legacy y prueba multi-gym real.
 - Stripe sigue fuera de alcance en 5C y no se tocó checkout/webhooks.
+
+## Nota 2026-05-04 — Fase 5C-E preparada (no aplicada)
+
+- Se preparó paquete SQL de prueba multi-gym controlada con setup/verificación/rollback manuales.
+- No se aplicó SQL en Supabase desde esta fase.
+- No se crearon usuarios Auth por SQL; quedan como paso manual en Dashboard.
+- Sin cambios sobre Stripe, checkout o webhooks.
