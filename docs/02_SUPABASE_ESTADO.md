@@ -383,23 +383,31 @@ Antes de completar la fase de RLS secundaria, ya se movieron a APIs protegidas l
   - Stripe/checkout/webhooks fuera de alcance y no tocados.
   - perfiles y clases legacy siguen pendientes para fases 5C-C / 5C-D.
 
-## Fase 5C-E - Prueba multi-gym controlada (preparación)
+## Fase 5C-E - Multi-gym controlada
 
-- Fecha: 2026-05-04.
-- Estado: **preparada, NO aplicada**.
-- Objetivo: habilitar prueba multi-gym real con segundo gym demo controlado sin tocar Stripe ni RLS.
-- SQL preparados:
-  - `supabase/fase5C_E_multigym_control_precheck.sql`
-  - `supabase/fase5C_E_multigym_control_setup.sql`
-  - `supabase/fase5C_E_multigym_control_verificacion.sql`
-  - `supabase/fase5C_E_multigym_control_rollback.sql`
-- Requisitos previos de ejecución manual:
-  - Crear 2 usuarios demo manualmente en Supabase Dashboard > Authentication > Users.
-  - Reemplazar placeholders `__DEMO_ADMIN_AUTH_USER_ID__` y `__DEMO_SOCIO_AUTH_USER_ID__` en setup.
-  - El setup aborta si esos UUIDs ya pertenecen a perfiles reales/no-demo.
-- Alcance explícito:
-  - No inserta en `auth.users` por SQL.
-  - No modifica policies RLS.
-  - No toca `perfiles_update_propio`.
-  - Stripe/checkout/webhooks fuera de alcance.
-- Rollback: preparado para borrar solo datos demo marcados con tag `F5CE_DEMO_GYM2_2026_05`.
+- Fecha: 2026-05-04
+- SQL setup ejecutado: `supabase/fase5C_E_multigym_control_setup.sql`
+- SQL verificación ejecutado: `supabase/fase5C_E_multigym_control_verificacion.sql`
+- Estado: aplicado y validado
+- Rollback: no ejecutado
+- Datos demo creados:
+  - Gym real (existente): `JGS Fight Team` (`gym_id = b94be501-cdb4-4e48-a525-e0a669ad0967`)
+  - Gym demo: `FITAPP Demo Gym 2` (`gym_id = b89abc75-8eb2-4dbf-8b32-f4586c75cccf`)
+  - Admin demo: `admin.demo.gym2@fitapp.test` (`auth_user_id = 28070f8a-b271-49e6-8343-649b2c1d0bfb`, rol `admin`, gym demo)
+  - Socio demo: `socio.demo.gym2@fitapp.test` (`auth_user_id = b87084ff-124c-4b90-a96b-6bf0f52c16bc`, rol `socio`, gym demo)
+  - Pago demo: `id = 7af31e24-78fc-48f6-bb17-7f5f23975004`, estado `pagado`, notas `F5CE_DEMO_GYM2_2026_05 | pago demo controlado`
+  - Sesión demo: `sesion_id = 2011c378-93ce-438c-b058-3a9eba67cfa6`, notas `F5CE_DEMO_GYM2_2026_05 | sesion demo controlada`
+  - Reserva demo: `reserva_id = 77f3024b-af3b-4e3f-a942-e99a221092e3`, estado `confirmada`
+- Resultados SQL de verificación:
+  - `FITAPP Demo Gym 2` existe: OK
+  - `JGS Fight Team` sigue existiendo: OK
+  - Admin demo y socio demo vinculados al gym demo: OK
+  - `pagos_user_gym_mismatch = 0`
+  - `reservas_user_session_gym_mismatch = 0`
+- Validación funcional app: OK
+  - Admin JGS panel OK y sin visibilidad demo
+  - Admin demo login OK, ve socio/pago demo y no ve JGS
+  - Socio demo login OK, historial pagos OK y no ve JGS
+- Alcance:
+  - Stripe/checkout/webhooks no se tocaron
+  - No hubo cambios de policies RLS en esta fase

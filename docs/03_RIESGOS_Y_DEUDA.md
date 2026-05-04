@@ -21,7 +21,7 @@ Este documento reclasifica riesgos tras completar 3B, 3C, check-in hardening, St
 ## Riesgos residuales (se mantienen)
 
 - ⏳ Limpieza RLS secundaria pendiente.
-- ⏳ Pruebas multi-gimnasio reales completas pendientes.
+- ✅ Prueba multi-gym real controlada validada en 5C-E (aislamiento OK con mismatch=0).
 - ⏳ Limpieza legacy pendiente.
 - ⏳ QR sin rotación periódica pendiente.
 - ✅ `sesiones_insert` eliminada: cierre 3D-3A aplicado y validado.
@@ -55,7 +55,7 @@ Este documento reclasifica riesgos tras completar 3B, 3C, check-in hardening, St
 - Pendiente futuro: valorar NOT NULL en sesiones.gym_id y asistencia.gym_id cuando haya más histórico validado.
 
 - Drift corregido: `public.auth_gym_id()` no existía en Supabase live y se creó manualmente como SECURITY DEFINER.
-- Pendiente siguiente: revisar RLS de reservas/pagos/perfiles y ejecutar prueba multi-gym real.
+- Pendiente siguiente: revisar y endurecer RLS de perfiles y legacy (multi-gym real ya validada en 5C-E).
 - Pendiente futuro: valorar NOT NULL en sesiones.gym_id y asistencia.gym_id.
 
 - Preparada Fase 5C para auditar RLS de reservas/pagos/perfiles/legacy y preparar hardening de reservas. Pendiente de ejecutar precheck y decidir aplicación manual.
@@ -64,7 +64,7 @@ Este documento reclasifica riesgos tras completar 3B, 3C, check-in hardening, St
 - Pendientes 5C:
   - perfiles_update_propio sigue demasiado amplio.
   - clases legacy no tiene filas, pero conserva policies antiguas.
-  - falta prueba multi-gym real.
+  - multi-gym real 5C-E ya validada.
 
 - Fase 5C-B pagos aplicada y validada en Supabase live.
   - Riesgo reducido: exposición admin global/duplicada en pagos mitigada al consolidar policies gym-scoped.
@@ -75,10 +75,11 @@ Este documento reclasifica riesgos tras completar 3B, 3C, check-in hardening, St
 - `perfiles_update_propio` y `clases` legacy continúan como pendientes para fases posteriores.
 - Pendiente futuro: valorar NOT NULL en `pagos.gym_id` si procede tras más histórico validado.
 
-## Actualización 2026-05-04 (Fase 5C-E preparada)
+## Actualización 2026-05-04 (Fase 5C-E aplicada y validada)
 
-- Fase 5C-E (multi-gym controlado) quedó **preparada y documentada**, pero **no aplicada** en Supabase live.
-- Se preparó setup manual con placeholders de Auth (`__DEMO_ADMIN_AUTH_USER_ID__`, `__DEMO_SOCIO_AUTH_USER_ID__`) para evitar inserciones directas en `auth.users`.
-- Se preparó rollback con guard rails para borrar únicamente datos demo etiquetados (`F5CE_DEMO_GYM2_2026_05`).
-- Riesgo residual vigente: todavía falta ejecutar la prueba multi-gym real en entorno live con segundo gimnasio demo.
-- Stripe/checkout/webhooks se mantienen fuera de alcance en esta fase.
+- Fase 5C-E (multi-gym controlado) fue **aplicada y validada** en Supabase live con gimnasio demo y usuarios demo controlados.
+- Resultado clave: aislamiento multi-gym validado en SQL y en app (`pagos_user_gym_mismatch = 0`, `reservas_user_session_gym_mismatch = 0`).
+- Riesgo residual de aislamiento multi-gym reducido de forma significativa; queda seguimiento de hardening de `perfiles_update_propio` y `clases` legacy.
+- Stripe/checkout/webhooks se mantienen fuera de alcance y no se tocaron.
+- Rollback de 5C-E: no ejecutado.
+- Pendiente futuro: valorar `NOT NULL` en `gym_id` donde proceda cuando el histórico validado lo permita.
