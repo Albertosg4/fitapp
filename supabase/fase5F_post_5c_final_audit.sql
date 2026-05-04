@@ -208,8 +208,8 @@ WITH checks AS (
   SELECT
     'reservas_gym_scoped_ready' AS check_name,
     CASE
-      WHEN EXISTS (
-        SELECT 1
+      WHEN (
+        SELECT COUNT(DISTINCT policyname)
         FROM pg_policies
         WHERE schemaname = 'public'
           AND tablename = 'reservas'
@@ -218,11 +218,11 @@ WITH checks AS (
             'reservas_select_gym_scoped',
             'reservas_update_gym_scoped'
           )
-      )
+      ) = 3
       THEN 'OK'
       ELSE 'WARNING'
     END AS status,
-    'Policies gym-scoped de reservas presentes (validar set completo).' AS details
+    'Set completo de 3 policies gym-scoped de reservas validado.' AS details
 
   UNION ALL
 
@@ -291,12 +291,18 @@ WITH checks AS (
         SELECT 1
         FROM pg_policies
         WHERE schemaname = 'public'
-          AND tablename IN ('perfiles','pagos','reservas','sesiones','asistencia')
+          AND tablename IN ('perfiles','pagos','reservas','sesiones','asistencia','clases')
           AND policyname IN (
             'leer perfiles',
             'usuarios pueden leer su perfil',
+            'admin_update_perfiles_su_gym',
+            'perfiles_update_propio',
             'admin puede gestionar clases',
             'socios pueden leer clases',
+            'clases_select',
+            'clases_insert',
+            'clases_update',
+            'clases_delete',
             'sesiones_insert',
             'asistencia_insert',
             'admin_ver_todos_pagos',
@@ -318,29 +324,23 @@ WITH mismatch_total AS (
   SELECT COUNT(*)::bigint AS total
   FROM public.sesiones s
   WHERE s.gym_id IS NULL
+), not_null_counts AS (
+  SELECT 'perfiles' AS table_name, COUNT(*) FILTER (WHERE gym_id IS NULL)::bigint AS null_rows FROM public.perfiles
+  UNION ALL
+  SELECT 'pagos', COUNT(*) FILTER (WHERE gym_id IS NULL)::bigint FROM public.pagos
+  UNION ALL
+  SELECT 'sesiones', COUNT(*) FILTER (WHERE gym_id IS NULL)::bigint FROM public.sesiones
+  UNION ALL
+  SELECT 'asistencia', COUNT(*) FILTER (WHERE gym_id IS NULL)::bigint FROM public.asistencia
+  UNION ALL
+  SELECT 'actividades', COUNT(*) FILTER (WHERE gym_id IS NULL)::bigint FROM public.actividades
+  UNION ALL
+  SELECT 'horarios_clase', COUNT(*) FILTER (WHERE gym_id IS NULL)::bigint FROM public.horarios_clase
+  UNION ALL
+  SELECT 'clases', COUNT(*) FILTER (WHERE gym_id IS NULL)::bigint FROM public.clases
 ), not_null_pending AS (
-  SELECT
-    (
-      COUNT(*) FILTER (WHERE gym_id IS NULL) FROM public.perfiles
-    )
-    + (
-      COUNT(*) FILTER (WHERE gym_id IS NULL) FROM public.pagos
-    )
-    + (
-      COUNT(*) FILTER (WHERE gym_id IS NULL) FROM public.sesiones
-    )
-    + (
-      COUNT(*) FILTER (WHERE gym_id IS NULL) FROM public.asistencia
-    )
-    + (
-      COUNT(*) FILTER (WHERE gym_id IS NULL) FROM public.actividades
-    )
-    + (
-      COUNT(*) FILTER (WHERE gym_id IS NULL) FROM public.horarios_clase
-    )
-    + (
-      COUNT(*) FILTER (WHERE gym_id IS NULL) FROM public.clases
-    ) AS nulls_total
+  SELECT COALESCE(SUM(null_rows), 0)::bigint AS nulls_total
+  FROM not_null_counts
 )
 SELECT
   'demo_data_present' AS warning_name,
