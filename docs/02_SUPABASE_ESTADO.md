@@ -382,3 +382,23 @@ Antes de completar la fase de RLS secundaria, ya se movieron a APIs protegidas l
 - Notas:
   - Stripe/checkout/webhooks fuera de alcance y no tocados.
   - perfiles y clases legacy siguen pendientes para fases 5C-C / 5C-D.
+
+## Fase 5C-E - Prueba multi-gym controlada (preparación)
+
+- Fecha: 2026-05-04.
+- Estado: **preparada, NO aplicada**.
+- Objetivo: habilitar prueba multi-gym real con segundo gym demo controlado sin tocar Stripe ni RLS.
+- SQL preparados:
+  - `supabase/fase5C_E_multigym_control_precheck.sql`
+  - `supabase/fase5C_E_multigym_control_setup.sql`
+  - `supabase/fase5C_E_multigym_control_verificacion.sql`
+  - `supabase/fase5C_E_multigym_control_rollback.sql`
+- Requisitos previos de ejecución manual:
+  - Crear 2 usuarios demo manualmente en Supabase Dashboard > Authentication > Users.
+  - Reemplazar placeholders `__DEMO_ADMIN_AUTH_USER_ID__` y `__DEMO_SOCIO_AUTH_USER_ID__` en setup.
+- Alcance explícito:
+  - No inserta en `auth.users` por SQL.
+  - No modifica policies RLS.
+  - No toca `perfiles_update_propio`.
+  - Stripe/checkout/webhooks fuera de alcance.
+- Rollback: preparado para borrar solo datos demo marcados con tag `F5CE_DEMO_GYM2_2026_05`.

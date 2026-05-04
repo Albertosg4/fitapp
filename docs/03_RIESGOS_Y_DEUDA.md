@@ -74,3 +74,11 @@ Este documento reclasifica riesgos tras completar 3B, 3C, check-in hardening, St
 - Stripe/checkout/webhooks siguen fuera de alcance en 5C-B y no se tocaron.
 - `perfiles_update_propio` y `clases` legacy continúan como pendientes para fases posteriores.
 - Pendiente futuro: valorar NOT NULL en `pagos.gym_id` si procede tras más histórico validado.
+
+## Actualización 2026-05-04 (Fase 5C-E preparada)
+
+- Fase 5C-E (multi-gym controlado) quedó **preparada y documentada**, pero **no aplicada** en Supabase live.
+- Se preparó setup manual con placeholders de Auth (`__DEMO_ADMIN_AUTH_USER_ID__`, `__DEMO_SOCIO_AUTH_USER_ID__`) para evitar inserciones directas en `auth.users`.
+- Se preparó rollback con guard rails para borrar únicamente datos demo etiquetados (`F5CE_DEMO_GYM2_2026_05`).
+- Riesgo residual vigente: todavía falta ejecutar la prueba multi-gym real en entorno live con segundo gimnasio demo.
+- Stripe/checkout/webhooks se mantienen fuera de alcance en esta fase.
