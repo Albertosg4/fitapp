@@ -66,3 +66,7 @@ Este documento reclasifica riesgos tras completar 3B, 3C, check-in hardening, St
   - perfiles_update_propio sigue demasiado amplio.
   - clases legacy no tiene filas, pero conserva policies antiguas.
   - falta prueba multi-gym real.
+
+- Fase 5C-B pagos: hardening gym-scoped **preparado (no aplicado)** con SQL manual + verificación + rollback.
+- Stripe/checkout/webhooks siguen fuera de alcance en 5C-B.
+- `perfiles_update_propio` y `clases` legacy continúan como pendientes para fases posteriores.

@@ -356,3 +356,15 @@ Antes de completar la fase de RLS secundaria, ya se movieron a APIs protegidas l
 - Fase 5C-D: clases legacy.
 - Fase 5C-E: prueba multi-gym real.
 - Evaluar NOT NULL más adelante.
+
+## Fase 5C-B - Pagos gym-scoped (preparación)
+
+- Fecha: 2026-05-04
+- SQL principal preparado: `supabase/fase5C_B_rls_pagos_gym_scoped.sql`
+- Verificación preparada: `supabase/fase5C_B_rls_pagos_gym_scoped_verificacion.sql`
+- Rollback preparado: `supabase/fase5C_B_rls_pagos_gym_scoped_rollback.sql`
+- Estado: **preparada, NO aplicada**
+- Notas:
+  - no se aplicó SQL en Supabase desde este PR.
+  - Stripe/checkout/webhooks quedan fuera de alcance.
+  - perfiles y clases legacy siguen pendientes para fases 5C-C / 5C-D.
