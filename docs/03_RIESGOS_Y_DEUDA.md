@@ -134,3 +134,11 @@ Este documento reclasifica riesgos tras completar 3B, 3C, check-in hardening, St
 - QR/rate-limit distribuido: sigue pendiente (estado actual en memoria best-effort).
 - `auth_gym_id()` mantiene `EXECUTE` para `anon`; revisar si se endurece en una fase separada para no romper onboarding/flows dependientes.
 - Datos demo multi-gym: conservar por ahora como entorno útil de pruebas (`KEEP_DEMO_DATA`).
+
+## Actualización 2026-05-05 — Post-5F / Fase 6A (dirección multi-negocio)
+
+- Riesgo estratégico activo: acoplamiento del producto al vertical gimnasio en lenguaje, UX y decisiones de alcance.
+- Riesgo técnico activo: endurecer `gym_id` (por ejemplo, vía `NOT NULL`) antes de cerrar el diseño tenant/location/vertical puede generar deuda de migración.
+- Decisión de fase: **Fase 5G (`NOT NULL`) queda pausada** hasta cerrar dirección de arquitectura multi-negocio.
+- Prioridad estratégica actual: definir arquitectura de producto tenant/location/vertical antes de nuevos cambios estructurales en schema.
+- Pendientes operativos que siguen vigentes (índices duplicados, QR/rate-limit distribuido) se mantienen, pero por detrás de la decisión de arquitectura de producto.

@@ -31,3 +31,18 @@
 - No se recomienda seguir tocando RLS crítico fuera de una fase específica dedicada.
 - No se recomienda tocar el fallback de reservas en esta etapa salvo fase específica futura.
 - Stripe queda parcialmente cerrado en checkout/webhook; pendiente solo de pruebas end-to-end reales si aplica.
+
+## Replanificación post-5F (2026-05-05)
+
+- ✅ Estado cerrado hasta Fase 5F (auditoría final post-5C completada y validada).
+- ✅ **Fase 6A** abierta: reenfoque documental multi-negocio (producto + arquitectura).
+- ⏸️ **Fase 5G (`NOT NULL`) diferida** hasta decidir dirección tenant/location/vertical.
+- 🚫 En esta fase no se toca SQL ni se ejecutan cambios de schema.
+
+### Siguiente secuencia propuesta
+
+1. **6A** — Documentación multi-negocio.
+2. **6B** — Diseño técnico tenant/location/vertical.
+3. **6C** — Inventario de impacto en schema/UI/API.
+4. **6D** — Decisión de migración progresiva.
+5. **5G** — `NOT NULL` solo si se confirma que `gym_id` mantiene scope correcto o se define transición explícita.
