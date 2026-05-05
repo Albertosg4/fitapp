@@ -541,3 +541,9 @@ Antes de completar la fase de RLS secundaria, ya se movieron a APIs protegidas l
   - Este PR solo documenta resultados y corrige un filtro SQL de auditoría de solo lectura.
   - “No SQL was applied by this PR” se refiere al PR (documental), no a la ejecución manual ya realizada en Supabase live.
 - Contexto: 5C (A/B/C/D/E) queda cerrada; 5F actúa como fase de cierre técnico y auditoría final antes de nuevos endurecimientos.
+
+## Nota Fase 6A (2026-05-05)
+
+- Fase 5G (`NOT NULL`) queda pausada por decisión de arquitectura multi-negocio.
+- En Fase 6A no hay cambios SQL aplicados ni preparados para ejecución.
+- `gym_id` se mantiene como scope operativo técnico actual hasta una nueva fase de diseño/migración.
