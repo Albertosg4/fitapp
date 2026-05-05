@@ -520,10 +520,9 @@ Antes de completar la fase de RLS secundaria, ya se movieron a APIs protegidas l
   - No se tocó Stripe/Auth/checkout/webhooks.
 
 
-- Fecha preparación: 2026-05-04
-- Estado: **preparada, NO aplicada**.
+- Fecha de preparación original: 2026-05-04.
 - Naturaleza: **solo lectura**.
-- SQL preparados:
+- SQL versionados/usados:
   - `supabase/fase5F_post_5c_final_audit.sql`
   - `supabase/fase5F_post_5c_not_null_candidates.sql`
   - `supabase/fase5F_post_5c_demo_data_inventory.sql`
@@ -532,9 +531,13 @@ Antes de completar la fase de RLS secundaria, ya se movieron a APIs protegidas l
   - `docs/security/fase5F_post_5c_final_audit_runbook.md`
   - `docs/security/fase5F_post_5c_decision_matrix.md`
 - Garantías de alcance:
-  - No toca datos.
+  - No toca datos por PR.
   - No cambia RLS/policies.
   - No añade constraints.
   - No toca Auth.
   - No toca Stripe/checkout/webhooks.
+- Aclaración de estado:
+  - Fase 5F **ya fue ejecutada manualmente en Supabase live y validada** (2026-05-05).
+  - Este PR solo documenta resultados y corrige un filtro SQL de auditoría de solo lectura.
+  - “No SQL was applied by this PR” se refiere al PR (documental), no a la ejecución manual ya realizada en Supabase live.
 - Contexto: 5C (A/B/C/D/E) queda cerrada; 5F actúa como fase de cierre técnico y auditoría final antes de nuevos endurecimientos.
