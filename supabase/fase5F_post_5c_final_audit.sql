@@ -197,7 +197,12 @@ WHERE n.nspname = 'public'
   AND (
     (p.proname = 'auth_gym_id' AND pg_get_function_identity_arguments(p.oid) = '') OR
     (p.proname = 'get_user_rol' AND pg_get_function_identity_arguments(p.oid) = '') OR
-    (p.proname = 'toggle_reserva' AND pg_get_function_identity_arguments(p.oid) = 'uuid, date')
+    (
+      p.proname = 'toggle_reserva'
+      AND p.pronargs = 2
+      AND p.proargtypes[0] = 'uuid'::regtype
+      AND p.proargtypes[1] = 'date'::regtype
+    )
   )
 ORDER BY function_name;
 

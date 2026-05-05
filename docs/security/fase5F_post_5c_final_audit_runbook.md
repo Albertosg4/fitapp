@@ -58,3 +58,10 @@ No aplica: esta fase es solo lectura.
 - multi-sector
 - constraints
 - limpieza demo
+
+
+## Nota sobre `toggle_reserva` y firma con argumentos nombrados
+
+- En algunos entornos, `pg_get_function_identity_arguments` devuelve la firma de `toggle_reserva` como `p_horario_id uuid, p_fecha date` (con nombres), no como `uuid, date`.
+- Si `toggle_reserva` no aparece en la salida del bloque de helpers/RPC, usar la versión corregida de `supabase/fase5F_post_5c_final_audit.sql`, que valida tipos reales en `pg_proc` (`pronargs = 2` + `proargtypes = [uuid, date]`) y evita falsos positivos por nombres de argumentos.
+- Esta corrección es **solo lectura** y no introduce DDL/DML.

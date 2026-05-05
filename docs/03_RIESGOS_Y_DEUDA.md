@@ -124,3 +124,13 @@ Este documento reclasifica riesgos tras completar 3B, 3C, check-in hardening, St
   - QR/rate-limit distribuido pendiente (actual en memoria best-effort).
   - Revisión de índices potencialmente duplicados.
   - `tenant_settings`/multi-sector diferido intencionalmente.
+
+
+## Actualización 2026-05-05 — Fase 5F ejecutada y validada
+
+- La auditoría final post-5C ya fue ejecutada manualmente en Supabase live con resultado global **OK** sin bloqueantes.
+- Siguiente candidato fuerte recomendado: **Fase 5G** para `NOT NULL` en `gym_id`, en PR/fase separada, con ventana controlada y rollback explícito.
+- Limpieza de índices duplicados: mantener diferida a fase separada posterior (sin drops en 5F).
+- QR/rate-limit distribuido: sigue pendiente (estado actual en memoria best-effort).
+- `auth_gym_id()` mantiene `EXECUTE` para `anon`; revisar si se endurece en una fase separada para no romper onboarding/flows dependientes.
+- Datos demo multi-gym: conservar por ahora como entorno útil de pruebas (`KEEP_DEMO_DATA`).

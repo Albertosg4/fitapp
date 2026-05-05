@@ -9,8 +9,8 @@
 | **E) Tenant settings / multi-sector** | Futuro, no ahora. | Base de seguridad cerrada + decisiones de producto multi-tenant. | Alto (impacto transversal). | Diseño por etapas y migración controlada. | Mantener diferido intencionalmente tras cierre técnico post-5C. |
 
 ## Recomendación explícita de secuencia
-1. Ejecutar Fase 5F.
-2. Si todo OK, valorar Fase 5G (NOT NULL de `gym_id`).
-3. Después decidir limpieza de demo data (5H).
-4. Luego abordar QR/rate-limit distribuido.
-5. Dejar multi-sector para más adelante.
+1. Fase 5F ya ejecutada/validada: mantener baseline documentada.
+2. Siguiente recomendado: Fase 5G (NOT NULL de `gym_id`) empezando por tablas con mayor seguridad y rollback claro.
+3. No limpiar demo multi-gym todavía salvo decisión explícita.
+4. No tocar índices duplicados todavía sin fase separada dedicada.
+5. Luego abordar QR/rate-limit distribuido y dejar multi-sector para más adelante.
