@@ -200,7 +200,7 @@ Tabla gimnasios:
 - Fuera de alcance y sin cambios:
   - Stripe, checkout, webhooks y Auth.
 
-## Post-5C — Cierre técnico y auditoría final (Fase 5F preparada)
+## Post-5C — Cierre técnico y auditoría final (Fase 5F ejecutada y validada)
 
 - Estado consolidado 5C:
   - 5C-A reservas: cerrada.
@@ -219,3 +219,18 @@ Tabla gimnasios:
 - Matriz de decisión:
   - `docs/security/fase5F_post_5c_decision_matrix.md`
 - Alcance de 5F: no tocar runtime, no tocar RLS, no tocar Stripe/checkout/webhooks/Auth, no borrar datos.
+
+
+## Resultado Fase 5F auditoría final post-5C
+
+- Estado: **OK** (ejecutada manualmente en Supabase live).
+- Conteos `gym_id` auditados: `null_rows = 0` en todas las tablas objetivo (`perfiles`, `pagos`, `sesiones`, `asistencia`, `clases`, `actividades`, `horarios_clase`).
+- Mismatches de consistencia: **0** en todos los checks definidos.
+- Warnings/pendientes no bloqueantes:
+  - demo multi-gym presente y **se conserva**.
+  - índices potencialmente duplicados pendientes de revisión/deduplicación en fase separada.
+  - QR/rate-limit distribuido pendiente.
+- Próximos pasos:
+  - Fase 5G NOT NULL `gym_id` por etapas con rollback.
+  - Fase separada para limpieza de índices.
+  - Revisión separada de `EXECUTE` anon en `auth_gym_id()` si aplica.

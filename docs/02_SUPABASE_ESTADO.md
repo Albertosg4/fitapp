@@ -496,7 +496,29 @@ Antes de completar la fase de RLS secundaria, ya se movieron a APIs protegidas l
 - Alcance fuera de fase (sin cambios): Stripe, checkout, webhooks, Auth, reservas/pagos/perfiles/sesiones/asistencia.
 - Nota operativa: **No SQL was applied in Supabase by this PR.**
 
-## Fase 5F - Auditoría final post-5C (preparada, no aplicada)
+## Fase 5F - Auditoría final post-5C (ejecutada y validada)
+
+- Fecha: 2026-05-05
+- Estado: ejecutada manualmente en Supabase live y validada.
+- Resultado resumido:
+  - Conteos `gym_id`: `perfiles=6/0 null`, `pagos=12/0 null`, `sesiones=5/0 null`, `asistencia=2/0 null`, `clases=0/0 null`, `actividades=5/0 null`, `horarios_clase=6/0 null`.
+  - Mismatches críticos: todos en `0` (OK).
+  - Helpers/RPC auditados: `auth_gym_id()`, `get_user_rol()`, `toggle_reserva(p_horario_id uuid, p_fecha date)` con `SECURITY DEFINER`; `anon` solo puede ejecutar `auth_gym_id()`.
+  - Checks finales 5C: `rls_base_closed`, `reservas_gym_scoped_ready`, `pagos_gym_scoped_ready`, `perfiles_update_closed`, `clases_legacy_closed`, `multi_gym_demo_present` = OK.
+- Warnings/INFO mantenidos (sin bloqueantes):
+  - `demo_data_present=INFO/PRESENT` (se conserva demo multi-gym).
+  - `duplicate_indexes_pending_review=INFO/PENDING`.
+  - `possible_not_null_candidates_pending_review=INFO/READY_REVIEW`.
+  - `qr_rate_limit_memory_only=WARNING/PENDING`.
+- Candidatos 5G (sin ejecutar en 5F): `public.actividades`, `public.asistencia`, `public.clases`, `public.horarios_clase`, `public.pagos`, `public.perfiles`, `public.sesiones`.
+- Garantías 5F:
+  - No se aplicaron cambios destructivos.
+  - No se ejecutaron cambios RLS.
+  - No se añadieron constraints.
+  - No se borraron datos.
+  - No se limpió demo multi-gym.
+  - No se tocó Stripe/Auth/checkout/webhooks.
+
 
 - Fecha preparación: 2026-05-04
 - Estado: **preparada, NO aplicada**.

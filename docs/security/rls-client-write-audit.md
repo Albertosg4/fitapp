@@ -181,6 +181,12 @@ Hallazgos relevantes respecto al precheck:
 
 ## Seguimiento post-5C y preparación 5F
 
+- Nota post-5F (2026-05-05):
+  - Escrituras críticas cliente/API ya cerradas en fases previas (5C-A/B/C/D/E).
+  - Auditoría final 5F ejecutada y sin bloqueantes.
+  - Las siguientes fases (NOT NULL/índices/QR distribuido) quedan separadas como cambios estructurales no incluidos en 5F.
+
+
 - Escrituras directas críticas desde cliente: **cerradas**.
 - `perfiles_update_propio`: **cerrado** en 5C-C.
 - `clases` legacy: **cerrado/deprecado** en 5C-D.
