@@ -81,3 +81,18 @@ Priorizar cambios de alto impacto funcional con **baja superficie de riesgo estr
 - Sin Supabase en esta fase.
 - Sin persistencia en esta fase.
 - `gym` se mantiene como default efectivo.
+
+
+## Fase 6I — Active vertical settings helper ✅ Implementada/en curso
+
+- **Objetivo**: centralizar settings verticales activos para consumo UI con fallback seguro.
+- **Alcance**: `getActiveVerticalSettings()` y migración de UI cubierta a `settings.labels`.
+- **Fuera de alcance**: Supabase, persistencia, SQL, schema, RLS, Auth, Stripe, APIs y rutas.
+- **Riesgo**: bajo.
+- **Validación esperada**: `gym` sigue como default, sin cambios funcionales y sin lecturas externas.
+
+## Estado 6I
+- Implementada/en curso: helper de active vertical settings + UI cubierta consume `settings.labels`.
+- Sin Supabase en esta fase.
+- Sin persistencia en esta fase.
+- `gym` se mantiene como default efectivo.

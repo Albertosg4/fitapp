@@ -192,3 +192,10 @@ Este documento reclasifica riesgos tras completar 3B, 3C, check-in hardening, St
 - Riesgo: el contrato de vertical settings existe pero todavía no se persiste.
 - Riesgo: futuras features por vertical deben validarse antes de ocultar/mostrar funcionalidades en UI.
 - Mitigación: `EffectiveVerticalSettings` centraliza labels/features con fallback seguro antes de conectar Supabase.
+
+
+## Actualización 2026-05-06 — Riesgos tras Fase 6I
+
+- Riesgo: `settings.features` existe en contrato pero todavía no controla UI.
+- Riesgo: los settings activos todavía son estáticos (default efectivo `gym`).
+- Mitigación: `getActiveVerticalSettings()` centraliza el futuro origen real sin retocar consumidores.

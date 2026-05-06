@@ -4,6 +4,7 @@ import {
   type VerticalLabels,
   getVerticalLabels,
   resolveBusinessVertical,
+  getActiveBusinessVertical,
 } from './verticals'
 
 export interface VerticalFeatureFlags {
@@ -127,6 +128,14 @@ export function resolveVerticalSettings(
       ...featureOverrides,
     },
   }
+}
+
+
+// Fase 6I: los active settings siguen resolviendo `gym` como default efectivo.
+// En fases futuras podrán resolverse desde tenant/location/settings.
+// No hay persistencia ni lecturas externas en esta fase.
+export function getActiveVerticalSettings(): EffectiveVerticalSettings {
+  return resolveVerticalSettings({ vertical: getActiveBusinessVertical() })
 }
 
 export function getDefaultVerticalSettings(): EffectiveVerticalSettings {
