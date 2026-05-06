@@ -48,3 +48,9 @@ Migrar/renombrar `gym_id` a `location_id` en una fase mayor con plan de transici
 - Mantener compatibilidad con los datos y flujos actuales.
 - Evitar un refactor gigante de una sola vez.
 - Priorizar decisiones reversibles por fase, con validación operativa y rollback.
+
+## Ampliación de Fase 6B (diseño técnico inicial)
+
+- Fase 6B amplía este modelo conceptual con un diseño técnico documental de tenant/location/vertical.
+- Decisión recomendada: evolución progresiva tipo **Opción B**.
+- No ejecutar cambios todavía: sin SQL, sin migraciones y sin cambios de código en esta fase.
