@@ -28,13 +28,13 @@ Priorizar cambios de alto impacto funcional con **baja superficie de riesgo estr
 - **Riesgo**: medio.
 - **Validación esperada**: scripts revisables, rollback claro y checklist pre/post.
 
-## Fase 6G — Aplicar tenants/location mínimo
+## Fase 6G — Hardening de resolución de vertical ✅ Implementada/en curso
 
-- **Objetivo**: crear tenants y relacionar gimnasios con tenant_id, solo si 6F se aprueba.
-- **Alcance**: despliegue controlado mínimo con rollback y validación.
-- **Fuera de alcance**: renombrado masivo de variables/código interno.
-- **Riesgo**: medio/alto.
-- **Validación esperada**: aislamiento y compatibilidad existentes intactos; métricas de no-cruce en 0.
+- **Objetivo**: endurecer la resolución de vertical con fallback seguro antes de settings reales.
+- **Alcance**: `BUSINESS_VERTICALS`, `isBusinessVertical()`, `resolveBusinessVertical()` y uso seguro en helpers activos.
+- **Fuera de alcance**: Supabase, persistencia, query params, env, localStorage.
+- **Riesgo**: bajo.
+- **Validación esperada**: `gym` sigue como default; valores inválidos caen a fallback seguro; sin cambios funcionales.
 
 ## Fase 6H — Labels UI por vertical
 
@@ -68,3 +68,9 @@ Priorizar cambios de alto impacto funcional con **baja superficie de riesgo estr
 - Sin lectura de vertical desde Supabase.
 - Sin persistencia de vertical en esta fase.
 - `gym` se mantiene como default efectivo.
+
+
+## Estado 6G
+- Implementada/en curso: hardening de resolución de vertical en dominio.
+- Fallback seguro activo hacia `DEFAULT_VERTICAL` (`gym`).
+- Sin Supabase y sin persistencia en esta fase.

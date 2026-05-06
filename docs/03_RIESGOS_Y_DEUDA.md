@@ -178,3 +178,11 @@ Este documento reclasifica riesgos tras completar 3B, 3C, check-in hardening, St
 - Riesgo: la vertical activa todavía es estática.
 - Riesgo: aún no existen settings persistidos para resolver vertical por tenant/location.
 - Mitigación: helper central de vertical activa que permitirá cambiar el origen en fases futuras sin retocar todos los componentes UI.
+
+## Actualización 2026-05-06 — Riesgos tras Fase 6G
+
+- Riesgo: futuras fuentes de vertical (settings, config, etc.) pueden enviar valores inválidos o desconocidos.
+- Mitigación: `resolveBusinessVertical()` fuerza fallback seguro a `DEFAULT_VERTICAL` (`gym`).
+- Riesgo: todavía no hay persistencia real de vertical activa.
+- Mitigación: mantener separada una fase futura específica de settings para introducir origen real de configuración.
+
