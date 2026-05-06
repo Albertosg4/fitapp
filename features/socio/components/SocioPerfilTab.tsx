@@ -2,6 +2,7 @@
 import type { Socio } from '@/types/domain'
 import type { ReservaLocal, HorarioSocio } from '@/features/socio/hooks/useSocioData'
 import { getEstadoMembresiaAdmin, getDiasRestantes } from '@/lib/domain/membresias'
+import { getDefaultVerticalLabels } from '@/lib/domain/verticals'
 
 interface Props {
   perfil: Socio | null
@@ -14,6 +15,7 @@ interface Props {
 export default function SocioPerfilTab({ perfil, reservas, horarios, onVerPagos, onLogout }: Props) {
   const estadoMembresia = perfil ? getEstadoMembresiaAdmin(perfil) : 'ok'
   const diasRestantes = perfil?.membresia_vence ? getDiasRestantes(perfil.membresia_vence) : 0
+  const labels = getDefaultVerticalLabels()
 
   return (
     <div>
@@ -42,12 +44,12 @@ export default function SocioPerfilTab({ perfil, reservas, horarios, onVerPagos,
 
       <div style={{ padding: '0 20px 20px' }}>
         <button onClick={onVerPagos} style={{ width: '100%', background: 'rgba(200,245,66,0.08)', border: '1px solid rgba(200,245,66,0.2)', borderRadius: '12px', padding: '12px', color: '#c8f542', fontSize: '14px', fontWeight: '600', cursor: 'pointer', fontFamily: 'system-ui' }}>
-          💳 Ver mis pagos y renovar membresía
+          {`💳 Ver mis ${labels.paymentLabelPlural.toLowerCase()} y renovar membresía`}
         </button>
       </div>
 
       <div style={{ padding: '0 20px' }}>
-        <div style={{ fontSize: '11px', color: '#888', fontWeight: '600', letterSpacing: '1px', textTransform: 'uppercase', marginBottom: '12px' }}>Clases reservadas</div>
+        <div style={{ fontSize: '11px', color: '#888', fontWeight: '600', letterSpacing: '1px', textTransform: 'uppercase', marginBottom: '12px' }}>{`${labels.serviceLabelPlural} reservadas`}</div>
         {reservas.length === 0 ? (
           <p style={{ color: '#888', fontSize: '13px' }}>No tienes reservas activas.</p>
         ) : reservas.map(r => {

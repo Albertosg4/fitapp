@@ -4,7 +4,7 @@
 
 Priorizar cambios de alto impacto funcional con **baja superficie de riesgo estructural** al inicio.
 
-## Fase 6D — Preparar capa de labels por vertical
+## Fase 6D — Preparar capa de labels por vertical ✅ Implementada
 
 - **Objetivo**: diseñar/configurar foundation de labels por vertical sin cambiar flujos.
 - **Alcance**: diccionario base de términos UI (gym/clinic/academy/beauty) con default gym.
@@ -49,3 +49,10 @@ Priorizar cambios de alto impacto funcional con **baja superficie de riesgo estr
 - **Estado**: sigue después, solo cuando se confirme scope definitivo.
 - **Objetivo**: endurecimiento estructural final sobre columnas objetivo.
 - **Condición previa**: arquitectura tenant/location ya consolidada y validada.
+
+
+### Estado de avance 2026-05-06
+
+- Fase 6D implementada/en curso con foundation de labels por vertical.
+- Sin cambios de schema.
+- Sin lectura de vertical desde Supabase.

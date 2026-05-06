@@ -8,6 +8,7 @@ import SociosTab from '@/features/admin/components/SociosTab'
 import PagosTab from '@/features/admin/components/PagosTab'
 import { supabase } from '@/lib/supabase'
 import { TIPOS_MEMBRESIA } from '@/lib/domain/membresias'
+import { getDefaultVerticalLabels } from '@/lib/domain/verticals'
 
 const inputStyle = { width: '100%', background: '#181818', border: '1px solid rgba(255,255,255,0.07)', borderRadius: '10px', padding: '10px 14px', color: '#f0f0f0', fontSize: '14px', outline: 'none', boxSizing: 'border-box' as const, fontFamily: 'system-ui' }
 
@@ -17,6 +18,7 @@ export default function AdminPage() {
   const [nuevoSocio, setNuevoSocio] = useState({ nombre: '', email: '', password: '', tipo_membresia: 'mensual' })
   const [msgSocio, setMsgSocio] = useState('')
   const [loadingSocio, setLoadingSocio] = useState(false)
+  const labels = getDefaultVerticalLabels()
 
   const registrarSocio = async () => {
     setMsgSocio(''); setLoadingSocio(true)
@@ -31,7 +33,7 @@ export default function AdminPage() {
       const data = await res.json()
       if (data.error) { setMsgSocio('❌ Error: ' + data.error) }
       else {
-        setMsgSocio('✅ Socio registrado correctamente')
+        setMsgSocio(`✅ ${labels.customerLabel} registrado correctamente`)
         setNuevoSocio({ nombre: '', email: '', password: '', tipo_membresia: 'mensual' })
         await loadSocios()
       }
@@ -67,7 +69,7 @@ export default function AdminPage() {
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', padding: '16px 20px' }}>
         <div style={{ background: '#1e1e1e', border: '1px solid rgba(255,255,255,0.07)', borderRadius: '12px', padding: '14px' }}>
           <div style={{ fontSize: '28px', fontWeight: '800', color: '#c8f542' }}>{stats.sociosActivos}</div>
-          <div style={{ fontSize: '12px', color: '#888', marginTop: '2px' }}>Socios activos</div>
+          <div style={{ fontSize: '12px', color: '#888', marginTop: '2px' }}>{labels.customerLabelPlural} activos</div>
         </div>
         <div style={{ background: '#1e1e1e', border: '1px solid rgba(255,255,255,0.07)', borderRadius: '12px', padding: '14px' }}>
           <div style={{ fontSize: '28px', fontWeight: '800', color: '#5ca8ff' }}>{stats.actividadesActivas}</div>
@@ -79,7 +81,7 @@ export default function AdminPage() {
         </div>
         <div style={{ background: '#1e1e1e', border: '1px solid rgba(255,255,255,0.07)', borderRadius: '12px', padding: '14px' }}>
           <div style={{ fontSize: '28px', fontWeight: '800', color: '#ffb84d' }}>{stats.puntualesProximas}</div>
-          <div style={{ fontSize: '12px', color: '#888', marginTop: '2px' }}>Clases puntuales próximas</div>
+          <div style={{ fontSize: '12px', color: '#888', marginTop: '2px' }}>{labels.serviceLabelPlural} puntuales próximas</div>
         </div>
       </div>
 
@@ -89,9 +91,9 @@ export default function AdminPage() {
           { key: 'actividades',  label: '🎯 Actividades' },
           { key: 'horarios',     label: '🔄 Horarios' },
           { key: 'puntuales',    label: '📅 Puntuales' },
-          { key: 'socios',       label: 'Socios' },
-          { key: 'pagos',        label: '💳 Pagos' },
-          { key: 'nuevo-socio',  label: '+ Socio' },
+          { key: 'socios',       label: labels.customerLabelPlural },
+          { key: 'pagos',        label: `💳 ${labels.paymentLabelPlural}` },
+          { key: 'nuevo-socio',  label: `+ ${labels.customerLabel}` },
         ].map(t => (
           <button key={t.key} onClick={() => setTab(t.key)}
             style={{ padding: '12px 16px', fontSize: '13px', fontWeight: '500', color: tab === t.key ? '#c8f542' : '#888', borderTop: 'none', borderLeft: 'none', borderRight: 'none', borderBottom: tab === t.key ? '2px solid #c8f542' : '2px solid transparent', cursor: 'pointer', background: 'none', fontFamily: 'system-ui', whiteSpace: 'nowrap' }}>
@@ -112,7 +114,7 @@ export default function AdminPage() {
 
         {tab === 'pagos' && <PagosTab onSociosChange={loadSocios} />}
 
-        {/* NUEVO SOCIO */}
+        {/* NUEVO CLIENTE (vertical label) */}
         {tab === 'nuevo-socio' && (
           <div>
             <div style={{ marginBottom: '12px' }}>
@@ -140,7 +142,7 @@ export default function AdminPage() {
             )}
             <button onClick={registrarSocio} disabled={loadingSocio}
               style={{ background: '#c8f542', color: '#0f0f0f', border: 'none', borderRadius: '10px', padding: '13px', fontSize: '14px', fontWeight: '700', cursor: 'pointer', width: '100%', fontFamily: 'system-ui', opacity: loadingSocio ? 0.6 : 1 }}>
-              {loadingSocio ? 'Registrando...' : 'Registrar socio'}
+              {loadingSocio ? 'Registrando...' : `Registrar ${labels.customerLabel.toLowerCase()}`}
             </button>
           </div>
         )}

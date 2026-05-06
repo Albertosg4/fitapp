@@ -10,6 +10,7 @@ import SocioHistorialTab from '@/features/socio/components/SocioHistorialTab'
 import SocioPagosTab from '@/features/socio/components/SocioPagosTab'
 import SocioQRTab from '@/features/socio/components/SocioQRTab'
 import SocioPerfilTab from '@/features/socio/components/SocioPerfilTab'
+import { getDefaultVerticalLabels } from '@/lib/domain/verticals'
 
 function SocioPageInner() {
   const {
@@ -37,6 +38,7 @@ function SocioPageInner() {
   const [msgPago, setMsgPago] = useState('')
   const router = useRouter()
   const searchParams = useSearchParams()
+  const labels = getDefaultVerticalLabels()
 
   const init = useCallback(async () => {
     const { data: { user } } = await supabase.auth.getUser()
@@ -121,14 +123,14 @@ function SocioPageInner() {
       {estadoMembresia === 'caducada' && (
         <div style={{ background: 'rgba(255,92,92,0.15)', borderBottom: '1px solid rgba(255,92,92,0.3)', padding: '10px 20px', fontSize: '13px', color: '#ff5c5c', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px' }}>
           <span>
-            ❌ Tu membresía ha caducado. {tab === 'pagos' ? 'Puedes renovarla más abajo.' : 'Renuévala desde la pestaña Pagos.'}
+            ❌ Tu membresía ha caducado. {tab === 'pagos' ? 'Puedes renovarla más abajo.' : `Renuévala desde la pestaña ${labels.paymentLabelPlural}.`}
           </span>
           {tab !== 'pagos' && (
             <button
               onClick={() => setTab('pagos')}
               style={{ border: '1px solid rgba(255,92,92,0.4)', background: 'rgba(255,92,92,0.12)', color: '#ff9a9a', borderRadius: '8px', padding: '4px 10px', fontSize: '12px', cursor: 'pointer' }}
             >
-              Ir a Pagos
+              {`Ir a ${labels.paymentLabelPlural}`}
             </button>
           )}
         </div>
@@ -220,9 +222,9 @@ function SocioPageInner() {
       {/* Nav inferior */}
       <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, background: 'rgba(18,18,18,0.95)', backdropFilter: 'blur(12px)', borderTop: '1px solid rgba(255,255,255,0.07)', display: 'flex', justifyContent: 'space-around', padding: '10px 0 20px' }}>
         {[
-          { key: 'clases',    icon: '🗓',  label: 'Clases' },
+          { key: 'clases',    icon: '🗓',  label: labels.serviceLabelPlural },
           { key: 'historial', icon: '📋',  label: 'Historial' },
-          { key: 'pagos',     icon: '💳',  label: 'Pagos' },
+          { key: 'pagos',     icon: '💳',  label: labels.paymentLabelPlural },
           { key: 'qr',        icon: '⬛',  label: 'Mi QR' },
           { key: 'perfil',    icon: '👤',  label: 'Perfil' },
         ].map(n => (

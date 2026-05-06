@@ -24,3 +24,8 @@ El siguiente cambio grande y seguro debe ser iniciar una **capa de labels/config
 - Sin cambios de base de datos.
 - Sin cambio de rutas.
 - Sin cambio de permisos.
+
+
+## Estado
+
+- ✅ Recomendación implementada en Fase 6D: **`feat/domain: add vertical labels foundation`**.

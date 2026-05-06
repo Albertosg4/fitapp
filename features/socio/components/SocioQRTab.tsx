@@ -2,6 +2,7 @@
 
 import { Badge, Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle, EmptyState } from '@/components/ui'
 import type { Socio } from '@/types/domain'
+import { getDefaultVerticalLabels } from '@/lib/domain/verticals'
 
 interface Props {
   perfil: Socio | null
@@ -10,6 +11,7 @@ interface Props {
 
 export default function SocioQRTab({ perfil, qrUrl }: Props) {
   const memberCode = `FIT-${perfil?.qr_token?.slice(0, 4).toUpperCase() || '0000'}`
+  const labels = getDefaultVerticalLabels()
 
   return (
     <section className="px-4 pb-6 pt-4 sm:px-6">
@@ -51,7 +53,7 @@ export default function SocioQRTab({ perfil, qrUrl }: Props) {
         </CardContent>
 
         <CardFooter className="pt-0 text-center text-sm text-zinc-400">
-          Muestra este QR al entrar al gym o al hacer check-in en una clase.
+          {`Muestra este QR al entrar al ${labels.locationLabel.toLowerCase()} o al hacer check-in en una ${labels.serviceLabel.toLowerCase()}.`}
         </CardFooter>
       </Card>
     </section>
