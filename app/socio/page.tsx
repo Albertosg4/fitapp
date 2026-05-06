@@ -10,7 +10,7 @@ import SocioHistorialTab from '@/features/socio/components/SocioHistorialTab'
 import SocioPagosTab from '@/features/socio/components/SocioPagosTab'
 import SocioQRTab from '@/features/socio/components/SocioQRTab'
 import SocioPerfilTab from '@/features/socio/components/SocioPerfilTab'
-import { getActiveVerticalSettings } from '@/lib/domain/vertical-settings'
+import { VerticalSettingsProvider, useActiveVerticalSettings } from '@/lib/domain/vertical-settings-context'
 
 function SocioPageInner() {
   const {
@@ -38,7 +38,8 @@ function SocioPageInner() {
   const [msgPago, setMsgPago] = useState('')
   const router = useRouter()
   const searchParams = useSearchParams()
-  const { labels } = getActiveVerticalSettings()
+  const { settings } = useActiveVerticalSettings()
+  const { labels } = settings
 
   const init = useCallback(async () => {
     const { data: { user } } = await supabase.auth.getUser()
@@ -241,12 +242,14 @@ function SocioPageInner() {
 
 export default function SocioPage() {
   return (
-    <Suspense fallback={
-      <div style={{ minHeight: '100vh', background: '#0f0f0f', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <p style={{ color: '#888', fontFamily: 'system-ui' }}>Cargando...</p>
-      </div>
-    }>
-      <SocioPageInner />
-    </Suspense>
+    <VerticalSettingsProvider>
+      <Suspense fallback={
+        <div style={{ minHeight: '100vh', background: '#0f0f0f', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <p style={{ color: '#888', fontFamily: 'system-ui' }}>Cargando...</p>
+        </div>
+      }>
+        <SocioPageInner />
+      </Suspense>
+    </VerticalSettingsProvider>
   )
 }

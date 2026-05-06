@@ -150,3 +150,14 @@
 - Siguiente recomendado:
   - diseño documental de settings persistidos, o
   - uso controlado de feature flags en UI no crítica.
+
+## Fase 7A — vertical preview mode
+
+- Provider client-side para settings verticales activos.
+- Selector discreto en admin para preview demo.
+- Persistencia local con `localStorage` solo para estado visual demo.
+- Sin persistencia real tenant/location.
+- Sin Supabase.
+- Siguiente recomendado:
+  - usar `settings.features` en UI no crítica, o
+  - diseñar settings persistidos.

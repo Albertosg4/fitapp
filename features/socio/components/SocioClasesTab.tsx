@@ -3,7 +3,7 @@ import CalendarioMes from '@/components/CalendarioMes'
 import type { HorarioSocio, ReservaLocal } from '@/features/socio/hooks/useSocioData'
 import type { Socio } from '@/types/domain'
 import { getEstadoMembresiaAdmin } from '@/lib/domain/membresias'
-import { getActiveVerticalSettings } from '@/lib/domain/vertical-settings'
+import { useActiveVerticalSettings } from '@/lib/domain/vertical-settings-context'
 
 interface Props {
   perfil: Socio | null
@@ -22,7 +22,8 @@ export default function SocioClasesTab({
   onSeleccionarDia, onAbrirModal,
 }: Props) {
   const estadoMembresia = perfil ? getEstadoMembresiaAdmin(perfil) : 'ok'
-  const { labels } = getActiveVerticalSettings()
+  const { settings } = useActiveVerticalSettings()
+  const { labels } = settings
 
   // Marcadores: fechas con reserva confirmada
   const marcadores: Record<string, 'reservada' | 'disponible' | 'llena'> = {}

@@ -199,3 +199,10 @@ Este documento reclasifica riesgos tras completar 3B, 3C, check-in hardening, St
 - Riesgo: `settings.features` existe en contrato pero todavía no controla UI.
 - Riesgo: los settings activos todavía son estáticos (default efectivo `gym`).
 - Mitigación: `getActiveVerticalSettings()` centraliza el futuro origen real sin retocar consumidores.
+
+## Actualización 2026-05-06 — Riesgos tras Fase 7A
+
+- Riesgo: el preview local puede confundirse con configuración real.
+- Mitigación: etiquetar explícitamente como modo demo/preview y documentar que no afecta datos ni permisos.
+- Riesgo: cobertura parcial de labels en UI.
+- Mitigación: mantener migración incremental de consumidores de settings.

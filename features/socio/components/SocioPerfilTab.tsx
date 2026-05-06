@@ -2,7 +2,7 @@
 import type { Socio } from '@/types/domain'
 import type { ReservaLocal, HorarioSocio } from '@/features/socio/hooks/useSocioData'
 import { getEstadoMembresiaAdmin, getDiasRestantes } from '@/lib/domain/membresias'
-import { getActiveVerticalSettings } from '@/lib/domain/vertical-settings'
+import { useActiveVerticalSettings } from '@/lib/domain/vertical-settings-context'
 
 interface Props {
   perfil: Socio | null
@@ -15,7 +15,8 @@ interface Props {
 export default function SocioPerfilTab({ perfil, reservas, horarios, onVerPagos, onLogout }: Props) {
   const estadoMembresia = perfil ? getEstadoMembresiaAdmin(perfil) : 'ok'
   const diasRestantes = perfil?.membresia_vence ? getDiasRestantes(perfil.membresia_vence) : 0
-  const { labels } = getActiveVerticalSettings()
+  const { settings } = useActiveVerticalSettings()
+  const { labels } = settings
 
   return (
     <div>
