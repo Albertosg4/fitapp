@@ -161,3 +161,15 @@
 - Siguiente recomendado:
   - usar `settings.features` en UI no crítica, o
   - diseñar settings persistidos.
+
+## Fase 7B — feat/ui: apply vertical feature preview flags
+
+- Aplicar `settings.features` en UI de preview no crítica.
+- Cambio visual sustancial por vertical (módulos visibles/ocultos en demo).
+- Sin Supabase.
+- Sin SQL.
+- Sin cambios de lógica server.
+- Siguiente recomendado:
+  - ampliar cobertura de UI por vertical, o
+  - preparar demo comercial por vertical, o
+  - diseñar settings persistidos (fase separada).

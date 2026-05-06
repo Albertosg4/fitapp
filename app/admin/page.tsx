@@ -28,7 +28,15 @@ function AdminPageInner() {
   const [msgSocio, setMsgSocio] = useState('')
   const [loadingSocio, setLoadingSocio] = useState(false)
   const { settings } = useActiveVerticalSettings()
-  const { labels } = settings
+  const { labels, features } = settings
+  const adminTabs = [
+    { key: 'actividades', label: '🎯 Actividades' },
+    { key: 'horarios', label: '🔄 Horarios' },
+    { key: 'puntuales', label: '📅 Puntuales' },
+    { key: 'socios', label: labels.customerLabelPlural },
+    ...(features.paymentsEnabled ? [{ key: 'pagos', label: `💳 ${labels.paymentLabelPlural}` }] : []),
+    { key: 'nuevo-socio', label: `+ ${labels.customerLabel}` },
+  ]
 
   const registrarSocio = async () => {
     setMsgSocio(''); setLoadingSocio(true)
@@ -78,7 +86,7 @@ function AdminPageInner() {
         </div>
       </div>
 
-      {/* STATS — modelo nuevo */}
+      {/* STATS — preview visual por vertical (no altera datos/permisos) */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', padding: '16px 20px' }}>
         <div style={{ background: '#1e1e1e', border: '1px solid rgba(255,255,255,0.07)', borderRadius: '12px', padding: '14px' }}>
           <div style={{ fontSize: '28px', fontWeight: '800', color: '#c8f542' }}>{stats.sociosActivos}</div>
@@ -88,10 +96,16 @@ function AdminPageInner() {
           <div style={{ fontSize: '28px', fontWeight: '800', color: '#5ca8ff' }}>{stats.actividadesActivas}</div>
           <div style={{ fontSize: '12px', color: '#888', marginTop: '2px' }}>Actividades activas</div>
         </div>
-        <div style={{ background: '#1e1e1e', border: '1px solid rgba(255,255,255,0.07)', borderRadius: '12px', padding: '14px' }}>
-          <div style={{ fontSize: '28px', fontWeight: '800', color: '#a855f7' }}>{stats.horariosActivos}</div>
-          <div style={{ fontSize: '12px', color: '#888', marginTop: '2px' }}>Horarios activos</div>
-        </div>
+        {features.recurringScheduleEnabled ? (
+          <div style={{ background: '#1e1e1e', border: '1px solid rgba(255,255,255,0.07)', borderRadius: '12px', padding: '14px' }}>
+            <div style={{ fontSize: '28px', fontWeight: '800', color: '#a855f7' }}>{stats.horariosActivos}</div>
+            <div style={{ fontSize: '12px', color: '#888', marginTop: '2px' }}>Horarios activos</div>
+          </div>
+        ) : (
+          <div style={{ background: '#1e1e1e', border: '1px dashed rgba(255,255,255,0.2)', borderRadius: '12px', padding: '14px' }}>
+            <div style={{ fontSize: '13px', color: '#999' }}>Horarios recurrentes no activos para esta vertical en modo demo.</div>
+          </div>
+        )}
         <div style={{ background: '#1e1e1e', border: '1px solid rgba(255,255,255,0.07)', borderRadius: '12px', padding: '14px' }}>
           <div style={{ fontSize: '28px', fontWeight: '800', color: '#ffb84d' }}>{stats.puntualesProximas}</div>
           <div style={{ fontSize: '12px', color: '#888', marginTop: '2px' }}>{labels.serviceLabelPlural} puntuales próximas</div>
@@ -100,14 +114,7 @@ function AdminPageInner() {
 
       {/* TABS */}
       <div style={{ display: 'flex', borderBottom: '1px solid rgba(255,255,255,0.07)', padding: '0 20px', overflowX: 'auto' }}>
-        {[
-          { key: 'actividades',  label: '🎯 Actividades' },
-          { key: 'horarios',     label: '🔄 Horarios' },
-          { key: 'puntuales',    label: '📅 Puntuales' },
-          { key: 'socios',       label: labels.customerLabelPlural },
-          { key: 'pagos',        label: `💳 ${labels.paymentLabelPlural}` },
-          { key: 'nuevo-socio',  label: `+ ${labels.customerLabel}` },
-        ].map(t => (
+        {adminTabs.map(t => (
           <button key={t.key} onClick={() => setTab(t.key)}
             style={{ padding: '12px 16px', fontSize: '13px', fontWeight: '500', color: tab === t.key ? '#c8f542' : '#888', borderTop: 'none', borderLeft: 'none', borderRight: 'none', borderBottom: tab === t.key ? '2px solid #c8f542' : '2px solid transparent', cursor: 'pointer', background: 'none', fontFamily: 'system-ui', whiteSpace: 'nowrap' }}>
             {t.label}
@@ -125,7 +132,10 @@ function AdminPageInner() {
 
         {tab === 'socios' && <SociosTab socios={socios} gymId={gymId} onRefreshSocios={loadSocios} />}
 
-        {tab === 'pagos' && <PagosTab onSociosChange={loadSocios} />}
+        {tab === 'pagos' && features.paymentsEnabled && <PagosTab onSociosChange={loadSocios} />}
+        {tab === 'pagos' && !features.paymentsEnabled && (
+          <div style={{ color: '#999', fontSize: '13px' }}>Pagos no activos para esta vertical en modo demo.</div>
+        )}
 
         {/* NUEVO CLIENTE (vertical label) */}
         {tab === 'nuevo-socio' && (

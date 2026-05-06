@@ -104,3 +104,10 @@ Priorizar cambios de alto impacto funcional con **baja superficie de riesgo estr
 - `localStorage` solo para estado de preview UI.
 - Sin Supabase.
 - Sin persistencia real tenant/location.
+
+## Fase 7B — Vertical feature preview flags ✅ Implementada/en curso
+
+- `settings.features` aplicados en UI preview no crítica.
+- Sin Supabase.
+- Sin persistencia real.
+- Sin cambios de seguridad/permisos.
