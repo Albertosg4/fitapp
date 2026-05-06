@@ -166,3 +166,9 @@ Este documento reclasifica riesgos tras completar 3B, 3C, check-in hardening, St
 - Riesgo: la capa de labels por vertical existe pero todavía no cubre toda la UI.
 - Riesgo: todavía no hay persistencia de vertical en datos ni lectura desde Supabase.
 - Mitigación: mantener `gym` como default, migrar textos visibles de forma gradual y evitar cambios en flujos críticos.
+
+
+## Fase 6E — Riesgos y mitigación
+- Riesgo: cobertura parcial de labels verticales en UI.
+- Riesgo: textos legacy todavía visibles en pantallas no cubiertas.
+- Mitigación: cobertura incremental por bloques con validación funcional tras cada bloque.

@@ -91,3 +91,12 @@
 - ✅ Sin SQL y sin cambios en Supabase.
 - ✅ `gym` se mantiene como default.
 - ▶️ Siguiente recomendado: aplicar labels gradualmente en más UI visible o preparar helper de vertical activa (sin persistencia todavía).
+
+
+## Fase 6E — feat/ui: expand vertical labels coverage
+- Expandir labels visibles de vertical en UI de bajo riesgo.
+- Implementación segura e incremental, sin refactor masivo.
+- Sin SQL.
+- Sin Supabase.
+- Sin cambios funcionales.
+- Siguiente recomendado: preparar helper de vertical activa o continuar cobertura UI incremental.
