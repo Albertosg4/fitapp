@@ -46,3 +46,20 @@
 3. **6C** — Inventario de impacto en schema/UI/API.
 4. **6D** — Decisión de migración progresiva.
 5. **5G** — `NOT NULL` solo si se confirma que `gym_id` mantiene scope correcto o se define transición explícita.
+
+## Actualización Fase 6B (2026-05-05)
+
+- ✅ **Fase 6A** documentación multi-negocio — completada.
+- 🧭 **Fase 6B** diseño técnico tenant/location/vertical — actual.
+- 📄 Fase 6B es **solo documental**.
+- 🚫 Sin SQL.
+- 🚫 Sin código.
+- 🎯 Resultado esperado: decisión técnica inicial antes del inventario de impacto 6C.
+
+### Secuencia vigente
+
+1. **6A** documentación multi-negocio — completada.
+2. **6B** diseño técnico tenant/location/vertical — actual.
+3. **6C** inventario de impacto schema/UI/API.
+4. **6D** decisión de migración progresiva.
+5. **5G** `NOT NULL` solo después.

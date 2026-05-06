@@ -142,3 +142,10 @@ Este documento reclasifica riesgos tras completar 3B, 3C, check-in hardening, St
 - Decisión de fase: **Fase 5G (`NOT NULL`) queda pausada** hasta cerrar dirección de arquitectura multi-negocio.
 - Prioridad estratégica actual: definir arquitectura de producto tenant/location/vertical antes de nuevos cambios estructurales en schema.
 - Pendientes operativos que siguen vigentes (índices duplicados, QR/rate-limit distribuido) se mantienen, pero por detrás de la decisión de arquitectura de producto.
+
+## Actualización 2026-05-05 — Riesgos de arquitectura previos a ejecución (Fase 6B)
+
+- Riesgo alto si se añade `tenant_id` sin inventario previo de impacto en schema, app, API y RLS.
+- Riesgo alto si se renombra `gym_id` de forma prematura sin estrategia de transición y rollback por fases.
+- Riesgo estratégico si se intenta resolver el multi-sector solo con textos de UI sin un modelo tenant/location/vertical detrás.
+- Mitigación recomendada: **6B diseño técnico documental**, **6C inventario de impacto**, **6D decisión de migración** antes de tocar schema.
