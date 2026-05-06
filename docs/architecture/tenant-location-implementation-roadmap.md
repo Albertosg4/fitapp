@@ -56,3 +56,9 @@ Priorizar cambios de alto impacto funcional con **baja superficie de riesgo estr
 - Fase 6D implementada/en curso con foundation de labels por vertical.
 - Sin cambios de schema.
 - Sin lectura de vertical desde Supabase.
+
+
+## Estado 6E
+- Implementada/en curso: expansión de labels visibles en UI de bajo riesgo.
+- Sin cambios de schema.
+- Sin cambios en Supabase.

@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from 'react'
 import { Button } from '@/components/ui'
 import { supabase } from '@/lib/supabase'
+import { getDefaultVerticalLabels } from '@/lib/domain/verticals'
 
 interface Pago {
   id: string
@@ -20,6 +21,7 @@ interface Props {
 }
 
 export default function HistorialPagos({ userId }: Props) {
+  const labels = getDefaultVerticalLabels()
   const [pagos, setPagos] = useState<Pago[]>([])
   const [loading, setLoading] = useState(true)
   const [showAll, setShowAll] = useState(false)
@@ -61,12 +63,12 @@ export default function HistorialPagos({ userId }: Props) {
     return '🏦 Transferencia'
   }
 
-  if (loading) return <div style={{ textAlign: 'center', padding: '20px', color: '#888' }}>Cargando pagos...</div>
+  if (loading) return <div style={{ textAlign: 'center', padding: '20px', color: '#888' }}>Cargando {labels.paymentLabelPlural.toLowerCase()}...</div>
 
   if (pagos.length === 0) return (
     <div style={{ textAlign: 'center', padding: '24px', color: '#888', fontSize: '13px', border: '1px dashed rgba(255,255,255,0.12)', borderRadius: '12px' }}>
       <p style={{ fontSize: '24px', marginBottom: '8px' }}>💳</p>
-      Sin pagos registrados
+      Sin {labels.paymentLabelPlural.toLowerCase()} registrados
     </div>
   )
 
