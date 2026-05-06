@@ -8,7 +8,17 @@ interface Props {
 
 export default function SocioHistorialTab({ userId }: Props) {
   const { settings } = useActiveVerticalSettings()
-  const { labels } = settings
+  const { labels, features } = settings
+
+  if (!features.attendanceEnabled) {
+    return (
+      <div style={{ padding: '20px' }}>
+        <div style={{ background: '#181818', border: '1px dashed rgba(255,255,255,0.2)', borderRadius: '12px', padding: '14px', color: '#999', fontSize: '13px' }}>
+          Historial de asistencia no activo para esta vertical en modo demo.
+        </div>
+      </div>
+    )
+  }
   return (
     <div>
       <div style={{ background: '#181818', borderBottom: '1px solid rgba(255,255,255,0.07)', padding: '16px 20px' }}>

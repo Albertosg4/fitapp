@@ -39,7 +39,19 @@ function SocioPageInner() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const { settings } = useActiveVerticalSettings()
-  const { labels } = settings
+  const { labels, features } = settings
+  const visibleNavTabs = [
+    { key: 'clases', icon: '🗓', label: labels.serviceLabelPlural, visible: true },
+    { key: 'historial', icon: '📋', label: 'Historial', visible: features.attendanceEnabled },
+    { key: 'pagos', icon: '💳', label: labels.paymentLabelPlural, visible: features.paymentsEnabled },
+    { key: 'qr', icon: '⬛', label: 'Mi QR', visible: features.qrCheckinEnabled },
+    { key: 'perfil', icon: '👤', label: 'Perfil', visible: true },
+  ].filter((tabItem) => tabItem.visible)
+
+  useEffect(() => {
+    const visibleKeys = new Set(visibleNavTabs.map((tabItem) => tabItem.key))
+    if (!visibleKeys.has(tab)) setTab('clases')
+  }, [tab, visibleNavTabs])
 
   const init = useCallback(async () => {
     const { data: { user } } = await supabase.auth.getUser()
@@ -187,7 +199,11 @@ function SocioPageInner() {
             <div style={{ borderTop: '1px solid rgba(255,255,255,0.07)', paddingTop: '16px', marginBottom: '20px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', fontSize: '13px' }}>
                 <span style={{ color: '#888' }}>Ocupación</span>
-                <span>{ocupacion[`${modal.id}_${modal.fecha}`]?.count ?? 0} / {modal.aforo_max} plazas</span>
+                <span>
+                  {features.capacityEnabled
+                    ? `${ocupacion[`${modal.id}_${modal.fecha}`]?.count ?? 0} / ${modal.aforo_max} plazas`
+                    : 'Capacidad no activa para esta vertical en modo demo.'}
+                </span>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', fontSize: '13px', borderTop: '1px solid rgba(255,255,255,0.07)' }}>
                 <span style={{ color: '#888' }}>Estado</span>
@@ -222,13 +238,7 @@ function SocioPageInner() {
 
       {/* Nav inferior */}
       <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, background: 'rgba(18,18,18,0.95)', backdropFilter: 'blur(12px)', borderTop: '1px solid rgba(255,255,255,0.07)', display: 'flex', justifyContent: 'space-around', padding: '10px 0 20px' }}>
-        {[
-          { key: 'clases',    icon: '🗓',  label: labels.serviceLabelPlural },
-          { key: 'historial', icon: '📋',  label: 'Historial' },
-          { key: 'pagos',     icon: '💳',  label: labels.paymentLabelPlural },
-          { key: 'qr',        icon: '⬛',  label: 'Mi QR' },
-          { key: 'perfil',    icon: '👤',  label: 'Perfil' },
-        ].map(n => (
+        {visibleNavTabs.map(n => (
           <button key={n.key} onClick={() => setTab(n.key)}
             style={{ display: 'flex', flexDirection: 'column' as const, alignItems: 'center', gap: '3px', cursor: 'pointer', padding: '4px 10px', borderRadius: '10px', border: 'none', background: 'transparent', fontFamily: 'system-ui', color: tab === n.key ? '#c8f542' : '#888' }}>
             <span style={{ fontSize: '20px' }}>{n.icon}</span>

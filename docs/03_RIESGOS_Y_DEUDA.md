@@ -206,3 +206,10 @@ Este documento reclasifica riesgos tras completar 3B, 3C, check-in hardening, St
 - Mitigación: etiquetar explícitamente como modo demo/preview y documentar que no afecta datos ni permisos.
 - Riesgo: cobertura parcial de labels en UI.
 - Mitigación: mantener migración incremental de consumidores de settings.
+
+## Actualización 2026-05-06 — Riesgos tras Fase 7B
+
+- Riesgo: feature flags visuales pueden confundirse con permisos reales.
+- Mitigación: mantener mensajes explícitos de “modo demo” y no tocar backend.
+- Riesgo: cobertura parcial de features por bloques UI.
+- Mitigación: ampliar cobertura gradualmente por módulos.

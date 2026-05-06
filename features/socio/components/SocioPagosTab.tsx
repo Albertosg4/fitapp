@@ -25,7 +25,19 @@ export default function SocioPagosTab({ userId, perfil, pagando, onPagar }: Prop
   const [renewalStep, setRenewalStep] = useState<RenewalStep>('closed')
   const [selectedPlan, setSelectedPlan] = useState<TipoMembresia | null>(null)
   const { settings } = useActiveVerticalSettings()
-  const { labels } = settings
+  const { labels, features } = settings
+
+  if (!features.paymentsEnabled) {
+    return (
+      <div className="p-4 sm:p-5">
+        <Card className="!border-zinc-700 !bg-[#181818] !text-zinc-100">
+          <CardContent className="pt-6 text-sm text-zinc-300">
+            Pagos no activos para esta vertical en modo demo.
+          </CardContent>
+        </Card>
+      </div>
+    )
+  }
 
   const estadoMembresia = perfil ? getEstadoMembresia(perfil) : 'inactiva'
   const diasRestantes = perfil?.membresia_vence ? getDiasRestantes(perfil.membresia_vence) : null
