@@ -82,3 +82,12 @@
 5. **6G** aplicación mínima tenant/location (condicionada a 6F).
 6. **6H** activación gradual de labels UI por vertical.
 7. **5G** NOT NULL al final, con arquitectura ya estabilizada.
+
+
+## Actualización Fase 6D (2026-05-06)
+
+- ✅ **Fase 6D** implementada: foundation de labels verticales (`gym`, `clinic`, `academy`, `beauty`, `generic`).
+- ✅ Implementación segura y progresiva en textos visibles de bajo riesgo.
+- ✅ Sin SQL y sin cambios en Supabase.
+- ✅ `gym` se mantiene como default.
+- ▶️ Siguiente recomendado: aplicar labels gradualmente en más UI visible o preparar helper de vertical activa (sin persistencia todavía).

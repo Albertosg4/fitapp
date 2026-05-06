@@ -159,3 +159,10 @@ Este documento reclasifica riesgos tras completar 3B, 3C, check-in hardening, St
   - Mitigación: no tocar Supabase hasta tener SQL, rollback y verificación separados y aprobados.
 - Riesgo: cambiar UI antes de tener capa de labels y mezclar semántica con estructura.
   - Mitigación: siguiente cambio seguro recomendado = foundation de vertical labels.
+
+
+## Actualización 2026-05-06 — Riesgos tras Fase 6D
+
+- Riesgo: la capa de labels por vertical existe pero todavía no cubre toda la UI.
+- Riesgo: todavía no hay persistencia de vertical en datos ni lectura desde Supabase.
+- Mitigación: mantener `gym` como default, migrar textos visibles de forma gradual y evitar cambios en flujos críticos.
