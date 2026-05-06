@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback } from 'react'
 import { Button } from '@/components/ui'
 import { supabase } from '@/lib/supabase'
-import { getActiveVerticalSettings } from '@/lib/domain/vertical-settings'
+import { useActiveVerticalSettings } from '@/lib/domain/vertical-settings-context'
 
 interface Pago {
   id: string
@@ -21,7 +21,8 @@ interface Props {
 }
 
 export default function HistorialPagos({ userId }: Props) {
-  const { labels } = getActiveVerticalSettings()
+  const { settings } = useActiveVerticalSettings()
+  const { labels } = settings
   const [pagos, setPagos] = useState<Pago[]>([])
   const [loading, setLoading] = useState(true)
   const [showAll, setShowAll] = useState(false)

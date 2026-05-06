@@ -96,3 +96,11 @@ Priorizar cambios de alto impacto funcional con **baja superficie de riesgo estr
 - Sin Supabase en esta fase.
 - Sin persistencia en esta fase.
 - `gym` se mantiene como default efectivo.
+
+## Fase 7A — Vertical preview mode ✅ Implementada/en curso
+
+- Provider client-side de vertical preview.
+- Selector demo en admin.
+- `localStorage` solo para estado de preview UI.
+- Sin Supabase.
+- Sin persistencia real tenant/location.

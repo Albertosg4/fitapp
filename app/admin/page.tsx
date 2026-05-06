@@ -8,17 +8,27 @@ import SociosTab from '@/features/admin/components/SociosTab'
 import PagosTab from '@/features/admin/components/PagosTab'
 import { supabase } from '@/lib/supabase'
 import { TIPOS_MEMBRESIA } from '@/lib/domain/membresias'
-import { getActiveVerticalSettings } from '@/lib/domain/vertical-settings'
+import VerticalPreviewSwitcher from '@/components/VerticalPreviewSwitcher'
+import { VerticalSettingsProvider, useActiveVerticalSettings } from '@/lib/domain/vertical-settings-context'
 
 const inputStyle = { width: '100%', background: '#181818', border: '1px solid rgba(255,255,255,0.07)', borderRadius: '10px', padding: '10px 14px', color: '#f0f0f0', fontSize: '14px', outline: 'none', boxSizing: 'border-box' as const, fontFamily: 'system-ui' }
 
 export default function AdminPage() {
+  return (
+    <VerticalSettingsProvider>
+      <AdminPageInner />
+    </VerticalSettingsProvider>
+  )
+}
+
+function AdminPageInner() {
   const { socios, gymId, stats, loading, error, loadSocios, logout } = useAdminData()
   const [tab, setTab] = useState('actividades')
   const [nuevoSocio, setNuevoSocio] = useState({ nombre: '', email: '', password: '', tipo_membresia: 'mensual' })
   const [msgSocio, setMsgSocio] = useState('')
   const [loadingSocio, setLoadingSocio] = useState(false)
-  const { labels } = getActiveVerticalSettings()
+  const { settings } = useActiveVerticalSettings()
+  const { labels } = settings
 
   const registrarSocio = async () => {
     setMsgSocio(''); setLoadingSocio(true)
@@ -62,7 +72,10 @@ export default function AdminPage() {
           JGS <span style={{ color: '#c8f542' }}>Fight Team</span>
           <span style={{ color: '#888', fontSize: '13px', fontWeight: '400', marginLeft: '8px' }}>Admin</span>
         </div>
-        <button onClick={logout} style={{ background: 'rgba(255,92,92,0.12)', color: '#ff5c5c', border: '1px solid rgba(255,92,92,0.2)', borderRadius: '8px', padding: '6px 14px', fontSize: '13px', cursor: 'pointer', fontFamily: 'system-ui' }}>Salir</button>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <VerticalPreviewSwitcher />
+          <button onClick={logout} style={{ background: 'rgba(255,92,92,0.12)', color: '#ff5c5c', border: '1px solid rgba(255,92,92,0.2)', borderRadius: '8px', padding: '6px 14px', fontSize: '13px', cursor: 'pointer', fontFamily: 'system-ui' }}>Salir</button>
+        </div>
       </div>
 
       {/* STATS — modelo nuevo */}

@@ -2,7 +2,7 @@
 
 import { Badge, Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle, EmptyState } from '@/components/ui'
 import type { Socio } from '@/types/domain'
-import { getActiveVerticalSettings } from '@/lib/domain/vertical-settings'
+import { useActiveVerticalSettings } from '@/lib/domain/vertical-settings-context'
 
 interface Props {
   perfil: Socio | null
@@ -11,7 +11,8 @@ interface Props {
 
 export default function SocioQRTab({ perfil, qrUrl }: Props) {
   const memberCode = `FIT-${perfil?.qr_token?.slice(0, 4).toUpperCase() || '0000'}`
-  const { labels } = getActiveVerticalSettings()
+  const { settings } = useActiveVerticalSettings()
+  const { labels } = settings
 
   return (
     <section className="px-4 pb-6 pt-4 sm:px-6">

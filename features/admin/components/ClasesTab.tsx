@@ -4,7 +4,7 @@ import { supabase } from '@/lib/supabase'
 import type { Clase, Reserva } from '@/types/domain'
 import type { TipoMembresia } from '@/lib/domain/membresias'
 import { parseLocalDate, getDiaSemanaLunesPrimero, formatLocalDate } from '@/lib/domain/fechas'
-import { getActiveVerticalSettings } from '@/lib/domain/vertical-settings'
+import { useActiveVerticalSettings } from '@/lib/domain/vertical-settings-context'
 
 // LEGACY: componente no visible en UI. Mantenido para compatibilidad TypeScript.
 // No usar en nuevas pantallas.
@@ -21,7 +21,8 @@ interface Props {
 }
 
 export default function ClasesTab({ clases, onEliminarClase }: Props) {
-  const { labels } = getActiveVerticalSettings()
+  const { settings } = useActiveVerticalSettings()
+  const { labels } = settings
   const [fechaSeleccionada, setFechaSeleccionada] = useState('')
   const [clasesDelDia, setClasesDelDia] = useState<Clase[]>([])
   const [modalClase, setModalClase] = useState<(Clase & { fecha: string }) | null>(null)
