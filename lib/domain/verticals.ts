@@ -1,5 +1,13 @@
 export type BusinessVertical = 'gym' | 'clinic' | 'academy' | 'beauty' | 'generic'
 
+export const BUSINESS_VERTICALS: readonly BusinessVertical[] = [
+  'gym',
+  'clinic',
+  'academy',
+  'beauty',
+  'generic',
+] as const
+
 export const DEFAULT_VERTICAL: BusinessVertical = 'gym'
 
 export interface VerticalLabels {
@@ -96,10 +104,20 @@ export const VERTICAL_LABELS: Record<BusinessVertical, VerticalLabels> = {
   },
 }
 
-export function getVerticalLabels(vertical: BusinessVertical = DEFAULT_VERTICAL): VerticalLabels {
-  return VERTICAL_LABELS[vertical] ?? VERTICAL_LABELS[DEFAULT_VERTICAL]
+// These helpers prepare future settings-based vertical resolution.
+// In this phase no external source is read.
+// Invalid or unknown values must always fall back to DEFAULT_VERTICAL.
+export function isBusinessVertical(value: unknown): value is BusinessVertical {
+  return typeof value === 'string' && BUSINESS_VERTICALS.includes(value as BusinessVertical)
 }
 
+export function resolveBusinessVertical(value: unknown): BusinessVertical {
+  return isBusinessVertical(value) ? value : DEFAULT_VERTICAL
+}
+
+export function getVerticalLabels(vertical: BusinessVertical = DEFAULT_VERTICAL): VerticalLabels {
+  return VERTICAL_LABELS[resolveBusinessVertical(vertical)] ?? VERTICAL_LABELS[DEFAULT_VERTICAL]
+}
 
 // In this phase, the active vertical is static and resolves to gym.
 // Future phases may resolve it from tenant/location/settings.

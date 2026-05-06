@@ -111,3 +111,17 @@
 - Siguiente recomendado:
   - ampliar cobertura UI usando `getActiveVerticalLabels()`, o
   - preparar diseño de settings (sin SQL todavía).
+
+## Fase 6G — feat/domain: harden vertical resolution helpers
+
+- Hardening de resolución de vertical en dominio.
+- Helpers seguros añadidos: `BUSINESS_VERTICALS`, `isBusinessVertical()`, `resolveBusinessVertical()`.
+- `gym` se mantiene como default efectivo.
+- Sin persistencia en esta fase.
+- Sin lecturas desde Supabase/localStorage/env/query params.
+- Sin SQL ni cambios de schema/RLS/Auth/Stripe/rutas.
+- Sin cambio funcional.
+- Siguiente recomendado:
+  - diseño documental de vertical settings, o
+  - ampliar cobertura UI con `getActiveVerticalLabels()`.
+
