@@ -5,7 +5,7 @@ import HistorialPagos from '@/components/HistorialPagos'
 import { Badge, Button, Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui'
 import { IMPORTES, TIPOS_MEMBRESIA, getDiasRestantes, getEstadoMembresia, type TipoMembresia } from '@/lib/domain/membresias'
 import type { Socio } from '@/types/domain'
-import { getDefaultVerticalLabels } from '@/lib/domain/verticals'
+import { getActiveVerticalLabels } from '@/lib/domain/verticals'
 
 interface Props {
   userId: string
@@ -24,7 +24,7 @@ const membershipLabelMap = TIPOS_MEMBRESIA.reduce<Record<string, string>>((acc, 
 export default function SocioPagosTab({ userId, perfil, pagando, onPagar }: Props) {
   const [renewalStep, setRenewalStep] = useState<RenewalStep>('closed')
   const [selectedPlan, setSelectedPlan] = useState<TipoMembresia | null>(null)
-  const labels = getDefaultVerticalLabels()
+  const labels = getActiveVerticalLabels()
 
   const estadoMembresia = perfil ? getEstadoMembresia(perfil) : 'inactiva'
   const diasRestantes = perfil?.membresia_vence ? getDiasRestantes(perfil.membresia_vence) : null

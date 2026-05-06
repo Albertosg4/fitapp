@@ -100,6 +100,18 @@ export function getVerticalLabels(vertical: BusinessVertical = DEFAULT_VERTICAL)
   return VERTICAL_LABELS[vertical] ?? VERTICAL_LABELS[DEFAULT_VERTICAL]
 }
 
+
+// In this phase, the active vertical is static and resolves to gym.
+// Future phases may resolve it from tenant/location/settings.
+// There is no persistence yet, and no reads from Supabase/localStorage/environment variables.
+export function getActiveBusinessVertical(): BusinessVertical {
+  return DEFAULT_VERTICAL
+}
+
+export function getActiveVerticalLabels(): VerticalLabels {
+  return getVerticalLabels(getActiveBusinessVertical())
+}
+
 export function getDefaultVerticalLabels(): VerticalLabels {
   return getVerticalLabels(DEFAULT_VERTICAL)
 }

@@ -172,3 +172,9 @@ Este documento reclasifica riesgos tras completar 3B, 3C, check-in hardening, St
 - Riesgo: cobertura parcial de labels verticales en UI.
 - Riesgo: textos legacy todavía visibles en pantallas no cubiertas.
 - Mitigación: cobertura incremental por bloques con validación funcional tras cada bloque.
+
+## Actualización 2026-05-06 — Riesgos tras Fase 6F
+
+- Riesgo: la vertical activa todavía es estática.
+- Riesgo: aún no existen settings persistidos para resolver vertical por tenant/location.
+- Mitigación: helper central de vertical activa que permitirá cambiar el origen en fases futuras sin retocar todos los componentes UI.

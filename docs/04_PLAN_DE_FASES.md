@@ -100,3 +100,14 @@
 - Sin Supabase.
 - Sin cambios funcionales.
 - Siguiente recomendado: preparar helper de vertical activa o continuar cobertura UI incremental.
+
+## Fase 6F — feat/domain: active vertical helper
+
+- Helper de vertical activa incorporado en dominio (`getActiveBusinessVertical`, `getActiveVerticalLabels`).
+- Implementación segura: `gym` se mantiene como default efectivo.
+- Sin persistencia de vertical en esta fase.
+- Sin lecturas desde Supabase/localStorage/env.
+- Sin SQL y sin cambios de schema/RLS/Auth/Stripe/rutas.
+- Siguiente recomendado:
+  - ampliar cobertura UI usando `getActiveVerticalLabels()`, o
+  - preparar diseño de settings (sin SQL todavía).
