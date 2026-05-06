@@ -125,3 +125,15 @@
   - diseño documental de vertical settings, o
   - ampliar cobertura UI con `getActiveVerticalLabels()`.
 
+
+## Fase 6H — feat/domain: add vertical settings contract foundation
+
+- Contrato tipado de vertical settings incorporado en dominio.
+- Helpers puros de resolución efectiva (`resolveVerticalSettings`, `getDefaultVerticalSettings`, `getDefaultVerticalFeatures`).
+- Sin persistencia en esta fase.
+- Sin Supabase en esta fase.
+- `gym` se mantiene como default.
+- Sin cambios funcionales visibles.
+- Siguiente recomendado:
+  - diseño documental SQL de `vertical_settings` / `tenant_settings` (sin ejecutar), o
+  - ampliar UI usando settings efectivos de forma gradual.

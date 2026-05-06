@@ -186,3 +186,9 @@ Este documento reclasifica riesgos tras completar 3B, 3C, check-in hardening, St
 - Riesgo: todavía no hay persistencia real de vertical activa.
 - Mitigación: mantener separada una fase futura específica de settings para introducir origen real de configuración.
 
+
+## Actualización 2026-05-06 — Riesgos tras Fase 6H
+
+- Riesgo: el contrato de vertical settings existe pero todavía no se persiste.
+- Riesgo: futuras features por vertical deben validarse antes de ocultar/mostrar funcionalidades en UI.
+- Mitigación: `EffectiveVerticalSettings` centraliza labels/features con fallback seguro antes de conectar Supabase.
