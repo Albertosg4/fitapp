@@ -63,3 +63,22 @@
 3. **6C** inventario de impacto schema/UI/API.
 4. **6D** decisión de migración progresiva.
 5. **5G** `NOT NULL` solo después.
+
+
+## Actualización Fase 6C (2026-05-06)
+
+- ✅ **Fase 6A** (visión multi-negocio) completada.
+- ✅ **Fase 6B** (diseño técnico tenant/location/vertical) completada.
+- 🧭 **Fase 6C actual**: inventario de impacto + decisión técnica + roadmap de implementación segura.
+- ▶️ **Fase 6D siguiente implementable segura**: foundation de labels por vertical.
+- ⏸️ **Fase 5G (`NOT NULL`) se mantiene pausada** hasta consolidar scope tenant/location.
+
+### Secuencia vigente (bloques grandes y seguros)
+
+1. **6C** inventario + decisión + roadmap (actual).
+2. **6D** labels foundation por vertical (siguiente).
+3. **6E** helpers/abstracciones de dominio.
+4. **6F** diseño SQL tenant/location (sin ejecutar).
+5. **6G** aplicación mínima tenant/location (condicionada a 6F).
+6. **6H** activación gradual de labels UI por vertical.
+7. **5G** NOT NULL al final, con arquitectura ya estabilizada.

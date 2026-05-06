@@ -149,3 +149,13 @@ Este documento reclasifica riesgos tras completar 3B, 3C, check-in hardening, St
 - Riesgo alto si se renombra `gym_id` de forma prematura sin estrategia de transición y rollback por fases.
 - Riesgo estratégico si se intenta resolver el multi-sector solo con textos de UI sin un modelo tenant/location/vertical detrás.
 - Mitigación recomendada: **6B diseño técnico documental**, **6C inventario de impacto**, **6D decisión de migración** antes de tocar schema.
+
+
+## Actualización 2026-05-06 — Riesgos de ejecución (Fase 6C ampliada)
+
+- Riesgo: avanzar demasiado lento y no consolidar producto.
+  - Mitigación: ejecutar bloques más grandes pero de baja superficie de riesgo (documentales o de abstracción semántica).
+- Riesgo: avanzar demasiado rápido en schema/RLS y romper compatibilidad.
+  - Mitigación: no tocar Supabase hasta tener SQL, rollback y verificación separados y aprobados.
+- Riesgo: cambiar UI antes de tener capa de labels y mezclar semántica con estructura.
+  - Mitigación: siguiente cambio seguro recomendado = foundation de vertical labels.

@@ -52,3 +52,10 @@ platform
 - Sin migraciones.
 - Sin RLS/constraints.
 - Sin cambios de código en app, API o UI.
+
+
+## Actualización Fase 6C (2026-05-06)
+
+- Fase 6C acepta formalmente la dirección **Opción B progresiva** como decisión técnica inicial.
+- Recomendación de siguiente implementación: **no empezar por SQL**.
+- Siguiente implementación recomendada: **foundation de labels verticales** para desacoplar lenguaje de UI antes de cambios de schema.
