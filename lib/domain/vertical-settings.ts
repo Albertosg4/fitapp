@@ -70,7 +70,42 @@ export function getDefaultVerticalFeatures(
   vertical: unknown = DEFAULT_VERTICAL,
 ): VerticalFeatureFlags {
   const resolvedVertical = resolveBusinessVertical(vertical)
-  return DEFAULT_VERTICAL_FEATURES[resolvedVertical] ?? DEFAULT_VERTICAL_FEATURES[DEFAULT_VERTICAL]
+  const defaults =
+    DEFAULT_VERTICAL_FEATURES[resolvedVertical] ?? DEFAULT_VERTICAL_FEATURES[DEFAULT_VERTICAL]
+
+  return {
+    ...defaults,
+  }
+}
+
+function resolveFeatureOverrides(
+  features: Partial<VerticalFeatureFlags> | null | undefined,
+): Partial<VerticalFeatureFlags> {
+  if (!features) return {}
+
+  const resolved: Partial<VerticalFeatureFlags> = {}
+
+  if (typeof features.attendanceEnabled === 'boolean') {
+    resolved.attendanceEnabled = features.attendanceEnabled
+  }
+
+  if (typeof features.qrCheckinEnabled === 'boolean') {
+    resolved.qrCheckinEnabled = features.qrCheckinEnabled
+  }
+
+  if (typeof features.paymentsEnabled === 'boolean') {
+    resolved.paymentsEnabled = features.paymentsEnabled
+  }
+
+  if (typeof features.capacityEnabled === 'boolean') {
+    resolved.capacityEnabled = features.capacityEnabled
+  }
+
+  if (typeof features.recurringScheduleEnabled === 'boolean') {
+    resolved.recurringScheduleEnabled = features.recurringScheduleEnabled
+  }
+
+  return resolved
 }
 
 export function resolveVerticalSettings(
@@ -79,6 +114,7 @@ export function resolveVerticalSettings(
   const vertical = resolveBusinessVertical(input.vertical)
   const baseLabels = getVerticalLabels(vertical)
   const baseFeatures = getDefaultVerticalFeatures(vertical)
+  const featureOverrides = resolveFeatureOverrides(input.features)
 
   return {
     vertical,
@@ -88,7 +124,7 @@ export function resolveVerticalSettings(
     },
     features: {
       ...baseFeatures,
-      ...(input.features ?? {}),
+      ...featureOverrides,
     },
   }
 }

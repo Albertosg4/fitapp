@@ -41,6 +41,13 @@ Es la salida resuelta y segura:
 - `labels` completas (base + overrides).
 - `features` completas (defaults + overrides).
 
+
+## Notas de seguridad del contrato
+
+- Los feature overrides se sanitizan antes de componer settings efectivos.
+- Solo valores booleanos explícitos pueden sobrescribir defaults de features.
+- Los defaults de features se devuelven como copia para evitar mutación global accidental.
+
 ## Persistencia (explícitamente fuera de alcance)
 
 Esta fase todavía **no** persiste settings ni lee fuentes externas.
