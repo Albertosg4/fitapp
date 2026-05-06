@@ -25,7 +25,7 @@ Priorizar cambios de alto impacto funcional con **baja superficie de riesgo estr
 - **Objetivo**: preparar SQL manual, rollback y verificación.
 - **Alcance**: diseño técnico ejecutable documentado (sin ejecutar todavía).
 - **Fuera de alcance**: aplicación en Supabase live.
-- **Riesgo**: medio.
+- **Riesgo**: bajo.
 - **Validación esperada**: scripts revisables, rollback claro y checklist pre/post.
 
 ## Fase 6G — Hardening de resolución de vertical ✅ Implementada/en curso
@@ -36,13 +36,13 @@ Priorizar cambios de alto impacto funcional con **baja superficie de riesgo estr
 - **Riesgo**: bajo.
 - **Validación esperada**: `gym` sigue como default; valores inválidos caen a fallback seguro; sin cambios funcionales.
 
-## Fase 6H — Labels UI por vertical
+## Fase 6H — Vertical settings contract ✅ Implementada/en curso
 
-- **Objetivo**: activar labels visibles por vertical de forma progresiva.
-- **Alcance**: textos visibles y copy contextual por vertical.
-- **Fuera de alcance**: rename interno masivo (`gym_id`, tablas legacy).
-- **Riesgo**: medio.
-- **Validación esperada**: UX por vertical sin regresiones funcionales ni de seguridad.
+- **Objetivo**: establecer contrato tipado de settings verticales con fallback seguro.
+- **Alcance**: feature flags por vertical, composición de settings efectivos y defaults seguros.
+- **Fuera de alcance**: Supabase, persistencia, SQL, schema, RLS, Auth, Stripe, APIs y rutas.
+- **Riesgo**: bajo.
+- **Validación esperada**: `gym` sigue como default, sin cambios funcionales y sin lecturas externas.
 
 ## Fase 5G — NOT NULL (diferida)
 
@@ -74,3 +74,10 @@ Priorizar cambios de alto impacto funcional con **baja superficie de riesgo estr
 - Implementada/en curso: hardening de resolución de vertical en dominio.
 - Fallback seguro activo hacia `DEFAULT_VERTICAL` (`gym`).
 - Sin Supabase y sin persistencia en esta fase.
+
+
+## Estado 6H
+- Implementada/en curso: contrato de vertical settings y feature flags por vertical.
+- Sin Supabase en esta fase.
+- Sin persistencia en esta fase.
+- `gym` se mantiene como default efectivo.
