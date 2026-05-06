@@ -62,3 +62,9 @@ Priorizar cambios de alto impacto funcional con **baja superficie de riesgo estr
 - Implementada/en curso: expansión de labels visibles en UI de bajo riesgo.
 - Sin cambios de schema.
 - Sin cambios en Supabase.
+
+## Estado 6F
+- Implementada/en curso: helper de vertical activa en dominio (`getActiveBusinessVertical` + `getActiveVerticalLabels`).
+- Sin lectura de vertical desde Supabase.
+- Sin persistencia de vertical en esta fase.
+- `gym` se mantiene como default efectivo.

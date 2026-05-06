@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback } from 'react'
 import { Button } from '@/components/ui'
 import { supabase } from '@/lib/supabase'
-import { getDefaultVerticalLabels } from '@/lib/domain/verticals'
+import { getActiveVerticalLabels } from '@/lib/domain/verticals'
 
 interface Pago {
   id: string
@@ -21,7 +21,7 @@ interface Props {
 }
 
 export default function HistorialPagos({ userId }: Props) {
-  const labels = getDefaultVerticalLabels()
+  const labels = getActiveVerticalLabels()
   const [pagos, setPagos] = useState<Pago[]>([])
   const [loading, setLoading] = useState(true)
   const [showAll, setShowAll] = useState(false)

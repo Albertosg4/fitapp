@@ -10,7 +10,7 @@ import SocioHistorialTab from '@/features/socio/components/SocioHistorialTab'
 import SocioPagosTab from '@/features/socio/components/SocioPagosTab'
 import SocioQRTab from '@/features/socio/components/SocioQRTab'
 import SocioPerfilTab from '@/features/socio/components/SocioPerfilTab'
-import { getDefaultVerticalLabels } from '@/lib/domain/verticals'
+import { getActiveVerticalLabels } from '@/lib/domain/verticals'
 
 function SocioPageInner() {
   const {
@@ -38,7 +38,7 @@ function SocioPageInner() {
   const [msgPago, setMsgPago] = useState('')
   const router = useRouter()
   const searchParams = useSearchParams()
-  const labels = getDefaultVerticalLabels()
+  const labels = getActiveVerticalLabels()
 
   const init = useCallback(async () => {
     const { data: { user } } = await supabase.auth.getUser()
