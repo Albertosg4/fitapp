@@ -1,13 +1,13 @@
 'use client'
 import HistorialAsistencia from '@/components/HistorialAsistencia'
-import { getActiveVerticalLabels } from '@/lib/domain/verticals'
+import { getActiveVerticalSettings } from '@/lib/domain/vertical-settings'
 
 interface Props {
   userId: string
 }
 
 export default function SocioHistorialTab({ userId }: Props) {
-  const labels = getActiveVerticalLabels()
+  const { labels } = getActiveVerticalSettings()
   return (
     <div>
       <div style={{ background: '#181818', borderBottom: '1px solid rgba(255,255,255,0.07)', padding: '16px 20px' }}>

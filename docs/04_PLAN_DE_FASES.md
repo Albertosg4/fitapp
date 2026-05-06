@@ -137,3 +137,16 @@
 - Siguiente recomendado:
   - diseño documental SQL de `vertical_settings` / `tenant_settings` (sin ejecutar), o
   - ampliar UI usando settings efectivos de forma gradual.
+
+
+## Fase 6I — feat/domain: add active vertical settings helper
+
+- Helper de settings verticales activos incorporado (`getActiveVerticalSettings`).
+- UI cubierta consume `settings.labels` desde settings efectivos.
+- `features` disponibles en contrato pero no activadas para alterar UI en esta fase.
+- Sin persistencia en esta fase.
+- Sin Supabase en esta fase.
+- `gym` se mantiene como default efectivo.
+- Siguiente recomendado:
+  - diseño documental de settings persistidos, o
+  - uso controlado de feature flags en UI no crítica.

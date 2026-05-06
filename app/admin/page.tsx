@@ -8,7 +8,7 @@ import SociosTab from '@/features/admin/components/SociosTab'
 import PagosTab from '@/features/admin/components/PagosTab'
 import { supabase } from '@/lib/supabase'
 import { TIPOS_MEMBRESIA } from '@/lib/domain/membresias'
-import { getActiveVerticalLabels } from '@/lib/domain/verticals'
+import { getActiveVerticalSettings } from '@/lib/domain/vertical-settings'
 
 const inputStyle = { width: '100%', background: '#181818', border: '1px solid rgba(255,255,255,0.07)', borderRadius: '10px', padding: '10px 14px', color: '#f0f0f0', fontSize: '14px', outline: 'none', boxSizing: 'border-box' as const, fontFamily: 'system-ui' }
 
@@ -18,7 +18,7 @@ export default function AdminPage() {
   const [nuevoSocio, setNuevoSocio] = useState({ nombre: '', email: '', password: '', tipo_membresia: 'mensual' })
   const [msgSocio, setMsgSocio] = useState('')
   const [loadingSocio, setLoadingSocio] = useState(false)
-  const labels = getActiveVerticalLabels()
+  const { labels } = getActiveVerticalSettings()
 
   const registrarSocio = async () => {
     setMsgSocio(''); setLoadingSocio(true)
