@@ -1,4 +1,5 @@
 'use client'
+import Link from 'next/link'
 import { useState } from 'react'
 import { useAdminData } from '@/features/admin/hooks/useAdminData'
 import ActividadesTab from '@/features/admin/components/ActividadesTab'
@@ -87,6 +88,7 @@ function AdminPageInner() {
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
           <VerticalPreviewSwitcher />
+          <Link href="/demo" style={{ color: '#7dd3fc', fontSize: '13px', textDecoration: 'none' }}>Ver demo online</Link>
           <button onClick={logout} style={{ background: 'rgba(255,92,92,0.12)', color: '#ff5c5c', border: '1px solid rgba(255,92,92,0.2)', borderRadius: '8px', padding: '6px 14px', fontSize: '13px', cursor: 'pointer', fontFamily: 'system-ui' }}>Salir</button>
         </div>
       </div>

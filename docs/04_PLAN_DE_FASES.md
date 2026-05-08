@@ -181,3 +181,15 @@
   - Preparar demo comercial completa por vertical.
   - Ampliar cobertura de labels/copy.
   - Diseñar settings persistidos (futuro, fuera de esta fase).
+
+## Fase 7D — feat/ui: add online demo experience
+
+- Online demo experience orientada a discovery de producto.
+- Nueva página pública `/demo`.
+- Cards por vertical para cambiar preview visual.
+- Guía de acceso demo y pasos de prueba.
+- Sin Auth/Supabase/SQL.
+- Siguiente recomendado:
+  - Fase 7E: diseño de cuentas demo controladas.
+  - Fase 7F: datos demo por vertical.
+  - Fase 7G: reset demo seguro.
