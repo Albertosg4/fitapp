@@ -274,3 +274,9 @@ Este documento reclasifica riesgos tras completar 3B, 3C, check-in hardening, St
 - Riesgo: enseñar la app sin una prueba funcional/comercial completa.
 - Mitigación: Fase 8D añade smoke test, guion comercial y plantilla de informe.
 - Riesgo residual: la prueba debe ejecutarse manualmente en entorno real antes de enseñar la app a clientes.
+
+## Actualización 2026-05-08 — Riesgo de pagos sin validación Stripe
+
+- Riesgo: enseñar pagos sin validar checkout/webhook/membresía.
+- Mitigación: Fase 8E documenta flujo, checklist y superficies de pago.
+- Riesgo residual: hay que ejecutar validación Stripe test mode antes de vender pagos.

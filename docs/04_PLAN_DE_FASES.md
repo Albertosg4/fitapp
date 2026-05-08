@@ -245,3 +245,9 @@
 - Fase 8D añade checklist funcional de venta y smoke test no destructivo.
 - No toca backend ni datos.
 - Siguiente fase sugerida: Fase 8E — Auditoría separada de pagos/Stripe.
+
+## Nota Fase 8E (Stripe)
+
+- Fase 8E audita pagos/Stripe de forma separada.
+- No toca checkout, webhook ni membresías.
+- Siguiente fase sugerida: Fase 8F — Validación controlada Stripe test mode.

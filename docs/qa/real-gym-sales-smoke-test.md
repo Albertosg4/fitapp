@@ -143,3 +143,8 @@ No se debe enseñar si:
 - Pagos redirige mal sin explicación.
 - QR no carga y no está explicado.
 - Se mezcla demo multi-sector con app real.
+
+## Nota Fase 8E (pagos Stripe)
+
+- La validación profunda de pagos se hace en `docs/qa/stripe-payment-validation-checklist.md`.
+- Si Stripe no está validado, marcar pagos como `PENDIENTE` y no prometer pagos listos.

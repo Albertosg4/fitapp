@@ -208,3 +208,9 @@ En esta fase no se han aplicado cambios funcionales. No se ha tocado backend, Su
 - Fase 8D añade smoke test comercial, guion de demo y plantilla de informe.
 - La app todavía requiere ejecutar manualmente el checklist antes de enseñarla.
 - Pagos/Stripe siguen pendientes de auditoría separada.
+
+## Nota Fase 8E — auditoría Stripe separada
+
+- Fase 8E audita pagos/Stripe sin cambiar runtime.
+- Pagos no deben considerarse listos hasta ejecutar checklist Stripe.
+- Cualquier cambio real en checkout/webhook/membresía debe ir en fase separada.
