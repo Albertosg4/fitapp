@@ -203,3 +203,14 @@
   - Fase 7F: diseño de cuentas demo controladas.
   - Fase 7G: datos demo por vertical.
   - Fase 7H: reset demo seguro.
+
+
+## Fase 7F — interactive vertical demo simulator
+
+- Interactive vertical demo simulator implementado en rutas `/demo/*/probar`.
+- Mock data local por vertical.
+- Sin Supabase/Auth/SQL.
+- Siguiente recomendado:
+  - Fase 7G: diseño de cuentas demo reales controladas.
+  - Fase 7H: datos demo por vertical.
+  - Fase 7I: reset demo seguro.

@@ -13,6 +13,14 @@ const ACTION_COPY: Record<BusinessVertical, string> = {
   generic: 'Ver demo genérica',
 }
 
+const INTERACTIVE_DEMO_ROUTES: Record<BusinessVertical, string> = {
+  gym: '/demo/gimnasio/probar',
+  clinic: '/demo/clinica/probar',
+  academy: '/demo/academia/probar',
+  beauty: '/demo/peluqueria/probar',
+  generic: '/demo/generico/probar',
+}
+
 const FOCUSED_DEMO_ROUTES: Record<BusinessVertical, string> = {
   gym: '/demo/gimnasio',
   clinic: '/demo/clinica',
@@ -57,6 +65,12 @@ export default function OnlineDemoVerticalCards() {
                 style={{ display: 'inline-block', marginTop: '10px', color: '#7dd3fc', fontSize: '13px' }}
               >
                 Abrir demo enfocada
+              </Link>
+              <Link
+                href={INTERACTIVE_DEMO_ROUTES[candidate]}
+                style={{ display: 'inline-block', marginTop: '6px', marginLeft: '10px', color: '#bae6fd', fontSize: '12px' }}
+              >
+                Probar interactiva
               </Link>
             </article>
           )

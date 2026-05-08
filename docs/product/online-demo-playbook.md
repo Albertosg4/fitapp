@@ -50,3 +50,18 @@ La demo online permite enseñar FITAPP por vertical sin tocar datos reales ni en
 | Discovery general | `/demo` |
 
 - No enviar `/demo` general a un cliente que espera una propuesta específica salvo que se quiera enseñar la visión multi-sector.
+
+
+## Enlaces para prueba interactiva
+
+| Vertical | Enlace |
+|---|---|
+| Gimnasio | `/demo/gimnasio/probar` |
+| Clínica | `/demo/clinica/probar` |
+| Academia | `/demo/academia/probar` |
+| Peluquería/estética | `/demo/peluqueria/probar` |
+| Genérico | `/demo/generico/probar` |
+
+- Estos enlaces son simulación interactiva sin login.
+- No sustituyen cuentas demo reales.
+- Sirven para primera validación comercial online.

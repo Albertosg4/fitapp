@@ -13,6 +13,14 @@ interface FocusedOnlineDemoPageProps {
   vertical: BusinessVertical
 }
 
+const INTERACTIVE_DEMO_ROUTES: Record<BusinessVertical, string> = {
+  gym: '/demo/gimnasio/probar',
+  clinic: '/demo/clinica/probar',
+  academy: '/demo/academia/probar',
+  beauty: '/demo/peluqueria/probar',
+  generic: '/demo/generico/probar',
+}
+
 const FOCUSED_DEMO_LINKS: Array<{ href: string; label: string }> = [
   { href: '/demo/gimnasio', label: 'Gimnasio' },
   { href: '/demo/clinica', label: 'Clínica' },
@@ -40,6 +48,12 @@ export default function FocusedOnlineDemoPage({ vertical }: FocusedOnlineDemoPag
               style={{ background: '#1f2937', color: '#e5e7eb', border: '1px solid rgba(148,163,184,0.35)', borderRadius: '8px', padding: '8px 12px', textDecoration: 'none' }}
             >
               Ir a demo general
+            </Link>
+            <Link
+              href={INTERACTIVE_DEMO_ROUTES[vertical]}
+              style={{ background: '#0ea5e9', color: '#082f49', border: '1px solid rgba(125,211,252,0.6)', borderRadius: '8px', padding: '8px 12px', textDecoration: 'none', fontWeight: 600 }}
+            >
+              Probar demo interactiva
             </Link>
             <button
               type="button"
