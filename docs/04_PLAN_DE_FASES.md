@@ -193,3 +193,13 @@
   - Fase 7E: diseño de cuentas demo controladas.
   - Fase 7F: datos demo por vertical.
   - Fase 7G: reset demo seguro.
+
+## Fase 7E — feat/ui: add focused vertical demo pages
+
+- Páginas demo públicas enfocadas por vertical.
+- Enlaces comerciales específicos para compartir online.
+- Sin Auth, Supabase ni SQL.
+- Siguiente recomendado:
+  - Fase 7F: diseño de cuentas demo controladas.
+  - Fase 7G: datos demo por vertical.
+  - Fase 7H: reset demo seguro.

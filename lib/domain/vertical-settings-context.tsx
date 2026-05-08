@@ -2,7 +2,6 @@
 
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
 import {
-  BUSINESS_VERTICALS,
   DEFAULT_VERTICAL,
   resolveBusinessVertical,
   type BusinessVertical,
@@ -23,27 +22,41 @@ interface VerticalSettingsContextValue {
 
 const VerticalSettingsContext = createContext<VerticalSettingsContextValue | null>(null)
 
-export function VerticalSettingsProvider({ children }: { children: ReactNode }) {
-  const [vertical, setVertical] = useState<BusinessVertical>(DEFAULT_VERTICAL)
+interface VerticalSettingsProviderProps {
+  children: ReactNode
+  initialVertical?: BusinessVertical
+  persistPreview?: boolean
+}
+
+export function VerticalSettingsProvider({
+  children,
+  initialVertical,
+  persistPreview = true,
+}: VerticalSettingsProviderProps) {
+  const fallbackVertical = resolveBusinessVertical(initialVertical ?? DEFAULT_VERTICAL)
+  const [vertical, setVertical] = useState<BusinessVertical>(fallbackVertical)
 
   useEffect(() => {
+    if (!persistPreview) return
+
     const stored = window.localStorage.getItem(VERTICAL_PREVIEW_STORAGE_KEY)
     if (!stored) return
 
-    const resolved = resolveBusinessVertical(stored)
-    if (BUSINESS_VERTICALS.includes(resolved)) {
-      setVertical(resolved)
-    }
-  }, [])
+    setVertical(resolveBusinessVertical(stored))
+  }, [persistPreview])
 
   const setPreviewVertical = (nextVertical: BusinessVertical) => {
     const resolved = resolveBusinessVertical(nextVertical)
     setVertical(resolved)
+
+    if (!persistPreview) return
     window.localStorage.setItem(VERTICAL_PREVIEW_STORAGE_KEY, resolved)
   }
 
   const resetPreviewVertical = () => {
-    setVertical(DEFAULT_VERTICAL)
+    setVertical(fallbackVertical)
+
+    if (!persistPreview) return
     window.localStorage.removeItem(VERTICAL_PREVIEW_STORAGE_KEY)
   }
 

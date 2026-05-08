@@ -226,3 +226,10 @@ Este documento reclasifica riesgos tras completar 3B, 3C, check-in hardening, St
 - Mitigación: avisos claros de demo y sin credenciales reales.
 - Riesgo: futuros accesos demo mal aislados.
 - Mitigación: cuentas demo y datos demo en fases separadas con RLS/verificación.
+
+## Actualización 2026-05-08 — Riesgos de presentación comercial demo
+
+- Riesgo: enviar demo general a un cliente específico puede confundir.
+- Mitigación: páginas enfocadas por vertical.
+- Riesgo: el cliente piense que ya hay acceso demo completo.
+- Mitigación: avisos de credenciales demo en fase separada.

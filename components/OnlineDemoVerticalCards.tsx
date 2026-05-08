@@ -1,5 +1,6 @@
 'use client'
 
+import Link from 'next/link'
 import { BUSINESS_VERTICALS, type BusinessVertical } from '@/lib/domain/verticals'
 import { getOnlineDemoVerticalProfile } from '@/lib/domain/online-demo'
 import { useActiveVerticalSettings } from '@/lib/domain/vertical-settings-context'
@@ -10,6 +11,14 @@ const ACTION_COPY: Record<BusinessVertical, string> = {
   academy: 'Ver demo como academia',
   beauty: 'Ver demo como peluquería/estética',
   generic: 'Ver demo genérica',
+}
+
+const FOCUSED_DEMO_ROUTES: Record<BusinessVertical, string> = {
+  gym: '/demo/gimnasio',
+  clinic: '/demo/clinica',
+  academy: '/demo/academia',
+  beauty: '/demo/peluqueria',
+  generic: '/demo/generico',
 }
 
 export default function OnlineDemoVerticalCards() {
@@ -43,6 +52,12 @@ export default function OnlineDemoVerticalCards() {
               >
                 {ACTION_COPY[candidate]}
               </button>
+              <Link
+                href={FOCUSED_DEMO_ROUTES[candidate]}
+                style={{ display: 'inline-block', marginTop: '10px', color: '#7dd3fc', fontSize: '13px' }}
+              >
+                Abrir demo enfocada
+              </Link>
             </article>
           )
         })}

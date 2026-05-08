@@ -37,3 +37,16 @@ La demo online permite enseñar FITAPP por vertical sin tocar datos reales ni en
 - No hay datos reales sensibles visibles.
 - No hay credenciales reales publicadas.
 - `admin` / `socio` siguen funcionando.
+
+## Qué enlace enviar según cliente
+
+| Cliente | Enlace |
+|---|---|
+| Gimnasio | `/demo/gimnasio` |
+| Clínica | `/demo/clinica` |
+| Academia | `/demo/academia` |
+| Peluquería/estética | `/demo/peluqueria` |
+| Otro negocio | `/demo/generico` |
+| Discovery general | `/demo` |
+
+- No enviar `/demo` general a un cliente que espera una propuesta específica salvo que se quiera enseñar la visión multi-sector.

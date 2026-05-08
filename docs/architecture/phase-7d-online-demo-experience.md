@@ -40,3 +40,10 @@ Implementar una experiencia de demo online compartible para discovery comercial 
 - Hero y capability cards se actualizan por vertical.
 - No aparecen emails/contraseñas ni credenciales reales.
 - `admin` y `socio` mantienen funcionamiento existente.
+
+## Nota posterior (Fase 7E)
+
+- `/demo` se mantiene como demo general multi-vertical.
+- `/demo/gimnasio`, `/demo/clinica`, `/demo/academia`, `/demo/peluqueria` y `/demo/generico` se usan como demos enfocadas para envío comercial.
+- Estas páginas no crean usuarios ni credenciales demo.
+- No tocan Auth ni Supabase.
