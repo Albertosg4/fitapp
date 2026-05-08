@@ -151,3 +151,11 @@ Priorizar cambios de alto impacto funcional con **baja superficie de riesgo estr
 - **Alcance**: `/admin` y `/socio` dejan de depender del preview vertical; la demo comercial multi-sector sigue disponible en `/demo` y `/demo/*`.
 - **Fuera de alcance**: backend, datos, permisos, Supabase, Auth, SQL, RLS, Stripe, APIs y credenciales.
 - **Validación esperada**: `/admin` y `/socio` se comportan como app real de gimnasio; `/demo` conserva las verticales comerciales; no hay cambios de backend/datos/permisos.
+
+## Fase 7H — Guardarraíles de frontera app real/demo
+
+- **Estado**: implementada/en curso.
+- **Objetivo**: evitar que demo multi-sector vuelva a contaminar `/admin` y `/socio`.
+- **Alcance**: documentación de fronteras, checklist y script de verificación.
+- **Fuera de alcance**: backend, Supabase, SQL, RLS, Auth, Stripe, APIs y datos reales.
+- **Validación**: `npm run lint`, `npm run build`, `node scripts/verify-real-gym-boundaries.mjs`.
