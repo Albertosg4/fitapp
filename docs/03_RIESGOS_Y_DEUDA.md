@@ -280,3 +280,8 @@ Este documento reclasifica riesgos tras completar 3B, 3C, check-in hardening, St
 - Riesgo: enseñar pagos sin validar checkout/webhook/membresía.
 - Mitigación: Fase 8E documenta flujo, checklist y superficies de pago.
 - Riesgo residual: hay que ejecutar validación Stripe test mode antes de vender pagos.
+
+## Actualización 2026-05-08 — Fase 9A Stripe lifecycle hardening
+- Riesgos cerrados: checkout/webhook con mensajes seguros e idempotencia reforzada en código.
+- Riesgos pendientes: aplicar SQL manual preparado para `stripe_event_id`/`stripe_session_id` y validar en test mode.
+- SQL queda pendiente de ejecutar manualmente.

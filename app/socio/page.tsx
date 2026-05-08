@@ -66,7 +66,7 @@ function SocioPageInner() {
 
   const procesarResultadoPago = useCallback((pago: string) => {
     if (pago === 'ok') { setMsgPago('✅ Pago completado. Membresía renovada.'); setTab('pagos') }
-    else if (pago === 'cancel') { setMsgPago('❌ Pago cancelado.') }
+    else if (pago === 'cancel') { setMsgPago('⚠️ Pago cancelado. Tu membresía no ha cambiado.') }
   }, [])
 
   useEffect(() => {
@@ -93,6 +93,7 @@ function SocioPageInner() {
     if (!userId) return
     setMsgPago('')
     setPagando(true)
+    setMsgPago('ℹ️ Redirigiendo a Stripe...')
     try {
       const { data: { session } } = await supabase.auth.getSession()
       if (!session?.access_token) { setMsgPago(`❌ ${USER_FACING_ERRORS.sessionExpired}`); return }

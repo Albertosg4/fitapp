@@ -251,3 +251,8 @@
 - Fase 8E audita pagos/Stripe de forma separada.
 - No toca checkout, webhook ni membresías.
 - Siguiente fase sugerida: Fase 8F — Validación controlada Stripe test mode.
+
+## Fase 9A — harden Stripe membership payment lifecycle
+- Endurece checkout + webhook + UI pagos socio/admin.
+- SQL preparado pero no ejecutado (`docs/sql/fase-9a-stripe-membership-lifecycle/*`).
+- Siguiente paso: ejecutar precheck/SQL manual si procede y validar Stripe test mode.

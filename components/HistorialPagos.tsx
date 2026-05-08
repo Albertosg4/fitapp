@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback } from 'react'
 import { Button } from '@/components/ui'
+import { USER_FACING_ERRORS } from '@/lib/ui/user-facing-errors'
 import { supabase } from '@/lib/supabase'
 
 interface Pago {
@@ -23,6 +24,7 @@ export default function HistorialPagos({ userId }: Props) {
   const [pagos, setPagos] = useState<Pago[]>([])
   const [loading, setLoading] = useState(true)
   const [showAll, setShowAll] = useState(false)
+  const [errorMsg, setErrorMsg] = useState('')
 
   const cargarPagos = useCallback(async () => {
     setLoading(true)
@@ -33,8 +35,10 @@ export default function HistorialPagos({ userId }: Props) {
         .order('fecha_pago', { ascending: false })
       if (error) throw error
       setPagos(data || [])
+      setErrorMsg('')
     } catch (err) {
       console.error('Error cargando pagos:', err)
+      setErrorMsg(USER_FACING_ERRORS.payment)
     } finally {
       setLoading(false)
     }
@@ -62,6 +66,8 @@ export default function HistorialPagos({ userId }: Props) {
   }
 
   if (loading) return <div style={{ textAlign: 'center', padding: '20px', color: '#888' }}>Cargando pagos...</div>
+
+  if (errorMsg) return <div style={{ textAlign: 'center', padding: '20px', color: '#ff8a8a' }}>{errorMsg}</div>
 
   if (pagos.length === 0) return (
     <div style={{ textAlign: 'center', padding: '24px', color: '#888', fontSize: '13px', border: '1px dashed rgba(255,255,255,0.12)', borderRadius: '12px' }}>
