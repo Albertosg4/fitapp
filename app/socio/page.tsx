@@ -91,6 +91,7 @@ function SocioPageInner() {
 
   const pagarMembresia = async (tipoMembresia: string) => {
     if (!userId) return
+    setMsgPago('')
     setPagando(true)
     try {
       const { data: { session } } = await supabase.auth.getSession()
@@ -101,7 +102,11 @@ function SocioPageInner() {
         body: JSON.stringify({ tipoMembresia }),
       })
       const data = await res.json()
-      if (data.url) window.location.assign(data.url as string)
+      if (!res.ok || data.error || !data.url) {
+        setMsgPago(`❌ ${normaliseUserFacingError(data?.error, USER_FACING_ERRORS.payment)}`)
+        return
+      }
+      window.location.assign(data.url as string)
     } catch (err) { console.error('Error pago:', err); setMsgPago(`❌ ${normaliseUserFacingError(err, USER_FACING_ERRORS.payment)}`) }
     finally { setPagando(false) }
   }
