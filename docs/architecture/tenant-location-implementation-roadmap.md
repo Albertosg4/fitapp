@@ -111,3 +111,10 @@ Priorizar cambios de alto impacto funcional con **baja superficie de riesgo estr
 - Sin Supabase.
 - Sin persistencia real.
 - Sin cambios de seguridad/permisos.
+
+## Estado Fase 7C (implementada)
+- Commercial demo profiles por vertical.
+- Hero comercial por vertical.
+- Capability cards de preview visual.
+- Copy socio ligero por vertical.
+- Sin Supabase y sin persistencia real.

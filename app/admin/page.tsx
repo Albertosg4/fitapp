@@ -10,6 +10,9 @@ import { supabase } from '@/lib/supabase'
 import { TIPOS_MEMBRESIA } from '@/lib/domain/membresias'
 import VerticalPreviewSwitcher from '@/components/VerticalPreviewSwitcher'
 import { VerticalSettingsProvider, useActiveVerticalSettings } from '@/lib/domain/vertical-settings-context'
+import VerticalDemoHero from '@/components/VerticalDemoHero'
+import VerticalCapabilityCards from '@/components/VerticalCapabilityCards'
+import { getVerticalCommercialProfile } from '@/lib/domain/vertical-commercial'
 
 const inputStyle = { width: '100%', background: '#181818', border: '1px solid rgba(255,255,255,0.07)', borderRadius: '10px', padding: '10px 14px', color: '#f0f0f0', fontSize: '14px', outline: 'none', boxSizing: 'border-box' as const, fontFamily: 'system-ui' }
 
@@ -29,6 +32,7 @@ function AdminPageInner() {
   const [loadingSocio, setLoadingSocio] = useState(false)
   const { settings } = useActiveVerticalSettings()
   const { labels, features } = settings
+  const profile = getVerticalCommercialProfile(settings.vertical)
   const adminTabs = [
     { key: 'actividades', label: '🎯 Actividades' },
     { key: 'horarios', label: '🔄 Horarios' },
@@ -75,16 +79,20 @@ function AdminPageInner() {
     <div style={{ minHeight: '100vh', background: '#0f0f0f', color: '#f0f0f0', fontFamily: 'system-ui' }}>
 
       {/* HEADER */}
-      <div style={{ background: '#181818', borderBottom: '1px solid rgba(255,255,255,0.07)', padding: '16px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      <div style={{ background: '#181818', borderBottom: '1px solid rgba(255,255,255,0.07)', padding: '16px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '12px' }}>
         <div style={{ fontSize: '20px', fontWeight: '800' }}>
           JGS <span style={{ color: '#c8f542' }}>Fight Team</span>
           <span style={{ color: '#888', fontSize: '13px', fontWeight: '400', marginLeft: '8px' }}>Admin</span>
+          <div style={{ fontSize: '12px', color: '#9ca3af', marginTop: '6px', fontWeight: '400' }}>{profile.adminSummary}</div>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
           <VerticalPreviewSwitcher />
           <button onClick={logout} style={{ background: 'rgba(255,92,92,0.12)', color: '#ff5c5c', border: '1px solid rgba(255,92,92,0.2)', borderRadius: '8px', padding: '6px 14px', fontSize: '13px', cursor: 'pointer', fontFamily: 'system-ui' }}>Salir</button>
         </div>
       </div>
+
+      <VerticalDemoHero />
+      <VerticalCapabilityCards />
 
       {/* STATS — preview visual por vertical (no altera datos/permisos) */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', padding: '16px 20px' }}>
@@ -94,7 +102,7 @@ function AdminPageInner() {
         </div>
         <div style={{ background: '#1e1e1e', border: '1px solid rgba(255,255,255,0.07)', borderRadius: '12px', padding: '14px' }}>
           <div style={{ fontSize: '28px', fontWeight: '800', color: '#5ca8ff' }}>{stats.actividadesActivas}</div>
-          <div style={{ fontSize: '12px', color: '#888', marginTop: '2px' }}>Actividades activas</div>
+          <div style={{ fontSize: '12px', color: '#888', marginTop: '2px' }}>{labels.serviceLabelPlural} activas</div>
         </div>
         {features.recurringScheduleEnabled ? (
           <div style={{ background: '#1e1e1e', border: '1px solid rgba(255,255,255,0.07)', borderRadius: '12px', padding: '14px' }}>

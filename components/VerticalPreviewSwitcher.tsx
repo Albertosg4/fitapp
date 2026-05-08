@@ -46,13 +46,14 @@ export default function VerticalPreviewSwitcher() {
           Reset gym
         </button>
       </div>
-      <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'flex-end', gap: '5px' }}>
+      <div style={{ fontSize: '10px', color: '#777', textAlign: 'right' }}>Solo afecta a esta demo local.</div>
+      <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'flex-end', gap: '6px', maxWidth: '360px' }}>
         {featureSummary.map((feature) => (
           <span
             key={feature.label}
             style={{
               fontSize: '10px',
-              padding: '2px 6px',
+              padding: '3px 7px',
               borderRadius: '999px',
               border: `1px solid ${feature.enabled ? 'rgba(200,245,66,0.35)' : 'rgba(255,255,255,0.18)'}`,
               color: feature.enabled ? '#c8f542' : '#aaa',

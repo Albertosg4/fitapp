@@ -173,3 +173,11 @@
   - ampliar cobertura de UI por vertical, o
   - preparar demo comercial por vertical, o
   - diseñar settings persistidos (fase separada).
+
+## Fase 7C · Demo comercial por vertical
+- Demo comercial por vertical con cambio visible grande en UI.
+- Sin Supabase, sin SQL y sin cambios server.
+- Siguiente recomendado:
+  - Preparar demo comercial completa por vertical.
+  - Ampliar cobertura de labels/copy.
+  - Diseñar settings persistidos (futuro, fuera de esta fase).
