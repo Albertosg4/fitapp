@@ -11,6 +11,7 @@ import SocioPagosTab from '@/features/socio/components/SocioPagosTab'
 import SocioQRTab from '@/features/socio/components/SocioQRTab'
 import SocioPerfilTab from '@/features/socio/components/SocioPerfilTab'
 import { VerticalSettingsProvider, useActiveVerticalSettings } from '@/lib/domain/vertical-settings-context'
+import { getVerticalCommercialProfile } from '@/lib/domain/vertical-commercial'
 
 function SocioPageInner() {
   const {
@@ -40,6 +41,7 @@ function SocioPageInner() {
   const searchParams = useSearchParams()
   const { settings } = useActiveVerticalSettings()
   const { labels, features } = settings
+  const profile = getVerticalCommercialProfile(settings.vertical)
   const visibleNavTabs = [
     { key: 'clases', icon: '🗓', label: labels.serviceLabelPlural, visible: true },
     { key: 'historial', icon: '📋', label: 'Historial', visible: features.attendanceEnabled },
@@ -158,6 +160,11 @@ function SocioPageInner() {
           {msgPago}
         </div>
       )}
+
+
+      <div style={{ padding: '10px 20px', borderBottom: '1px solid rgba(255,255,255,0.06)', color: '#a1a1aa', fontSize: '12px' }}>
+        {profile.memberSummary}
+      </div>
 
       {/* Tabs */}
       {tab === 'clases' && (

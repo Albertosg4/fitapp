@@ -213,3 +213,9 @@ Este documento reclasifica riesgos tras completar 3B, 3C, check-in hardening, St
 - Mitigación: mantener mensajes explícitos de “modo demo” y no tocar backend.
 - Riesgo: cobertura parcial de features por bloques UI.
 - Mitigación: ampliar cobertura gradualmente por módulos.
+
+## Riesgos Fase 7C
+- Riesgo: la demo comercial puede parecer configuración real.
+- Mitigación: mensajes explícitos de modo demo local.
+- Riesgo: cobertura visual parcial.
+- Mitigación: ampliar cobertura por módulos en fases siguientes.
