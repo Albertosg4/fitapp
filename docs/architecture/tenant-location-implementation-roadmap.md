@@ -127,3 +127,11 @@ Priorizar cambios de alto impacto funcional con **baja superficie de riesgo estr
 - Sin Supabase.
 - Sin datos reales.
 - Sin credenciales demo reales todavía.
+
+## Fase 7E — Focused vertical demo pages
+
+- Focused vertical demo pages.
+- Enlaces comerciales por sector.
+- Sin Supabase.
+- Sin Auth.
+- Sin datos reales.
