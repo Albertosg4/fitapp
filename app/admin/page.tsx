@@ -9,6 +9,7 @@ import SociosTab from '@/features/admin/components/SociosTab'
 import PagosTab from '@/features/admin/components/PagosTab'
 import { supabase } from '@/lib/supabase'
 import { TIPOS_MEMBRESIA } from '@/lib/domain/membresias'
+import { USER_FACING_ERRORS, normaliseUserFacingError } from '@/lib/ui/user-facing-errors'
 
 const inputStyle = { width: '100%', background: '#181818', border: '1px solid rgba(255,255,255,0.07)', borderRadius: '10px', padding: '10px 14px', color: '#f0f0f0', fontSize: '14px', outline: 'none', boxSizing: 'border-box' as const, fontFamily: 'system-ui' }
 
@@ -31,20 +32,22 @@ export default function AdminPage() {
     setMsgSocio(''); setLoadingSocio(true)
     try {
       const { data: { session } } = await supabase.auth.getSession()
-      if (!session?.access_token) { setMsgSocio('❌ Sin sesión activa.'); return }
+      if (!session?.access_token) { setMsgSocio(`❌ ${USER_FACING_ERRORS.sessionExpired}`); return }
       const res = await fetch('/api/register-socio', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.access_token}` },
         body: JSON.stringify({ ...nuevoSocio, gym_id: gymId }),
       })
       const data = await res.json()
-      if (data.error) { setMsgSocio('❌ Error: ' + data.error) }
+      if (!res.ok || data.error) {
+        setMsgSocio(`❌ ${normaliseUserFacingError(data?.error, 'No se ha podido registrar el socio. Revisa los datos e inténtalo de nuevo.')}`)
+      }
       else {
         setMsgSocio('✅ Socio registrado correctamente')
         setNuevoSocio({ nombre: '', email: '', password: '', tipo_membresia: 'mensual' })
         await loadSocios()
       }
-    } catch { setMsgSocio('❌ Error de conexión') }
+    } catch (error) { setMsgSocio(`❌ ${normaliseUserFacingError(error, USER_FACING_ERRORS.network)}`) }
     finally { setLoadingSocio(false) }
   }
 
@@ -56,7 +59,7 @@ export default function AdminPage() {
 
   if (error) return (
     <div style={{ minHeight: '100vh', background: '#0f0f0f', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
-      <p style={{ color: '#ff5c5c', fontFamily: 'system-ui', textAlign: 'center' }}>Error al cargar: {error}</p>
+      <div style={{ textAlign: 'center' }}><p style={{ color: '#ff5c5c', fontFamily: 'system-ui', marginBottom: '8px' }}>{USER_FACING_ERRORS.loadAdmin}</p><p style={{ color: '#9ca3af', fontFamily: 'system-ui', fontSize: '13px' }}>Vuelve a intentarlo en unos segundos.</p></div>
     </div>
   )
 

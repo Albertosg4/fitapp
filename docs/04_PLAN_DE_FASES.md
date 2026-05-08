@@ -235,3 +235,7 @@
 - Fase 8B mejora presentación de app real gimnasio.
 - No toca backend ni datos.
 - Siguiente fase sugerida: 8C errores/mensajes.
+
+- Fase 8C mejora mensajes de error de app real gimnasio.
+- No toca backend ni datos.
+- Siguiente fase sugerida: 8D checklist funcional de venta/smoke test.

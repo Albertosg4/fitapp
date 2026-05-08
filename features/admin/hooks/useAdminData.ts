@@ -3,6 +3,7 @@ import { useState, useEffect, useCallback, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import type { Socio } from '@/types/domain'
+import { USER_FACING_ERRORS, normaliseUserFacingError } from '@/lib/ui/user-facing-errors'
 
 export interface AdminStats {
   actividadesActivas: number
@@ -104,7 +105,7 @@ export function useAdminData() {
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Error al inicializar'
       console.error('[useAdminData] init error:', msg)
-      if (mountedRef.current) setError(msg)
+      if (mountedRef.current) setError(normaliseUserFacingError(msg, USER_FACING_ERRORS.loadAdmin))
     } finally {
       if (mountedRef.current) setLoading(false)
     }

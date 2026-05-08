@@ -2,6 +2,7 @@
 import { useState, useCallback, useRef } from 'react'
 import { supabase } from '@/lib/supabase'
 import QRCode from 'qrcode'
+import { USER_FACING_ERRORS, normaliseUserFacingError } from '@/lib/ui/user-facing-errors'
 import type { Socio } from '@/types/domain'
 import { getDiaSemanaLunesPrimero, parseLocalDate } from '@/lib/domain/fechas'
 
@@ -53,7 +54,10 @@ export function useSocioData() {
       return 'Tu sesión ha caducado. Cierra sesión y vuelve a entrar.'
     }
     if (status >= 500) return 'No se pudo procesar la reserva ahora. Inténtalo de nuevo en unos segundos.'
-    return rawError || `Error ${status}`
+    if (message.includes('membresía') && message.includes('activa')) return 'Tu membresía no está activa. Renueva tu membresía para reservar.'
+    if (message.includes('completa') || message.includes('aforo')) return 'La clase está completa.'
+    if (message.includes('no disponible') || message.includes('no encontrada')) return 'Esta clase ya no está disponible.'
+    return normaliseUserFacingError(rawError, USER_FACING_ERRORS.booking)
   }, [])
 
   const cargarReservas = useCallback(async (
@@ -229,7 +233,7 @@ export function useSocioData() {
     try {
       const { data: { session } } = await supabase.auth.getSession()
       if (!session?.access_token) {
-        const msg = 'Sin sesión activa. Vuelve a iniciar sesión.'
+        const msg = USER_FACING_ERRORS.sessionExpired
         setReservaError(msg)
         return { ok: false, error: msg }
       }
@@ -308,7 +312,7 @@ export function useSocioData() {
         reservasActualizadas: cargaReservasResult.reservas,
       }
     } catch {
-      const msg = 'Error de conexión. Comprueba tu red.'
+      const msg = USER_FACING_ERRORS.booking
       setReservaError(msg)
       return { ok: false, error: msg }
     } finally {

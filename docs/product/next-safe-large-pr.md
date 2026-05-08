@@ -98,3 +98,6 @@ La regla para Fase 8B debe ser simple: solo presentacion y claridad. Cualquier c
 Fase 8B implementada/en curso.
 
 Siguiente recomendado: Fase 8C — Hardening de errores y mensajes usuario.
+
+- Fase 8C implementada/en curso: hardening de mensajes de error visibles en la app real (/admin y /socio) sin cambios de lógica.
+- Siguiente recomendado: Fase 8D — Checklist funcional de venta y smoke test no destructivo.
