@@ -118,3 +118,12 @@ Priorizar cambios de alto impacto funcional con **baja superficie de riesgo estr
 - Capability cards de preview visual.
 - Copy socio ligero por vertical.
 - Sin Supabase y sin persistencia real.
+
+## Estado Fase 7D (implementada/en curso)
+
+- Página pública `/demo`.
+- Experiencia online demo por vertical.
+- Sin Auth.
+- Sin Supabase.
+- Sin datos reales.
+- Sin credenciales demo reales todavía.

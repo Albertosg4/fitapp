@@ -219,3 +219,10 @@ Este documento reclasifica riesgos tras completar 3B, 3C, check-in hardening, St
 - Mitigación: mensajes explícitos de modo demo local.
 - Riesgo: cobertura visual parcial.
 - Mitigación: ampliar cobertura por módulos en fases siguientes.
+
+## Riesgos Fase 7D
+
+- Riesgo: la demo pública puede confundirse con entorno productivo real.
+- Mitigación: avisos claros de demo y sin credenciales reales.
+- Riesgo: futuros accesos demo mal aislados.
+- Mitigación: cuentas demo y datos demo en fases separadas con RLS/verificación.
