@@ -214,3 +214,11 @@
   - Fase 7G: diseño de cuentas demo reales controladas.
   - Fase 7H: datos demo por vertical.
   - Fase 7I: reset demo seguro.
+
+## Actualización Fase 7G/7H — frontera app real/demo
+
+- Fase 7G aisló la demo multi-sector de la app real.
+- Fase 7H añade guardarraíles de frontera.
+- La app real sigue siendo gimnasio/JGS Fight Team.
+- La demo multi-sector vive bajo `/demo`.
+- Multi-tenant real sigue pendiente y requiere fase separada.

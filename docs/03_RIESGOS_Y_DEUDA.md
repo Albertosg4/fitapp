@@ -241,3 +241,14 @@ Este documento reclasifica riesgos tras completar 3B, 3C, check-in hardening, St
 - Mitigación: avisos visibles de simulación.
 - Riesgo: simulación no cubre todos los flujos reales.
 - Mitigación: siguiente fase con cuentas demo reales controladas.
+
+## Actualización 2026-05-08 — Riesgo de contaminación app real/demo
+
+- Riesgo: contaminación entre demo multi-sector y app real de gimnasio.
+- Estado: mitigado parcialmente por Fase 7G y Fase 7H.
+- Mitigaciones:
+  - `/admin` y `/socio` limpios de preview vertical.
+  - Script `verify-real-gym-boundaries`.
+  - Checklist de PR.
+  - Demo multi-sector confinada a `/demo`.
+- Riesgo residual: Codex o futuras fases pueden reintroducir imports demo en app real si no se ejecuta el script.
