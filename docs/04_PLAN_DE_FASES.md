@@ -222,3 +222,10 @@
 - La app real sigue siendo gimnasio/JGS Fight Team.
 - La demo multi-sector vive bajo `/demo`.
 - Multi-tenant real sigue pendiente y requiere fase separada.
+
+## Nota Fase 8A — auditoría comercial app gimnasio real
+
+- Fase 8A revisa la app real de gimnasio para venta.
+- Reafirma que la demo multi-sector queda separada bajo `/demo`.
+- Próximo paso recomendado: pulido visual seguro de `/admin` y `/socio` reales.
+- No cambia backend, Supabase, SQL, Auth, Stripe, APIs, rutas ni datos reales.
