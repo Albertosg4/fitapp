@@ -256,3 +256,5 @@
 - Endurece checkout + webhook + UI pagos socio/admin.
 - SQL preparado pero no ejecutado (`docs/sql/fase-9a-stripe-membership-lifecycle/*`).
 - Siguiente paso: ejecutar precheck/SQL manual si procede y validar Stripe test mode.
+
+- Corrección Fase 9A: webhook movido a RPC transaccional; merge/deploy condicionado a ejecutar SQL manual y verify.

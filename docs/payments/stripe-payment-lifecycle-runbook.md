@@ -1,10 +1,19 @@
 # Runbook validación Stripe lifecycle (Fase 9A)
 
-1. Probar pago cancelado (`/socio`, ir a Stripe y cancelar): esperar mensaje cancelado sin cambio de membresía.
-2. Probar pago correcto en test mode: esperar redirección OK y actualización posterior por webhook.
-3. Verificar webhook: evento `checkout.session.completed` recibido y 200.
-4. Verificar membresía en socio: tipo y fecha renovados.
-5. Verificar historial socio: pago visible con método tarjeta y estado pagado.
-6. Verificar admin pagos: pago visible con socio, fecha, importe y estado.
-7. Guardar capturas: checkout inicio, retorno cancelado, retorno OK, historial socio, admin pagos.
-8. Parar inmediatamente si hay error técnico visible, duplicado de pago, o membresía no sincronizada.
+## Regla crítica previa
+Si esta PR se mergea sin SQL aplicado y verificado, **no probar pagos**.
+
+## Orden seguro
+1. Revisar PR y aprobar cambios.
+2. Ejecutar `00_precheck.sql`.
+3. Ejecutar `01_main.sql` solo si se aprueba.
+4. Ejecutar `02_verify.sql`.
+5. Merge/deploy.
+6. Probar Stripe test mode.
+
+## Pruebas funcionales (test mode)
+- Pago cancelado: volver a `/socio?pago=cancel`, sin cambio de membresía.
+- Pago correcto: volver a `/socio?pago=ok`.
+- Webhook: `checkout.session.completed` procesado por RPC con respuesta 200.
+- Membresía: renovada una sola vez.
+- Historial socio y admin pagos: reflejan el pago de forma consistente.

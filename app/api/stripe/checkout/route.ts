@@ -30,8 +30,8 @@ export async function POST(req: Request) {
     if (!isTipoMembresia(tipoMembresia)) return NextResponse.json({ error: PAYMENT_ERROR_MESSAGE }, { status: 400 })
 
     const { data: perfil, error: perfilError } = await supabaseAdmin.from('perfiles').select('stripe_customer_id, nombre, gym_id').eq('id', user.id).single()
-    if (perfilError || !perfil) {
-      console.error('[stripe/checkout] Failed to load profile', perfilError?.message)
+    if (perfilError || !perfil || !perfil.gym_id) {
+      console.error('[stripe/checkout] Failed to load profile or missing gym_id', perfilError?.message)
       return NextResponse.json({ error: PAYMENT_ERROR_MESSAGE }, { status: 500 })
     }
 

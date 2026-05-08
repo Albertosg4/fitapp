@@ -18,6 +18,7 @@ const optionalSql = [
   'docs/sql/fase-9a-stripe-membership-lifecycle/01_main.sql',
   'docs/sql/fase-9a-stripe-membership-lifecycle/02_verify.sql',
   'docs/sql/fase-9a-stripe-membership-lifecycle/99_rollback.sql',
+  'docs/sql/fase-9a-stripe-membership-lifecycle/README.md',
 ]
 
 const rows = [...required, ...optionalSql].map((p) => ({ p, ok: fs.existsSync(p), required: required.includes(p) }))

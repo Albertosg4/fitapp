@@ -285,3 +285,5 @@ Este documento reclasifica riesgos tras completar 3B, 3C, check-in hardening, St
 - Riesgos cerrados: checkout/webhook con mensajes seguros e idempotencia reforzada en código.
 - Riesgos pendientes: aplicar SQL manual preparado para `stripe_event_id`/`stripe_session_id` y validar en test mode.
 - SQL queda pendiente de ejecutar manualmente.
+
+- Fase 9A correctiva: webhook Stripe ahora depende de RPC transaccional `registrar_pago_stripe_membresia`; requiere SQL manual previo (no ejecutado en PR).
