@@ -233,3 +233,11 @@ Este documento reclasifica riesgos tras completar 3B, 3C, check-in hardening, St
 - Mitigación: páginas enfocadas por vertical.
 - Riesgo: el cliente piense que ya hay acceso demo completo.
 - Mitigación: avisos de credenciales demo en fase separada.
+
+
+## Actualización 2026-05-08 — Riesgos tras Fase 7F
+
+- Riesgo: cliente confunda simulación con datos reales.
+- Mitigación: avisos visibles de simulación.
+- Riesgo: simulación no cubre todos los flujos reales.
+- Mitigación: siguiente fase con cuentas demo reales controladas.

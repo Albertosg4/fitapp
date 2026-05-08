@@ -135,3 +135,11 @@ Priorizar cambios de alto impacto funcional con **baja superficie de riesgo estr
 - Sin Supabase.
 - Sin Auth.
 - Sin datos reales.
+
+
+## Fase 7F — interactive demo simulator
+
+- Interactive demo simulator por vertical.
+- Mock data local.
+- Sin Supabase/Auth/datos reales.
+- Base previa a cuentas demo reales.
