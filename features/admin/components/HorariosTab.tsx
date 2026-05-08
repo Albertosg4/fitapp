@@ -201,7 +201,7 @@ export default function HorariosTab({ gymId }: Props) {
 
       {/* Lista de horarios */}
       {horarios.length === 0 ? (
-        <p style={{ color: '#888', textAlign: 'center', padding: '20px 0', fontSize: '13px' }}>Sin horarios recurrentes.</p>
+        <p style={{ color: '#888', textAlign: 'center', padding: '20px 0', fontSize: '13px' }}>Aún no hay horarios recurrentes. Crea un horario para que los socios puedan reservar.</p>
       ) : horarios.map(h => (
         <div key={h.id} style={{ ...cardStyle, opacity: h.activo ? 1 : 0.5, borderLeft: `3px solid ${h.actividad?.color || '#c8f542'}` }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>

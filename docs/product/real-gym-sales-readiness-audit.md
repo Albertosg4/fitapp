@@ -189,3 +189,9 @@ En esta fase no se han aplicado cambios funcionales. No se ha tocado backend, Su
 - [ ] Hay backup/rollback para operaciones sensibles.
 - [ ] Build/lint verificados.
 - [ ] Checklist manual pasado.
+
+## Nota Fase 8B
+
+- Fase 8B pule visualmente `/admin` y `/socio` sin cambiar comportamiento.
+- Sigue pendiente validación manual comercial completa.
+- Pagos/Stripe siguen pendientes de auditoría separada.

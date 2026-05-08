@@ -229,3 +229,9 @@
 - Reafirma que la demo multi-sector queda separada bajo `/demo`.
 - Próximo paso recomendado: pulido visual seguro de `/admin` y `/socio` reales.
 - No cambia backend, Supabase, SQL, Auth, Stripe, APIs, rutas ni datos reales.
+
+## Nota Fase 8B
+
+- Fase 8B mejora presentación de app real gimnasio.
+- No toca backend ni datos.
+- Siguiente fase sugerida: 8C errores/mensajes.

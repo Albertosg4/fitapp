@@ -66,7 +66,7 @@ export default function HistorialPagos({ userId }: Props) {
   if (pagos.length === 0) return (
     <div style={{ textAlign: 'center', padding: '24px', color: '#888', fontSize: '13px', border: '1px dashed rgba(255,255,255,0.12)', borderRadius: '12px' }}>
       <p style={{ fontSize: '24px', marginBottom: '8px' }}>💳</p>
-      Sin pagos registrados
+      Aún no hay pagos registrados.
     </div>
   )
 

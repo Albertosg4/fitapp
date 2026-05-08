@@ -45,7 +45,7 @@ export default function SocioClasesTab({
         <CalendarioMes horarios={horarios} onSeleccionarDia={onSeleccionarDia} marcadores={marcadores} />
 
         {modalFecha && horariosDelDia.length === 0 && (
-          <p style={{ color: '#888', textAlign: 'center', padding: '20px 0', fontSize: '13px' }}>Sin clases este día</p>
+          <p style={{ color: '#888', textAlign: 'center', padding: '20px 0', fontSize: '13px' }}>No hay clases disponibles para este día.</p>
         )}
 
         {modalFecha && horariosDelDia.map(h => {

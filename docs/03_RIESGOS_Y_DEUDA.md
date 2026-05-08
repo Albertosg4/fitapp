@@ -258,3 +258,9 @@ Este documento reclasifica riesgos tras completar 3B, 3C, check-in hardening, St
 - Riesgo: vender o enseñar la app real de gimnasio sin checklist funcional/comercial completo.
 - Mitigación: Fase 8A crea auditoría de preparación comercial, checklist de validación y siguiente PR seguro recomendado.
 - Riesgo residual: la app debe validarse manualmente antes de enseñarla a clientes, especialmente reservas, pagos, QR/check-in, móvil y estados sin datos.
+
+## Riesgo comercial/UI y mitigación (Fase 8B)
+
+- Riesgo: app funcional pero visualmente poco vendible.
+- Mitigación: Fase 8B pule UI real de admin/socio sin tocar lógica.
+- Riesgo residual: hay que validar con checklist comercial real antes de enseñar a clientes.

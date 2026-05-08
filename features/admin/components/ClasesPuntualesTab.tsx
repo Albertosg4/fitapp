@@ -233,7 +233,7 @@ export default function ClasesPuntualesTab({ gymId }: Props) {
 
       {/* Lista de clases puntuales */}
       {sesiones.length === 0 ? (
-        <p style={{ color: '#888', textAlign: 'center', padding: '20px 0', fontSize: '13px' }}>Sin clases puntuales.</p>
+        <p style={{ color: '#888', textAlign: 'center', padding: '20px 0', fontSize: '13px' }}>No hay clases puntuales próximas.</p>
       ) : sesiones.map(s => (
         <div key={s.id} style={{ ...cardStyle, opacity: s.cancelada ? 0.4 : 1, borderLeft: `3px solid ${s.actividad?.color || '#5ca8ff'}` }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
