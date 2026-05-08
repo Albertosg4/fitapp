@@ -4,6 +4,12 @@
 
 La demo online permite enseñar FITAPP por vertical sin tocar datos reales ni entregar credenciales reales en esta fase.
 
+## Nota de separación Fase 7G
+
+Las demos multi-sector están pensadas para venta y validación comercial online. No deben confundirse con el panel real de gimnasio.
+
+`/admin` y `/socio` siguen siendo la app real de gimnasio; la experiencia multi-sector vive bajo `/demo` y sus rutas hijas.
+
 ## Qué enseñar por vertical
 
 - **Gym**: socios, clases, reservas, pagos y check-in QR.

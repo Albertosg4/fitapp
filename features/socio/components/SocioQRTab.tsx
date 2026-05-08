@@ -2,7 +2,6 @@
 
 import { Badge, Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle, EmptyState } from '@/components/ui'
 import type { Socio } from '@/types/domain'
-import { useActiveVerticalSettings } from '@/lib/domain/vertical-settings-context'
 
 interface Props {
   perfil: Socio | null
@@ -11,20 +10,6 @@ interface Props {
 
 export default function SocioQRTab({ perfil, qrUrl }: Props) {
   const memberCode = `FIT-${perfil?.qr_token?.slice(0, 4).toUpperCase() || '0000'}`
-  const { settings } = useActiveVerticalSettings()
-  const { labels, features } = settings
-
-  if (!features.qrCheckinEnabled) {
-    return (
-      <section className="px-4 pb-6 pt-4 sm:px-6">
-        <EmptyState
-          title="QR/check-in no activo para esta vertical en modo demo."
-          description="No activo para esta vertical en modo demo."
-          className="mx-auto w-full max-w-md border-zinc-700 bg-zinc-900 text-zinc-200"
-        />
-      </section>
-    )
-  }
 
   return (
     <section className="px-4 pb-6 pt-4 sm:px-6">
@@ -66,7 +51,7 @@ export default function SocioQRTab({ perfil, qrUrl }: Props) {
         </CardContent>
 
         <CardFooter className="pt-0 text-center text-sm text-zinc-400">
-          {`Muestra este QR al entrar al ${labels.locationLabel.toLowerCase()} o al hacer check-in en una ${labels.serviceLabel.toLowerCase()}.`}
+          Muestra este QR al entrar al gimnasio o al hacer check-in en una clase.
         </CardFooter>
       </Card>
     </section>

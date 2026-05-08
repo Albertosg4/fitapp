@@ -143,3 +143,11 @@ Priorizar cambios de alto impacto funcional con **baja superficie de riesgo estr
 - Mock data local.
 - Sin Supabase/Auth/datos reales.
 - Base previa a cuentas demo reales.
+
+## Fase 7G — Aislar demo multi-sector de app real de gimnasio
+
+- **Estado**: implementada/en curso.
+- **Objetivo**: proteger la app real de gimnasio y aislar la demo vertical bajo `/demo`.
+- **Alcance**: `/admin` y `/socio` dejan de depender del preview vertical; la demo comercial multi-sector sigue disponible en `/demo` y `/demo/*`.
+- **Fuera de alcance**: backend, datos, permisos, Supabase, Auth, SQL, RLS, Stripe, APIs y credenciales.
+- **Validación esperada**: `/admin` y `/socio` se comportan como app real de gimnasio; `/demo` conserva las verticales comerciales; no hay cambios de backend/datos/permisos.

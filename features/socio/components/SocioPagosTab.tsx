@@ -5,7 +5,6 @@ import HistorialPagos from '@/components/HistorialPagos'
 import { Badge, Button, Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui'
 import { IMPORTES, TIPOS_MEMBRESIA, getDiasRestantes, getEstadoMembresia, type TipoMembresia } from '@/lib/domain/membresias'
 import type { Socio } from '@/types/domain'
-import { useActiveVerticalSettings } from '@/lib/domain/vertical-settings-context'
 
 interface Props {
   userId: string
@@ -24,20 +23,6 @@ const membershipLabelMap = TIPOS_MEMBRESIA.reduce<Record<string, string>>((acc, 
 export default function SocioPagosTab({ userId, perfil, pagando, onPagar }: Props) {
   const [renewalStep, setRenewalStep] = useState<RenewalStep>('closed')
   const [selectedPlan, setSelectedPlan] = useState<TipoMembresia | null>(null)
-  const { settings } = useActiveVerticalSettings()
-  const { labels, features } = settings
-
-  if (!features.paymentsEnabled) {
-    return (
-      <div className="p-4 sm:p-5">
-        <Card className="!border-zinc-700 !bg-[#181818] !text-zinc-100">
-          <CardContent className="pt-6 text-sm text-zinc-300">
-            Pagos no activos para esta vertical en modo demo.
-          </CardContent>
-        </Card>
-      </div>
-    )
-  }
 
   const estadoMembresia = perfil ? getEstadoMembresia(perfil) : 'inactiva'
   const diasRestantes = perfil?.membresia_vence ? getDiasRestantes(perfil.membresia_vence) : null
@@ -78,7 +63,7 @@ export default function SocioPagosTab({ userId, perfil, pagando, onPagar }: Prop
 
       <Card className="!border-lime-300/20 !bg-[#181818] !text-zinc-100 shadow-[0_12px_24px_rgba(0,0,0,0.3)]">
         <CardHeader className="space-y-2">
-          <CardTitle className="text-xl font-extrabold text-zinc-100">{`Historial de ${labels.paymentLabelPlural.toLowerCase()}`}</CardTitle>
+          <CardTitle className="text-xl font-extrabold text-zinc-100">Historial de pagos</CardTitle>
           <CardDescription className="!text-zinc-300">Consulta tus pagos realizados.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-3 pt-0">

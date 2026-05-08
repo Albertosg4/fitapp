@@ -2,7 +2,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '@/lib/supabase'
 import type { Pago } from '@/types/domain'
-import { useActiveVerticalSettings } from '@/lib/domain/vertical-settings-context'
 
 const cardStyle = { background: '#1e1e1e', border: '1px solid rgba(255,255,255,0.07)', borderRadius: '12px', padding: '14px', marginBottom: '10px' }
 const inputStyle = { width: '100%', background: '#181818', border: '1px solid rgba(255,255,255,0.07)', borderRadius: '10px', padding: '10px 14px', color: '#f0f0f0', fontSize: '14px', outline: 'none', boxSizing: 'border-box' as const, fontFamily: 'system-ui' }
@@ -22,8 +21,6 @@ async function getAuthHeaders(): Promise<HeadersInit> {
 }
 
 export default function PagosTab({ onSociosChange }: Props) {
-  const { settings } = useActiveVerticalSettings()
-  const { labels } = settings
   const [pagos, setPagos] = useState<Pago[]>([])
   const [loading, setLoading] = useState(false)
   const [errorMsg, setErrorMsg] = useState('')
@@ -112,7 +109,7 @@ export default function PagosTab({ onSociosChange }: Props) {
         </div>
       </div>
       <div style={{ display: 'flex', gap: '8px', marginBottom: '16px', flexWrap: 'wrap' as const }}>
-        <input placeholder={`Buscar ${labels.customerLabel.toLowerCase()}...`} value={filtroSocio} onChange={e => setFiltroSocio(e.target.value)}
+        <input placeholder="Buscar socio..." value={filtroSocio} onChange={e => setFiltroSocio(e.target.value)}
           style={{ ...inputStyle, flex: 1, minWidth: '120px', padding: '8px 12px', fontSize: '13px' }} />
         <select value={filtroEstado} onChange={e => setFiltroEstado(e.target.value)}
           style={{ ...inputStyle, width: 'auto', padding: '8px 12px', fontSize: '13px' }}>
@@ -128,7 +125,7 @@ export default function PagosTab({ onSociosChange }: Props) {
       ) : errorMsg ? (
         <p style={{ color: '#ff5c5c', textAlign: 'center', padding: '20px 0', fontSize: '13px' }}>{errorMsg}</p>
       ) : filtrados.length === 0 ? (
-        <p style={{ color: '#888', textAlign: 'center', padding: '20px 0', fontSize: '13px' }}>Sin {labels.paymentLabelPlural.toLowerCase()} registrados</p>
+        <p style={{ color: '#888', textAlign: 'center', padding: '20px 0', fontSize: '13px' }}>Sin pagos registrados</p>
       ) : filtrados.map(p => (
         <div key={p.id} style={{ ...cardStyle, borderLeft: p.estado === 'pendiente' ? '3px solid #ffb84d' : p.metodo === 'cortesia' ? '3px solid #a855f7' : '1px solid rgba(255,255,255,0.07)' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
