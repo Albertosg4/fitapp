@@ -112,3 +112,11 @@ Siguiente recomendado: Fase 8C — Hardening de errores y mensajes usuario.
 ## Siguiente recomendado
 
 - Fase 8E — Auditoría separada de pagos/Stripe.
+
+## Estado Fase 8E
+
+- Fase 8E implementada/en curso: auditoría separada de pagos/Stripe sin cambios de runtime.
+- Siguiente recomendado: Fase 8F — Validación controlada Stripe test mode.
+- Fase 8F podrá implicar pruebas reales en test mode.
+- Fase 8F no debe tocar producción live sin confirmación.
+- Fase 8F debe tener rollback/plan de soporte si se cambia código.

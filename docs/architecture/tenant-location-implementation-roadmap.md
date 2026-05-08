@@ -191,3 +191,11 @@ Priorizar cambios de alto impacto funcional con **baja superficie de riesgo estr
 - Alcance: checklist smoke test, guion comercial, plantilla de informe y script no destructivo.
 - Fuera de alcance: backend, Supabase, SQL, RLS, Auth, Stripe, APIs, datos reales, demo multi-sector.
 - Validación: lint, build, guardrails, audit surfaces y verify-real-gym-sales-smoke-readiness.
+
+## Fase 8E — Auditoría separada de pagos/Stripe
+
+- Estado: implementada/en curso.
+- Objetivo: auditar flujo real de pagos Stripe antes de cambios funcionales.
+- Alcance: documentación de flujo, riesgos, checklist QA y script no destructivo.
+- Fuera de alcance: backend, Supabase, SQL, RLS, Auth, cambios Stripe, webhooks, datos reales, demo multi-sector.
+- Validación: lint, build, guardrails, audit surfaces, smoke readiness y audit-stripe-payment-surfaces.
