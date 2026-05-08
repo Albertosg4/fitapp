@@ -34,3 +34,8 @@ Así se evita que un cliente vea primero sectores no relevantes para su caso.
 - `/demo/peluqueria` carga enfoque beauty directamente.
 - `/demo/generico` carga enfoque generic directamente.
 - Ninguna página publica credenciales reales.
+
+## Nota de sincronización del provider
+
+- `VerticalSettingsProvider` sincroniza `initialVertical` durante navegación client-side entre rutas enfocadas (`/demo/*`).
+- Con `persistPreview=false`, el provider no usa `localStorage` y mantiene la vertical fija por ruta.

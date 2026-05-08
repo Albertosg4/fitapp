@@ -33,17 +33,26 @@ export function VerticalSettingsProvider({
   initialVertical,
   persistPreview = true,
 }: VerticalSettingsProviderProps) {
-  const fallbackVertical = resolveBusinessVertical(initialVertical ?? DEFAULT_VERTICAL)
+  const fallbackVertical = useMemo(
+    () => resolveBusinessVertical(initialVertical ?? DEFAULT_VERTICAL),
+    [initialVertical],
+  )
   const [vertical, setVertical] = useState<BusinessVertical>(fallbackVertical)
 
   useEffect(() => {
-    if (!persistPreview) return
+    if (!persistPreview) {
+      setVertical(fallbackVertical)
+      return
+    }
 
     const stored = window.localStorage.getItem(VERTICAL_PREVIEW_STORAGE_KEY)
-    if (!stored) return
+    if (!stored) {
+      setVertical(fallbackVertical)
+      return
+    }
 
     setVertical(resolveBusinessVertical(stored))
-  }, [persistPreview])
+  }, [fallbackVertical, persistPreview])
 
   const setPreviewVertical = (nextVertical: BusinessVertical) => {
     const resolved = resolveBusinessVertical(nextVertical)
