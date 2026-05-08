@@ -202,3 +202,9 @@ En esta fase no se han aplicado cambios funcionales. No se ha tocado backend, Su
 - No cambia lógica real.
 - Sigue pendiente validación manual comercial completa.
 - Pagos/Stripe siguen pendientes de auditoría separada.
+
+## Nota Fase 8D
+
+- Fase 8D añade smoke test comercial, guion de demo y plantilla de informe.
+- La app todavía requiere ejecutar manualmente el checklist antes de enseñarla.
+- Pagos/Stripe siguen pendientes de auditoría separada.
