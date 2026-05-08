@@ -4,7 +4,6 @@ import { supabase } from '@/lib/supabase'
 import type { Clase, Reserva } from '@/types/domain'
 import type { TipoMembresia } from '@/lib/domain/membresias'
 import { parseLocalDate, getDiaSemanaLunesPrimero, formatLocalDate } from '@/lib/domain/fechas'
-import { useActiveVerticalSettings } from '@/lib/domain/vertical-settings-context'
 
 // LEGACY: componente no visible en UI. Mantenido para compatibilidad TypeScript.
 // No usar en nuevas pantallas.
@@ -21,8 +20,6 @@ interface Props {
 }
 
 export default function ClasesTab({ clases, onEliminarClase }: Props) {
-  const { settings } = useActiveVerticalSettings()
-  const { labels } = settings
   const [fechaSeleccionada, setFechaSeleccionada] = useState('')
   const [clasesDelDia, setClasesDelDia] = useState<Clase[]>([])
   const [modalClase, setModalClase] = useState<(Clase & { fecha: string }) | null>(null)
@@ -97,7 +94,7 @@ export default function ClasesTab({ clases, onEliminarClase }: Props) {
         <div>
           <div style={{ fontSize: '12px', color: '#888', fontWeight: '600', letterSpacing: '1px', textTransform: 'uppercase', marginBottom: '12px' }}>{fechaSeleccionada}</div>
           {clasesDelDia.length === 0 ? (
-            <p style={{ color: '#888', fontSize: '13px', textAlign: 'center', padding: '20px 0' }}>Sin {labels.serviceLabelPlural.toLowerCase()} este día</p>
+            <p style={{ color: '#888', fontSize: '13px', textAlign: 'center', padding: '20px 0' }}>Sin clases este día</p>
           ) : clasesDelDia.map(c => (
             <div key={c.id} style={{ ...cardStyle, cursor: 'pointer', opacity: eliminando === c.id ? 0.5 : 1 }} onClick={() => abrirModalClase(c, fechaSeleccionada)}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
@@ -106,7 +103,7 @@ export default function ClasesTab({ clases, onEliminarClase }: Props) {
                   <div style={{ fontSize: '12px', color: '#888', marginTop: '3px' }}>{c.hora_inicio} · {c.duracion_min} min · Aforo: {c.aforo_max}</div>
                 </div>
                 <div style={{ display: 'flex', gap: '8px' }}>
-                  <span style={{ fontSize: '11px', color: '#888', padding: '3px 8px', background: 'rgba(255,255,255,0.06)', borderRadius: '8px' }}>Ver {labels.bookingLabelPlural.toLowerCase()}</span>
+                  <span style={{ fontSize: '11px', color: '#888', padding: '3px 8px', background: 'rgba(255,255,255,0.06)', borderRadius: '8px' }}>Ver reservas</span>
                   <button
                     onClick={(e) => handleEliminar(e, c.id)}
                     disabled={!!eliminando}
@@ -132,12 +129,12 @@ export default function ClasesTab({ clases, onEliminarClase }: Props) {
             <div style={{ fontSize: '20px', fontWeight: '800', marginBottom: '4px' }}>{modalClase.nombre}</div>
             <div style={{ fontSize: '13px', color: '#888', marginBottom: '20px' }}>{modalClase.fecha} · {modalClase.hora_inicio}</div>
             <div style={{ fontSize: '12px', color: '#888', fontWeight: '600', letterSpacing: '1px', textTransform: 'uppercase', marginBottom: '12px' }}>
-              {labels.bookingLabelPlural} — {loadingReservas ? '...' : `${reservasClase.length} / ${modalClase.aforo_max}`}
+              Reservas — {loadingReservas ? '...' : `${reservasClase.length} / ${modalClase.aforo_max}`}
             </div>
             {loadingReservas
               ? <p style={{ color: '#888', fontSize: '13px' }}>Cargando...</p>
               : reservasClase.length === 0
-                ? <p style={{ color: '#888', fontSize: '13px' }}>Sin {labels.bookingLabelPlural.toLowerCase()} para este día</p>
+                ? <p style={{ color: '#888', fontSize: '13px' }}>Sin reservas para este día</p>
                 : reservasClase.map(r => (
                   <div key={r.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
                     <span style={{ fontSize: '14px' }}>{r.perfil?.nombre || 'Sin nombre'}</span>

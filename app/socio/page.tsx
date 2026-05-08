@@ -10,8 +10,6 @@ import SocioHistorialTab from '@/features/socio/components/SocioHistorialTab'
 import SocioPagosTab from '@/features/socio/components/SocioPagosTab'
 import SocioQRTab from '@/features/socio/components/SocioQRTab'
 import SocioPerfilTab from '@/features/socio/components/SocioPerfilTab'
-import { VerticalSettingsProvider, useActiveVerticalSettings } from '@/lib/domain/vertical-settings-context'
-import { getVerticalCommercialProfile } from '@/lib/domain/vertical-commercial'
 
 function SocioPageInner() {
   const {
@@ -39,21 +37,13 @@ function SocioPageInner() {
   const [msgPago, setMsgPago] = useState('')
   const router = useRouter()
   const searchParams = useSearchParams()
-  const { settings } = useActiveVerticalSettings()
-  const { labels, features } = settings
-  const profile = getVerticalCommercialProfile(settings.vertical)
-  const visibleNavTabs = [
-    { key: 'clases', icon: '🗓', label: labels.serviceLabelPlural, visible: true },
-    { key: 'historial', icon: '📋', label: 'Historial', visible: features.attendanceEnabled },
-    { key: 'pagos', icon: '💳', label: labels.paymentLabelPlural, visible: features.paymentsEnabled },
-    { key: 'qr', icon: '⬛', label: 'Mi QR', visible: features.qrCheckinEnabled },
-    { key: 'perfil', icon: '👤', label: 'Perfil', visible: true },
-  ].filter((tabItem) => tabItem.visible)
-
-  useEffect(() => {
-    const visibleKeys = new Set(visibleNavTabs.map((tabItem) => tabItem.key))
-    if (!visibleKeys.has(tab)) setTab('clases')
-  }, [tab, visibleNavTabs])
+  const navTabs = [
+    { key: 'clases', icon: '🗓', label: 'Clases' },
+    { key: 'historial', icon: '📋', label: 'Historial' },
+    { key: 'pagos', icon: '💳', label: 'Pagos' },
+    { key: 'qr', icon: '⬛', label: 'Mi QR' },
+    { key: 'perfil', icon: '👤', label: 'Perfil' },
+  ]
 
   const init = useCallback(async () => {
     const { data: { user } } = await supabase.auth.getUser()
@@ -138,14 +128,14 @@ function SocioPageInner() {
       {estadoMembresia === 'caducada' && (
         <div style={{ background: 'rgba(255,92,92,0.15)', borderBottom: '1px solid rgba(255,92,92,0.3)', padding: '10px 20px', fontSize: '13px', color: '#ff5c5c', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px' }}>
           <span>
-            ❌ Tu membresía ha caducado. {tab === 'pagos' ? 'Puedes renovarla más abajo.' : `Renuévala desde la pestaña ${labels.paymentLabelPlural}.`}
+            ❌ Tu membresía ha caducado. {tab === 'pagos' ? 'Puedes renovarla más abajo.' : 'Renuévala desde la pestaña Pagos.'}
           </span>
           {tab !== 'pagos' && (
             <button
               onClick={() => setTab('pagos')}
               style={{ border: '1px solid rgba(255,92,92,0.4)', background: 'rgba(255,92,92,0.12)', color: '#ff9a9a', borderRadius: '8px', padding: '4px 10px', fontSize: '12px', cursor: 'pointer' }}
             >
-              {`Ir a ${labels.paymentLabelPlural}`}
+              Ir a Pagos
             </button>
           )}
         </div>
@@ -163,7 +153,7 @@ function SocioPageInner() {
 
 
       <div style={{ padding: '10px 20px', borderBottom: '1px solid rgba(255,255,255,0.06)', color: '#a1a1aa', fontSize: '12px' }}>
-        {profile.memberSummary}
+        JGS Fight Team - Área de socio
       </div>
 
       {/* Tabs */}
@@ -207,9 +197,7 @@ function SocioPageInner() {
               <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', fontSize: '13px' }}>
                 <span style={{ color: '#888' }}>Ocupación</span>
                 <span>
-                  {features.capacityEnabled
-                    ? `${ocupacion[`${modal.id}_${modal.fecha}`]?.count ?? 0} / ${modal.aforo_max} plazas`
-                    : 'Capacidad no activa para esta vertical en modo demo.'}
+                  {`${ocupacion[`${modal.id}_${modal.fecha}`]?.count ?? 0} / ${modal.aforo_max} plazas`}
                 </span>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', fontSize: '13px', borderTop: '1px solid rgba(255,255,255,0.07)' }}>
@@ -245,7 +233,7 @@ function SocioPageInner() {
 
       {/* Nav inferior */}
       <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, background: 'rgba(18,18,18,0.95)', backdropFilter: 'blur(12px)', borderTop: '1px solid rgba(255,255,255,0.07)', display: 'flex', justifyContent: 'space-around', padding: '10px 0 20px' }}>
-        {visibleNavTabs.map(n => (
+        {navTabs.map(n => (
           <button key={n.key} onClick={() => setTab(n.key)}
             style={{ display: 'flex', flexDirection: 'column' as const, alignItems: 'center', gap: '3px', cursor: 'pointer', padding: '4px 10px', borderRadius: '10px', border: 'none', background: 'transparent', fontFamily: 'system-ui', color: tab === n.key ? '#c8f542' : '#888' }}>
             <span style={{ fontSize: '20px' }}>{n.icon}</span>
@@ -259,14 +247,12 @@ function SocioPageInner() {
 
 export default function SocioPage() {
   return (
-    <VerticalSettingsProvider>
-      <Suspense fallback={
-        <div style={{ minHeight: '100vh', background: '#0f0f0f', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <p style={{ color: '#888', fontFamily: 'system-ui' }}>Cargando...</p>
-        </div>
-      }>
-        <SocioPageInner />
-      </Suspense>
-    </VerticalSettingsProvider>
+    <Suspense fallback={
+      <div style={{ minHeight: '100vh', background: '#0f0f0f', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <p style={{ color: '#888', fontFamily: 'system-ui' }}>Cargando...</p>
+      </div>
+    }>
+      <SocioPageInner />
+    </Suspense>
   )
 }
