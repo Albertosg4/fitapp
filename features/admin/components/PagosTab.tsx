@@ -125,7 +125,7 @@ export default function PagosTab({ onSociosChange }: Props) {
       ) : errorMsg ? (
         <p style={{ color: '#ff5c5c', textAlign: 'center', padding: '20px 0', fontSize: '13px' }}>{errorMsg}</p>
       ) : filtrados.length === 0 ? (
-        <p style={{ color: '#888', textAlign: 'center', padding: '20px 0', fontSize: '13px' }}>Sin pagos registrados</p>
+        <p style={{ color: '#888', textAlign: 'center', padding: '20px 0', fontSize: '13px' }}>Aún no hay pagos registrados.</p>
       ) : filtrados.map(p => (
         <div key={p.id} style={{ ...cardStyle, borderLeft: p.estado === 'pendiente' ? '3px solid #ffb84d' : p.metodo === 'cortesia' ? '3px solid #a855f7' : '1px solid rgba(255,255,255,0.07)' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>

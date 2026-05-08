@@ -60,15 +60,22 @@ export default function AdminPage() {
     </div>
   )
 
+  const metricCards = [
+    { title: 'Socios activos', value: stats.sociosActivos, color: '#c8f542', help: 'Socios con membresía vigente' },
+    { title: 'Actividades activas', value: stats.actividadesActivas, color: '#5ca8ff', help: 'Disciplinas publicadas para reservar' },
+    { title: 'Horarios activos', value: stats.horariosActivos, color: '#a855f7', help: 'Franjas semanales disponibles' },
+    { title: 'Clases puntuales próximas', value: stats.puntualesProximas, color: '#ffb84d', help: 'Sesiones especiales aún por impartir' },
+  ]
+
   return (
     <div style={{ minHeight: '100vh', background: '#0f0f0f', color: '#f0f0f0', fontFamily: 'system-ui' }}>
 
       {/* HEADER */}
-      <div style={{ background: '#181818', borderBottom: '1px solid rgba(255,255,255,0.07)', padding: '16px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '12px' }}>
+      <div style={{ background: '#181818', borderBottom: '1px solid rgba(255,255,255,0.07)', padding: '18px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
         <div style={{ fontSize: '20px', fontWeight: '800' }}>
           JGS <span style={{ color: '#c8f542' }}>Fight Team</span>
-          <span style={{ color: '#888', fontSize: '13px', fontWeight: '400', marginLeft: '8px' }}>Admin</span>
-          <div style={{ fontSize: '12px', color: '#9ca3af', marginTop: '6px', fontWeight: '400' }}>Gestión de gimnasio</div>
+          <span style={{ color: '#888', fontSize: '13px', fontWeight: '500', marginLeft: '8px' }}>Admin</span>
+          <div style={{ fontSize: '12px', color: '#9ca3af', marginTop: '6px', fontWeight: '400' }}>Panel de gestión del gimnasio</div>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
           <Link href="/demo" style={{ color: '#7dd3fc', fontSize: '13px', textDecoration: 'none' }}>Ver demo online</Link>
@@ -77,23 +84,14 @@ export default function AdminPage() {
       </div>
 
       {/* STATS */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', padding: '16px 20px' }}>
-        <div style={{ background: '#1e1e1e', border: '1px solid rgba(255,255,255,0.07)', borderRadius: '12px', padding: '14px' }}>
-          <div style={{ fontSize: '28px', fontWeight: '800', color: '#c8f542' }}>{stats.sociosActivos}</div>
-          <div style={{ fontSize: '12px', color: '#888', marginTop: '2px' }}>Socios activos</div>
-        </div>
-        <div style={{ background: '#1e1e1e', border: '1px solid rgba(255,255,255,0.07)', borderRadius: '12px', padding: '14px' }}>
-          <div style={{ fontSize: '28px', fontWeight: '800', color: '#5ca8ff' }}>{stats.actividadesActivas}</div>
-          <div style={{ fontSize: '12px', color: '#888', marginTop: '2px' }}>Actividades activas</div>
-        </div>
-        <div style={{ background: '#1e1e1e', border: '1px solid rgba(255,255,255,0.07)', borderRadius: '12px', padding: '14px' }}>
-          <div style={{ fontSize: '28px', fontWeight: '800', color: '#a855f7' }}>{stats.horariosActivos}</div>
-          <div style={{ fontSize: '12px', color: '#888', marginTop: '2px' }}>Horarios activos</div>
-        </div>
-        <div style={{ background: '#1e1e1e', border: '1px solid rgba(255,255,255,0.07)', borderRadius: '12px', padding: '14px' }}>
-          <div style={{ fontSize: '28px', fontWeight: '800', color: '#ffb84d' }}>{stats.puntualesProximas}</div>
-          <div style={{ fontSize: '12px', color: '#888', marginTop: '2px' }}>Clases puntuales próximas</div>
-        </div>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(190px, 1fr))', gap: '10px', padding: '16px 20px' }}>
+        {metricCards.map((metric) => (
+          <div key={metric.title} style={{ background: '#1e1e1e', border: '1px solid rgba(255,255,255,0.07)', borderRadius: '12px', padding: '14px' }}>
+            <div style={{ fontSize: '12px', color: '#9ca3af', marginBottom: '6px', fontWeight: '500' }}>{metric.title}</div>
+            <div style={{ fontSize: '30px', fontWeight: '800', color: metric.color }}>{metric.value}</div>
+            <div style={{ fontSize: '12px', color: '#888', marginTop: '6px' }}>{metric.help}</div>
+          </div>
+        ))}
       </div>
 
       {/* TABS */}
@@ -120,7 +118,11 @@ export default function AdminPage() {
 
         {/* NUEVO SOCIO */}
         {tab === 'nuevo-socio' && (
-          <div>
+          <div style={{ background: '#1a1a1a', border: '1px solid rgba(200,245,66,0.15)', borderRadius: '14px', padding: '16px' }}>
+            <div style={{ marginBottom: '14px' }}>
+              <h2 style={{ margin: 0, fontSize: '20px', fontWeight: '800' }}>Registrar nuevo socio</h2>
+              <p style={{ margin: '6px 0 0', color: '#9ca3af', fontSize: '13px' }}>Crea el acceso del socio y asigna su membresía inicial.</p>
+            </div>
             <div style={{ marginBottom: '12px' }}>
               <label style={{ display: 'block', color: '#888', fontSize: '12px', marginBottom: '6px', fontWeight: '500' }}>NOMBRE</label>
               <input style={inputStyle} placeholder="Nombre completo" value={nuevoSocio.nombre} onChange={e => setNuevoSocio({ ...nuevoSocio, nombre: e.target.value })} />

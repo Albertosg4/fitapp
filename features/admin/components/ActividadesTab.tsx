@@ -138,7 +138,7 @@ export default function ActividadesTab({ gymId }: Props) {
 
       {/* Lista de actividades */}
       {actividades.length === 0 ? (
-        <p style={{ color: '#888', textAlign: 'center', padding: '20px 0', fontSize: '13px' }}>Sin actividades. Crea la primera.</p>
+        <p style={{ color: '#888', textAlign: 'center', padding: '20px 0', fontSize: '13px' }}>Aún no hay actividades. Crea la primera actividad del gimnasio.</p>
       ) : actividades.map(a => (
         <div key={a.id} style={{ ...cardStyle, opacity: a.activa ? 1 : 0.5, borderLeft: `3px solid ${a.color || '#c8f542'}` }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>

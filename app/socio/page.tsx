@@ -152,8 +152,9 @@ function SocioPageInner() {
       )}
 
 
-      <div style={{ padding: '10px 20px', borderBottom: '1px solid rgba(255,255,255,0.06)', color: '#a1a1aa', fontSize: '12px' }}>
-        JGS Fight Team - Área de socio
+      <div style={{ padding: '12px 20px', borderBottom: '1px solid rgba(255,255,255,0.06)', color: '#a1a1aa', fontSize: '12px', display: 'flex', justifyContent: 'space-between', gap: '12px', alignItems: 'center', flexWrap: 'wrap' }}>
+        <span>JGS Fight Team - Área de socio</span>
+        {perfil?.nombre && <span style={{ color: '#d4d4d8' }}>Hola, {perfil.nombre}</span>}
       </div>
 
       {/* Tabs */}
@@ -188,6 +189,7 @@ function SocioPageInner() {
           style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.8)', zIndex: 200, display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}>
           <div style={{ background: '#1e1e1e', border: '1px solid rgba(255,255,255,0.07)', borderRadius: '24px 24px 0 0', padding: '24px 20px 36px', width: '100%', maxWidth: '480px' }}>
             <div style={{ width: '36px', height: '4px', background: 'rgba(255,255,255,0.1)', borderRadius: '2px', margin: '0 auto 20px' }}></div>
+            <div style={{ fontSize: '12px', letterSpacing: '0.08em', textTransform: 'uppercase', color: '#9ca3af', marginBottom: '6px' }}>Reserva de clase</div>
             <div style={{ fontSize: '22px', fontWeight: '800', marginBottom: '4px' }}>{modal.actividad_nombre}</div>
             <div style={{ fontSize: '13px', color: '#888', marginBottom: '20px' }}>
               {modal.fecha} · {modal.hora_inicio} · {modal.duracion_min} min

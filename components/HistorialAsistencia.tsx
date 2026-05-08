@@ -82,7 +82,7 @@ export default function HistorialAsistencia({ userId, limit = 20, compact = fals
   if (historial.length === 0) return (
     <div className="text-center py-8 text-gray-400">
       <p className="text-2xl mb-2">📋</p>
-      <p className="text-sm">Sin asistencias registradas todavía</p>
+      <p className="text-sm">Aún no hay asistencias registradas.</p>
     </div>
   )
 

@@ -167,3 +167,11 @@ Priorizar cambios de alto impacto funcional con **baja superficie de riesgo estr
 - **Alcance**: documentación de producto, checklist comercial y próximos PRs seguros.
 - **Fuera de alcance**: backend, Supabase, SQL, RLS, Auth, Stripe, APIs, datos reales y multi-sector real.
 - **Validación**: `npm run lint`, `npm run build`, `node scripts/verify-real-gym-boundaries.mjs` y guardarraíles documentales.
+
+## Fase 8B — Pulido visual seguro app gimnasio real
+
+- Estado: implementada/en curso.
+- Objetivo: mejorar presentación comercial de `/admin` y `/socio`.
+- Alcance: UI, copy, estados vacíos y responsive.
+- Fuera de alcance: backend, Supabase, SQL, RLS, Auth, Stripe, APIs, datos reales, demo multi-sector.
+- Validación: lint, build, verify-real-gym-boundaries, audit-real-gym-app-surfaces y prueba manual.

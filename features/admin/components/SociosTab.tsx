@@ -270,7 +270,7 @@ export default function SociosTab({ socios, gymId: _gymId, onRefreshSocios }: Pr
   return (
     <>
       {socios.length === 0 ? (
-        <p style={{ color: '#888', textAlign: 'center', padding: '40px 0' }}>No hay socios registrados.</p>
+        <p style={{ color: '#888', textAlign: 'center', padding: '40px 0' }}>Aún no hay socios registrados.</p>
       ) : socios.map(s => {
         const badge = badgeEstado(s)
         return (

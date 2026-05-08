@@ -92,3 +92,9 @@ Si `npm run build` falla solo por Google Fonts o red externa, documentarlo como 
 - Riesgo de no probar movil.
 
 La regla para Fase 8B debe ser simple: solo presentacion y claridad. Cualquier cambio de datos, permisos, pagos o API debe salir a otra fase.
+
+## Estado actualizado
+
+Fase 8B implementada/en curso.
+
+Siguiente recomendado: Fase 8C — Hardening de errores y mensajes usuario.
