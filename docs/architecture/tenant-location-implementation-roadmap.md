@@ -159,3 +159,11 @@ Priorizar cambios de alto impacto funcional con **baja superficie de riesgo estr
 - **Alcance**: documentación de fronteras, checklist y script de verificación.
 - **Fuera de alcance**: backend, Supabase, SQL, RLS, Auth, Stripe, APIs y datos reales.
 - **Validación**: `npm run lint`, `npm run build`, `node scripts/verify-real-gym-boundaries.mjs`.
+
+## Fase 8A — Auditoría de preparación comercial app gimnasio real
+
+- **Estado**: implementada/en curso.
+- **Objetivo**: auditar la app real de gimnasio para venta.
+- **Alcance**: documentación de producto, checklist comercial y próximos PRs seguros.
+- **Fuera de alcance**: backend, Supabase, SQL, RLS, Auth, Stripe, APIs, datos reales y multi-sector real.
+- **Validación**: `npm run lint`, `npm run build`, `node scripts/verify-real-gym-boundaries.mjs` y guardarraíles documentales.

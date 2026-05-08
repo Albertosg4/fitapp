@@ -252,3 +252,9 @@ Este documento reclasifica riesgos tras completar 3B, 3C, check-in hardening, St
   - Checklist de PR.
   - Demo multi-sector confinada a `/demo`.
 - Riesgo residual: Codex o futuras fases pueden reintroducir imports demo en app real si no se ejecuta el script.
+
+## Actualización 2026-05-08 — Riesgo de venta sin validación comercial completa
+
+- Riesgo: vender o enseñar la app real de gimnasio sin checklist funcional/comercial completo.
+- Mitigación: Fase 8A crea auditoría de preparación comercial, checklist de validación y siguiente PR seguro recomendado.
+- Riesgo residual: la app debe validarse manualmente antes de enseñarla a clientes, especialmente reservas, pagos, QR/check-in, móvil y estados sin datos.
