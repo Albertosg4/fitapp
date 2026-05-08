@@ -175,3 +175,11 @@ Priorizar cambios de alto impacto funcional con **baja superficie de riesgo estr
 - Alcance: UI, copy, estados vacíos y responsive.
 - Fuera de alcance: backend, Supabase, SQL, RLS, Auth, Stripe, APIs, datos reales, demo multi-sector.
 - Validación: lint, build, verify-real-gym-boundaries, audit-real-gym-app-surfaces y prueba manual.
+
+
+## Fase 8C — Hardening de errores y mensajes usuario
+- Estado: implementada/en curso.
+- Objetivo: evitar mensajes técnicos visibles en /admin y /socio.
+- Alcance: copy de errores, estados de error, helper UI de normalización.
+- Fuera de alcance: backend, Supabase, SQL, RLS, Auth, Stripe, APIs, datos reales, demo multi-sector.
+- Validación: lint, build, guardrails, rg de patrones técnicos y prueba manual.

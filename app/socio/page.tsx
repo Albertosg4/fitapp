@@ -10,6 +10,7 @@ import SocioHistorialTab from '@/features/socio/components/SocioHistorialTab'
 import SocioPagosTab from '@/features/socio/components/SocioPagosTab'
 import SocioQRTab from '@/features/socio/components/SocioQRTab'
 import SocioPerfilTab from '@/features/socio/components/SocioPerfilTab'
+import { USER_FACING_ERRORS, normaliseUserFacingError } from '@/lib/ui/user-facing-errors'
 
 function SocioPageInner() {
   const {
@@ -93,7 +94,7 @@ function SocioPageInner() {
     setPagando(true)
     try {
       const { data: { session } } = await supabase.auth.getSession()
-      if (!session?.access_token) { console.error('Sin sesión activa'); return }
+      if (!session?.access_token) { setMsgPago(`❌ ${USER_FACING_ERRORS.sessionExpired}`); return }
       const res = await fetch('/api/stripe/checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.access_token}` },
@@ -101,7 +102,7 @@ function SocioPageInner() {
       })
       const data = await res.json()
       if (data.url) window.location.assign(data.url as string)
-    } catch (err) { console.error('Error pago:', err) }
+    } catch (err) { console.error('Error pago:', err); setMsgPago(`❌ ${normaliseUserFacingError(err, USER_FACING_ERRORS.payment)}`) }
     finally { setPagando(false) }
   }
 

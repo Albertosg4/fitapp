@@ -195,3 +195,10 @@ En esta fase no se han aplicado cambios funcionales. No se ha tocado backend, Su
 - Fase 8B pule visualmente `/admin` y `/socio` sin cambiar comportamiento.
 - Sigue pendiente validación manual comercial completa.
 - Pagos/Stripe siguen pendientes de auditoría separada.
+
+
+## Nota Fase 8C
+- Fase 8C endurece mensajes de error visibles para usuarios.
+- No cambia lógica real.
+- Sigue pendiente validación manual comercial completa.
+- Pagos/Stripe siguen pendientes de auditoría separada.

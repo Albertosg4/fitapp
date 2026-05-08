@@ -264,3 +264,7 @@ Este documento reclasifica riesgos tras completar 3B, 3C, check-in hardening, St
 - Riesgo: app funcional pero visualmente poco vendible.
 - Mitigación: Fase 8B pule UI real de admin/socio sin tocar lógica.
 - Riesgo residual: hay que validar con checklist comercial real antes de enseñar a clientes.
+
+- Riesgo: errores técnicos visibles a usuarios/clientes.
+- Mitigación: Fase 8C normaliza mensajes visibles en /admin y /socio.
+- Riesgo residual: debe validarse manualmente provocando errores controlados.
