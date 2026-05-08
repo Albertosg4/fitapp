@@ -101,3 +101,14 @@ Siguiente recomendado: Fase 8C — Hardening de errores y mensajes usuario.
 
 - Fase 8C implementada/en curso: hardening de mensajes de error visibles en la app real (/admin y /socio) sin cambios de lógica.
 - Siguiente recomendado: Fase 8D — Checklist funcional de venta y smoke test no destructivo.
+
+## Estado Fase 8D
+
+- Fase 8D implementada/en curso.
+- Esta fase añade checklist funcional de venta y smoke test no destructivo.
+- No tocar Stripe en esta fase 8D.
+- Stripe se revisará aparte.
+
+## Siguiente recomendado
+
+- Fase 8E — Auditoría separada de pagos/Stripe.

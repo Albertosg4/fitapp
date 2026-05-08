@@ -183,3 +183,11 @@ Priorizar cambios de alto impacto funcional con **baja superficie de riesgo estr
 - Alcance: copy de errores, estados de error, helper UI de normalización.
 - Fuera de alcance: backend, Supabase, SQL, RLS, Auth, Stripe, APIs, datos reales, demo multi-sector.
 - Validación: lint, build, guardrails, rg de patrones técnicos y prueba manual.
+
+## Fase 8D — Checklist funcional de venta y smoke test no destructivo
+
+- Estado: implementada/en curso.
+- Objetivo: preparar validación funcional/comercial de la app real gimnasio.
+- Alcance: checklist smoke test, guion comercial, plantilla de informe y script no destructivo.
+- Fuera de alcance: backend, Supabase, SQL, RLS, Auth, Stripe, APIs, datos reales, demo multi-sector.
+- Validación: lint, build, guardrails, audit surfaces y verify-real-gym-sales-smoke-readiness.

@@ -239,3 +239,9 @@
 - Fase 8C mejora mensajes de error de app real gimnasio.
 - No toca backend ni datos.
 - Siguiente fase sugerida: 8D checklist funcional de venta/smoke test.
+
+## Nota Fase 8D
+
+- Fase 8D añade checklist funcional de venta y smoke test no destructivo.
+- No toca backend ni datos.
+- Siguiente fase sugerida: Fase 8E — Auditoría separada de pagos/Stripe.

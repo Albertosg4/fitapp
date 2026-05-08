@@ -268,3 +268,9 @@ Este documento reclasifica riesgos tras completar 3B, 3C, check-in hardening, St
 - Riesgo: errores técnicos visibles a usuarios/clientes.
 - Mitigación: Fase 8C normaliza mensajes visibles en /admin y /socio.
 - Riesgo residual: debe validarse manualmente provocando errores controlados.
+
+## Actualización Fase 8D — mitigación comercial
+
+- Riesgo: enseñar la app sin una prueba funcional/comercial completa.
+- Mitigación: Fase 8D añade smoke test, guion comercial y plantilla de informe.
+- Riesgo residual: la prueba debe ejecutarse manualmente en entorno real antes de enseñar la app a clientes.
