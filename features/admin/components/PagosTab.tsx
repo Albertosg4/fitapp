@@ -2,6 +2,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '@/lib/supabase'
 import type { Pago } from '@/types/domain'
+import { USER_FACING_ERRORS, normaliseUserFacingError } from '@/lib/ui/user-facing-errors'
 
 const cardStyle = { background: '#1e1e1e', border: '1px solid rgba(255,255,255,0.07)', borderRadius: '12px', padding: '14px', marginBottom: '10px' }
 const inputStyle = { width: '100%', background: '#181818', border: '1px solid rgba(255,255,255,0.07)', borderRadius: '10px', padding: '10px 14px', color: '#f0f0f0', fontSize: '14px', outline: 'none', boxSizing: 'border-box' as const, fontFamily: 'system-ui' }
@@ -38,13 +39,13 @@ export default function PagosTab({ onSociosChange }: Props) {
       if (!res.ok) {
         const msg = data.error || `Error ${res.status}`
         console.error('[PagosTab] cargar:', msg)
-        setErrorMsg(msg)
+        setErrorMsg(normaliseUserFacingError(msg, USER_FACING_ERRORS.loadAdmin))
         return
       }
       setPagos(data.pagos || [])
     } catch (err) {
       console.error('[PagosTab] cargar error:', err)
-      setErrorMsg('Error de conexión al cargar pagos')
+      setErrorMsg(USER_FACING_ERRORS.network)
     } finally {
       setLoading(false)
     }
